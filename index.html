@@ -15,6 +15,7 @@
       "imports": {
         "react": "https://esm.sh/react@18.2.0",
         "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
         "lucide-react": "https://esm.sh/lucide-react?external=react,react-dom"
       }
     }
@@ -27,6 +28,7 @@
   <script type="text/babel" data-type="module">
     import React, { useState, useEffect, useRef } from 'react';
     import { createRoot } from 'react-dom/client';
+    import { createClient } from '@supabase/supabase-js';
     import { 
       Menu, X, ArrowRight, ChevronRight, CheckCircle2, 
       BarChart3, Users, Settings, FileText, Database, 
@@ -64,6 +66,10 @@
     const PENDING_ROUTE_TOP_KEY = 'worth-between-pending-route-top';
     const ADVISOR_TRANSITION_STORAGE_KEY = 'worth-between-advisor-transition';
     const STORAGE_BACKUP_VERSION = '1.0.0';
+    const SUPABASE_URL = window.WORTH_BETWEEN_SUPABASE_URL || 'https://rdyqyaacfkopruprxkpq.supabase.co';
+    const SUPABASE_ANON_KEY = window.WORTH_BETWEEN_SUPABASE_ANON_KEY || 'sb_publishable_mwDjLlme7TnmnVkpaP1jpA_i1ktZSyS';
+    const SUPABASE_SITE_STATE_TABLE = 'site_state';
+    const SUPABASE_SITE_STATE_ID = 'primary';
     const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
     const TARGET_UPLOAD_BYTES = 70 * 1024;
     const MAX_IMAGE_DIMENSION = 1600;
@@ -74,6 +80,22 @@
     const SUPPORTED_IMAGE_LABEL = 'JPG/JPEG、PNG、WebP、GIF、SVG';
     const ADMIN_LOGIN_EMAIL = 'admin';
     const ADMIN_LOGIN_PASSWORD = 'wb2026';
+    const isSupabaseConfigured = (
+      typeof SUPABASE_URL === 'string' &&
+      typeof SUPABASE_ANON_KEY === 'string' &&
+      /^https:\/\/.+\.supabase\.co$/i.test(SUPABASE_URL) &&
+      !SUPABASE_URL.includes('YOUR_PROJECT_REF') &&
+      !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY')
+    );
+    const supabase = isSupabaseConfigured
+      ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
+        })
+      : null;
     const defaultHeroSlides = [
       {
         id: 1,
@@ -1149,6 +1171,58 @@
           items: normalizedItems
         };
       });
+    };
+    const readJsonFromLocalStorage = (key, fallback) => {
+      try {
+        const saved = window.localStorage.getItem(key);
+        return saved ? JSON.parse(saved) : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+    const buildDefaultSiteState = () => ({
+      heroSlides: normalizeHeroSlides(defaultHeroSlides),
+      contentPages: normalizeContentPages(defaultContentPages),
+      homepageContent: normalizeHomepageContent(defaultHomepageContent),
+      brands: defaultBrands.map((brand) => ({ ...brand })),
+      serviceRecords: normalizeServiceRecords(defaultServiceRecords),
+      teamAccess: {
+        ...defaultTeamAccess,
+        roles: (defaultTeamAccess.roles || []).map((role) => ({ ...role })),
+        members: (defaultTeamAccess.members || []).map((member) => ({ ...member })),
+        activities: (defaultTeamAccess.activities || []).map((activity) => ({ ...activity }))
+      }
+    });
+    const readLocalSiteState = () => {
+      const defaults = buildDefaultSiteState();
+      return {
+        heroSlides: normalizeHeroSlides(readJsonFromLocalStorage(HERO_SLIDES_STORAGE_KEY, defaults.heroSlides)),
+        contentPages: normalizeContentPages(readJsonFromLocalStorage(CONTENT_PAGES_STORAGE_KEY, defaults.contentPages)),
+        homepageContent: normalizeHomepageContent(readJsonFromLocalStorage(HOMEPAGE_CONTENT_STORAGE_KEY, defaults.homepageContent)),
+        brands: readJsonFromLocalStorage(BRANDS_STORAGE_KEY, defaults.brands),
+        serviceRecords: normalizeServiceRecords(readJsonFromLocalStorage(SERVICE_TRACKER_STORAGE_KEY, defaults.serviceRecords)),
+        teamAccess: readJsonFromLocalStorage(TEAM_ACCESS_STORAGE_KEY, defaults.teamAccess)
+      };
+    };
+    const normalizeRemoteSiteState = (payload) => {
+      const defaults = buildDefaultSiteState();
+      const source = payload && typeof payload === 'object' ? payload : {};
+      return {
+        heroSlides: normalizeHeroSlides(source.heroSlides || defaults.heroSlides),
+        contentPages: normalizeContentPages(source.contentPages || defaults.contentPages),
+        homepageContent: normalizeHomepageContent(source.homepageContent || defaults.homepageContent),
+        brands: Array.isArray(source.brands) ? source.brands : defaults.brands,
+        serviceRecords: normalizeServiceRecords(source.serviceRecords || defaults.serviceRecords),
+        teamAccess: source.teamAccess?.roles && source.teamAccess?.members ? source.teamAccess : defaults.teamAccess
+      };
+    };
+    const persistLocalSiteState = ({ heroSlides, contentPages, homepageContent, brands, serviceRecords, teamAccess }) => {
+      window.localStorage.setItem(HERO_SLIDES_STORAGE_KEY, JSON.stringify(normalizeHeroSlides(heroSlides)));
+      window.localStorage.setItem(CONTENT_PAGES_STORAGE_KEY, JSON.stringify(normalizeContentPages(contentPages)));
+      window.localStorage.setItem(HOMEPAGE_CONTENT_STORAGE_KEY, JSON.stringify(normalizeHomepageContent(homepageContent)));
+      window.localStorage.setItem(BRANDS_STORAGE_KEY, JSON.stringify(brands));
+      window.localStorage.setItem(SERVICE_TRACKER_STORAGE_KEY, JSON.stringify(normalizeServiceRecords(serviceRecords)));
+      window.localStorage.setItem(TEAM_ACCESS_STORAGE_KEY, JSON.stringify(teamAccess));
     };
     const getContentPageByRoute = (contentPages, route) => {
       const page = contentPages.find((item) => item.route === route);
@@ -2919,21 +2993,26 @@
     // ==========================================
     // 2. 後台管理系統 (AdminApp)
     // ==========================================
-    const AdminApp = ({ heroSlides, setHeroSlides, contentPages, setContentPages, homepageContent, setHomepageContent }) => {
+    const AdminApp = ({
+      heroSlides,
+      setHeroSlides,
+      contentPages,
+      setContentPages,
+      homepageContent,
+      setHomepageContent,
+      brands,
+      setBrands,
+      serviceRecords,
+      setServiceRecords,
+      teamAccess,
+      setTeamAccess,
+      storageState
+    }) => {
       const [isAuthenticated, setIsAuthenticated] = useState(() => window.localStorage.getItem(ADMIN_AUTH_STORAGE_KEY) === 'true');
       const [activeTab, setActiveTab] = useState('dashboard');
       const [flashMessage, setFlashMessage] = useState(() => window.localStorage.getItem(ADMIN_FLASH_STORAGE_KEY) || '');
       const [loginForm, setLoginForm] = useState({ email: '', password: '' });
       const [loginError, setLoginError] = useState('');
-      
-      const [brands, setBrands] = useState(() => {
-        try {
-          const saved = window.localStorage.getItem(BRANDS_STORAGE_KEY);
-          return saved ? JSON.parse(saved) : defaultBrands;
-        } catch {
-          return defaultBrands;
-        }
-      });
       const [isAddModalOpen, setIsAddModalOpen] = useState(false);
       const [editingBrandId, setEditingBrandId] = useState(null);
       const [newBrand, setNewBrand] = useState({ name: '', service: '', status: 'Active' });
@@ -2941,14 +3020,6 @@
       const [brandSearchTerm, setBrandSearchTerm] = useState('');
       const [brandStatusFilter, setBrandStatusFilter] = useState('全部');
       const [brandSortBy, setBrandSortBy] = useState('updated-desc');
-      const [serviceRecords, setServiceRecords] = useState(() => {
-        try {
-          const saved = window.localStorage.getItem(SERVICE_TRACKER_STORAGE_KEY);
-          return saved ? normalizeServiceRecords(JSON.parse(saved)) : normalizeServiceRecords(defaultServiceRecords);
-        } catch {
-          return normalizeServiceRecords(defaultServiceRecords);
-        }
-      });
       const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
       const [editingServiceId, setEditingServiceId] = useState(null);
       const [serviceForm, setServiceForm] = useState({ projectName: '', client: '', serviceType: '', owner: '', stage: '待啟動', priority: '中', dueDate: '', notes: '' });
@@ -2960,14 +3031,6 @@
       const [selectedServiceIds, setSelectedServiceIds] = useState([]);
       const [serviceBatchForm, setServiceBatchForm] = useState({ stage: '', priority: '', owner: '' });
       const [draggedServiceId, setDraggedServiceId] = useState(null);
-      const [teamAccess, setTeamAccess] = useState(() => {
-        try {
-          const saved = window.localStorage.getItem(TEAM_ACCESS_STORAGE_KEY);
-          return saved ? JSON.parse(saved) : defaultTeamAccess;
-        } catch {
-          return defaultTeamAccess;
-        }
-      });
       const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
       const [editingRoleId, setEditingRoleId] = useState(null);
       const [roleForm, setRoleForm] = useState({ name: '', description: '', permissions: [] });
@@ -3224,19 +3287,6 @@
         deleteHeroConfirmId,
         deleteConfirmId
       ]);
-      useEffect(() => {
-        window.localStorage.setItem(BRANDS_STORAGE_KEY, JSON.stringify(brands));
-      }, [brands]);
-      useEffect(() => {
-        window.localStorage.setItem(SERVICE_TRACKER_STORAGE_KEY, JSON.stringify(normalizeServiceRecords(serviceRecords)));
-      }, [serviceRecords]);
-      useEffect(() => {
-        window.localStorage.setItem(TEAM_ACCESS_STORAGE_KEY, JSON.stringify(teamAccess));
-      }, [teamAccess]);
-      useEffect(() => {
-        window.localStorage.setItem(HOMEPAGE_CONTENT_STORAGE_KEY, JSON.stringify(normalizeHomepageContent(homepageContent)));
-      }, [homepageContent]);
-
       const handleLogin = (e) => {
         e.preventDefault();
         const email = loginForm.email.trim();
@@ -5082,8 +5132,8 @@
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <div>
-                      <h3 className="text-xl font-bold">本機資料管理</h3>
-                      <p className="text-gray-500 text-sm mt-1">管理這個網站儲存在目前瀏覽器的 Banner 資料與登入狀態，適合備份、搬移或重設。</p>
+                      <h3 className="text-xl font-bold">資料管理</h3>
+                      <p className="text-gray-500 text-sm mt-1">目前以 Supabase 雲端資料為主，瀏覽器會保留本機快取與登入狀態，方便備份、搬移或離線回復。</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <input
@@ -5102,10 +5152,14 @@
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
                       <p className="text-gray-500 text-sm font-bold mb-1">已管理資料鍵</p>
                       <p className="text-3xl font-bold">{storageSummary.length}</p>
+                    </div>
+                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                      <p className="text-gray-500 text-sm font-bold mb-1">同步模式</p>
+                      <p className="text-2xl font-bold">{storageState.mode === 'supabase' ? 'Supabase' : 'Local'}</p>
                     </div>
                     <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
                       <p className="text-gray-500 text-sm font-bold mb-1">Banner 筆數</p>
@@ -5117,9 +5171,26 @@
                     </div>
                   </div>
 
+                  <div className={`rounded-xl px-4 py-3 text-sm flex items-start gap-3 ${
+                    storageState.error
+                      ? 'bg-red-50 border border-red-200 text-red-700'
+                      : storageState.mode === 'supabase'
+                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                        : 'bg-amber-50 border border-amber-200 text-amber-800'
+                  }`}>
+                    <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+                    <div>
+                      {storageState.error
+                        ? `Supabase 同步失敗：${storageState.error}`
+                        : storageState.mode === 'supabase'
+                          ? `目前已連上 Supabase，站台資料會自動同步到資料表 ${SUPABASE_SITE_STATE_TABLE}。${storageState.lastSyncedAt ? ` 最近同步：${storageState.lastSyncedAt}` : ''}`
+                          : '尚未填入 Supabase URL 與 anon key，目前仍使用本機資料。填入設定後會自動切換為雲端同步。'}
+                    </div>
+                  </div>
+
                   <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                      <h4 className="font-bold">目前本機資料</h4>
+                      <h4 className="font-bold">目前本機快取</h4>
                       <button onClick={clearAllStorage} className="px-4 py-2 text-sm font-bold text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
                         清除全部資料
                       </button>
@@ -5146,7 +5217,7 @@
                   <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-start gap-3">
                     <AlertTriangle size={18} className="shrink-0 mt-0.5" />
                     <div>
-                      本機資料只存在目前這台電腦、這個瀏覽器。清除瀏覽器網站資料後，Banner 與登入狀態都會消失。建議重大修改前先匯出備份。
+                      清除本機快取不會刪除 Supabase 雲端資料，但會移除目前瀏覽器的登入狀態與暫存內容。建議重大修改前先匯出備份。
                     </div>
                   </div>
                 </div>
@@ -6619,40 +6690,86 @@
     // ==========================================
     function App() {
       const [currentRoute, setCurrentRoute] = useState(window.location.hash);
-      const [heroSlides, setHeroSlides] = useState(() => {
-        try {
-          const saved = window.localStorage.getItem(HERO_SLIDES_STORAGE_KEY);
-          if (!saved) return defaultHeroSlides;
-          const parsed = JSON.parse(saved);
-          if (!Array.isArray(parsed) || parsed.length === 0) return defaultHeroSlides;
-          return normalizeHeroSlides(parsed);
-        } catch {
-          return defaultHeroSlides;
-        }
-      });
-      const [contentPages, setContentPages] = useState(() => {
-        try {
-          const saved = window.localStorage.getItem(CONTENT_PAGES_STORAGE_KEY);
-          if (!saved) return normalizeContentPages(defaultContentPages);
-          return normalizeContentPages(JSON.parse(saved));
-        } catch {
-          return normalizeContentPages(defaultContentPages);
-        }
-      });
-      const [homepageContent, setHomepageContent] = useState(() => {
-        try {
-          const saved = window.localStorage.getItem(HOMEPAGE_CONTENT_STORAGE_KEY);
-          if (!saved) return normalizeHomepageContent(defaultHomepageContent);
-          return normalizeHomepageContent(JSON.parse(saved));
-        } catch {
-          return normalizeHomepageContent(defaultHomepageContent);
-        }
+      const localSiteState = useRef(readLocalSiteState());
+      const syncTimerRef = useRef(null);
+      const hasCompletedBootstrapRef = useRef(false);
+      const [heroSlides, setHeroSlides] = useState(localSiteState.current.heroSlides);
+      const [contentPages, setContentPages] = useState(localSiteState.current.contentPages);
+      const [homepageContent, setHomepageContent] = useState(localSiteState.current.homepageContent);
+      const [brands, setBrands] = useState(localSiteState.current.brands);
+      const [serviceRecords, setServiceRecords] = useState(localSiteState.current.serviceRecords);
+      const [teamAccess, setTeamAccess] = useState(localSiteState.current.teamAccess);
+      const [storageState, setStorageState] = useState({
+        mode: isSupabaseConfigured ? 'supabase' : 'local',
+        isLoading: isSupabaseConfigured,
+        isSyncing: false,
+        error: '',
+        lastSyncedAt: ''
       });
 
       useEffect(() => {
         const handleHashChange = () => setCurrentRoute(window.location.hash);
         window.addEventListener('hashchange', handleHashChange);
         return () => window.removeEventListener('hashchange', handleHashChange);
+      }, []);
+
+      useEffect(() => {
+        let isCancelled = false;
+
+        const hydrateFromSupabase = async () => {
+          if (!supabase) {
+            hasCompletedBootstrapRef.current = true;
+            setStorageState((prev) => ({ ...prev, mode: 'local', isLoading: false }));
+            return;
+          }
+
+          setStorageState((prev) => ({ ...prev, mode: 'supabase', isLoading: true, error: '' }));
+          const { data, error } = await supabase
+            .from(SUPABASE_SITE_STATE_TABLE)
+            .select('payload, updated_at')
+            .eq('site_id', SUPABASE_SITE_STATE_ID)
+            .maybeSingle();
+
+          if (isCancelled) return;
+
+          if (error) {
+            console.error('Failed to load site state from Supabase:', error);
+            hasCompletedBootstrapRef.current = true;
+            setStorageState((prev) => ({
+              ...prev,
+              mode: 'local',
+              isLoading: false,
+              error: error.message || '無法讀取雲端資料'
+            }));
+            return;
+          }
+
+          if (data?.payload) {
+            const remoteState = normalizeRemoteSiteState(data.payload);
+            setHeroSlides(remoteState.heroSlides);
+            setContentPages(remoteState.contentPages);
+            setHomepageContent(remoteState.homepageContent);
+            setBrands(remoteState.brands);
+            setServiceRecords(remoteState.serviceRecords);
+            setTeamAccess(remoteState.teamAccess);
+          }
+
+          hasCompletedBootstrapRef.current = true;
+          setStorageState((prev) => ({
+            ...prev,
+            mode: 'supabase',
+            isLoading: false,
+            error: '',
+            lastSyncedAt: data?.updated_at
+              ? new Date(data.updated_at).toLocaleString('zh-TW', { hour12: false })
+              : prev.lastSyncedAt
+          }));
+        };
+
+        hydrateFromSupabase();
+        return () => {
+          isCancelled = true;
+        };
       }, []);
 
       useEffect(() => {
@@ -6670,32 +6787,78 @@
       }, [currentRoute]);
 
       useEffect(() => {
-        try {
-          window.localStorage.setItem(HERO_SLIDES_STORAGE_KEY, JSON.stringify(normalizeHeroSlides(heroSlides)));
-        } catch (error) {
-          console.error('Failed to persist hero slides to localStorage:', error);
-        }
-      }, [heroSlides]);
+        persistLocalSiteState({ heroSlides, contentPages, homepageContent, brands, serviceRecords, teamAccess });
+      }, [heroSlides, contentPages, homepageContent, brands, serviceRecords, teamAccess]);
       useEffect(() => {
-        try {
-          window.localStorage.setItem(CONTENT_PAGES_STORAGE_KEY, JSON.stringify(normalizeContentPages(contentPages)));
-        } catch (error) {
-          console.error('Failed to persist content pages to localStorage:', error);
-        }
-      }, [contentPages]);
-      useEffect(() => {
-        try {
-          window.localStorage.setItem(HOMEPAGE_CONTENT_STORAGE_KEY, JSON.stringify(normalizeHomepageContent(homepageContent)));
-        } catch (error) {
-          console.error('Failed to persist homepage content to localStorage:', error);
-        }
-      }, [homepageContent]);
+        if (!hasCompletedBootstrapRef.current || !supabase || storageState.mode !== 'supabase') return;
+        if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
+
+        syncTimerRef.current = window.setTimeout(async () => {
+          const payload = {
+            heroSlides: normalizeHeroSlides(heroSlides),
+            contentPages: normalizeContentPages(contentPages),
+            homepageContent: normalizeHomepageContent(homepageContent),
+            brands,
+            serviceRecords: normalizeServiceRecords(serviceRecords),
+            teamAccess
+          };
+
+          setStorageState((prev) => ({ ...prev, isSyncing: true, error: '', mode: 'supabase' }));
+          const { error } = await supabase
+            .from(SUPABASE_SITE_STATE_TABLE)
+            .upsert({
+              site_id: SUPABASE_SITE_STATE_ID,
+              payload,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'site_id' });
+
+          if (error) {
+            console.error('Failed to sync site state to Supabase:', error);
+            setStorageState((prev) => ({
+              ...prev,
+              isSyncing: false,
+              error: error.message || '雲端同步失敗'
+            }));
+            return;
+          }
+
+          setStorageState((prev) => ({
+            ...prev,
+            isSyncing: false,
+            error: '',
+            lastSyncedAt: new Date().toLocaleString('zh-TW', { hour12: false })
+          }));
+        }, 600);
+
+        return () => {
+          if (syncTimerRef.current) {
+            window.clearTimeout(syncTimerRef.current);
+            syncTimerRef.current = null;
+          }
+        };
+      }, [heroSlides, contentPages, homepageContent, brands, serviceRecords, teamAccess, storageState.mode]);
       useEffect(() => {
         applyFaviconToDocument(homepageContent?.footer?.faviconUrl || defaultHomepageContent.footer.faviconUrl);
       }, [homepageContent?.footer?.faviconUrl]);
 
       if (currentRoute === '#/private-manager') {
-        return <AdminApp heroSlides={heroSlides} setHeroSlides={setHeroSlides} contentPages={contentPages} setContentPages={setContentPages} homepageContent={homepageContent} setHomepageContent={setHomepageContent} />;
+        return (
+          <AdminApp
+            heroSlides={heroSlides}
+            setHeroSlides={setHeroSlides}
+            contentPages={contentPages}
+            setContentPages={setContentPages}
+            homepageContent={homepageContent}
+            setHomepageContent={setHomepageContent}
+            brands={brands}
+            setBrands={setBrands}
+            serviceRecords={serviceRecords}
+            setServiceRecords={setServiceRecords}
+            teamAccess={teamAccess}
+            setTeamAccess={setTeamAccess}
+            storageState={storageState}
+          />
+        );
       }
       const contentItemEntry = getContentItemByRoute(contentPages, currentRoute);
       if (contentItemEntry) {
