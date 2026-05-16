@@ -1038,51 +1038,51 @@
             return {
               ...item,
               category: '媒體',
-              title: '媒體策略與採購',
+              title: item.title || '媒體策略與採購',
               subtitle: 'Media Lead',
-              body: '20年以上媒體端實戰經驗，從策略規劃到實際採購落地。理解品牌高度與個性，為每個品牌量身打造最適合的媒體配置與內容主軸。',
-              tags: ['平網媒體採購', 'OTT 串流廣告', 'LINE OA 顧問', 'LINE Ads', '電視節目置入', '戲劇商業合作', '議題包裝策展']
+              body: item.body || '20年以上媒體端實戰經驗，從策略規劃到實際採購落地。理解品牌高度與個性，為每個品牌量身打造最適合的媒體配置與內容主軸。',
+              tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : ['平網媒體採購', 'OTT 串流廣告', 'LINE OA 顧問', 'LINE Ads', '電視節目置入', '戲劇商業合作', '議題包裝策展']
             };
           }
           if (defaultPage.key === 'services' && String(item.id) === '202') {
             return {
               ...item,
               category: 'ESG',
-              title: 'ESG 議題溝通與培育',
+              title: item.title || 'ESG 議題溝通與培育',
               subtitle: 'ESG Lead',
-              body: '從本業找到真實的社會價值，而非另設公益部門。陪伴品牌從資源盤點、議題培育到對外傳播，走完從內部實踐到市場感知的完整路徑。',
-              tags: ['ESG資源盤點', '議題培育', 'ESG傳播規劃', '課程培訓共學', '永續報告溝通']
+              body: item.body || '從本業找到真實的社會價值，而非另設公益部門。陪伴品牌從資源盤點、議題培育到對外傳播，走完從內部實踐到市場感知的完整路徑。',
+              tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : ['ESG資源盤點', '議題培育', 'ESG傳播規劃', '課程培訓共學', '永續報告溝通']
             };
           }
           if (defaultPage.key === 'services' && String(item.id) === '203') {
             return {
               ...item,
               category: '整合行銷',
-              title: '整合行銷與全案統籌',
+              title: item.title || '整合行銷與全案統籌',
               subtitle: 'Growth Lead',
-              body: '好的策略，需要有人把它變成真實發生的事。從規劃到落地，涵蓋媒體代理、內容營運與活動策劃，讓每一分行銷預算都花在真正有效的地方。',
-              tags: ['整合行銷規劃', '媒體代理', '內容營運', '活動策劃', '全案執行統籌']
+              body: item.body || '好的策略，需要有人把它變成真實發生的事。從規劃到落地，涵蓋媒體代理、內容營運與活動策劃，讓每一分行銷預算都花在真正有效的地方。',
+              tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : ['整合行銷規劃', '媒體代理', '內容營運', '活動策劃', '全案執行統籌']
             };
           }
           if (defaultPage.key === 'services' && String(item.id) === '204') {
             return {
               ...item,
               category: '媒合',
-              title: '跨域資源媒合',
+              title: item.title || '跨域資源媒合',
               subtitle: 'Connection Lead',
-              body: '品牌的成長，往往發生在意想不到的連結之間。協助品牌找到跨域合作夥伴、公部門資源與異業結盟機會，讓品牌不只在市場上被看見，更在對的生態圈裡生根。',
-              tags: ['異業合作媒合', '公部門資源連結', '國際合作統籌', '品牌社會影響力']
+              body: item.body || '品牌的成長，往往發生在意想不到的連結之間。協助品牌找到跨域合作夥伴、公部門資源與異業結盟機會，讓品牌不只在市場上被看見，更在對的生態圈裡生根。',
+              tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : ['異業合作媒合', '公部門資源連結', '國際合作統籌', '品牌社會影響力']
             };
           }
           if (defaultPage.key === 'services' && String(item.id) === '205') {
             return {
               ...item,
               category: '中小企業',
-              title: '中小企業行銷顧問',
+              title: item.title || '中小企業行銷顧問',
               subtitle: 'SME Lead',
-              body: '你的事業有底蘊，但市場還不知道你的故事。WB把服務大品牌20年的媒體與行銷專業，帶給傳統產業與家族企業——協助轉型、重塑品牌，讓下一個世代看見你。',
-              tags: ['品牌定位梳理', '行銷管道策略', '數位轉型規劃', '議題包裝曝光'],
-              collaborationModes: ['固定月費顧問陪跑', '單次專案合作']
+              body: item.body || '你的事業有底蘊，但市場還不知道你的故事。WB把服務大品牌20年的媒體與行銷專業，帶給傳統產業與家族企業——協助轉型、重塑品牌，讓下一個世代看見你。',
+              tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : ['品牌定位梳理', '行銷管道策略', '數位轉型規劃', '議題包裝曝光'],
+              collaborationModes: Array.isArray(item.collaborationModes) && item.collaborationModes.length > 0 ? item.collaborationModes : ['固定月費顧問陪跑', '單次專案合作']
             };
           }
           if (defaultPage.key === 'work' && String(item.id) === '301') {
@@ -3178,7 +3178,7 @@
       const [draggedCategoryName, setDraggedCategoryName] = useState(null);
       const [isContentItemModalOpen, setIsContentItemModalOpen] = useState(false);
       const [editingContentItemId, setEditingContentItemId] = useState(null);
-      const [contentItemForm, setContentItemForm] = useState({ category: '', title: '', subtitle: '', body: '', result: '', image: '', publishedAt: '', isPopular: false });
+      const [contentItemForm, setContentItemForm] = useState({ category: '', title: '', subtitle: '', body: '', result: '', tagsText: '', collaborationModesText: '', image: '', publishedAt: '', isPopular: false });
       const [contentItemErrors, setContentItemErrors] = useState({});
       const [isCompressingContentImage, setIsCompressingContentImage] = useState(false);
       const [contentDeleteTarget, setContentDeleteTarget] = useState(null);
@@ -4252,6 +4252,8 @@
             subtitle: item.subtitle || '',
             body: item.body || '',
             result: item.result || '',
+            tagsText: Array.isArray(item.tags) ? item.tags.join('\n') : '',
+            collaborationModesText: Array.isArray(item.collaborationModes) ? item.collaborationModes.join('\n') : '',
             image: item.image || '',
             publishedAt: item.publishedAt || new Date().toISOString().split('T')[0],
             isPopular: item.isPopular === true
@@ -4264,6 +4266,8 @@
             subtitle: '',
             body: '',
             result: '',
+            tagsText: '',
+            collaborationModesText: '',
             image: activeContentSection?.heroImage || '',
             publishedAt: new Date().toISOString().split('T')[0],
             isPopular: false
@@ -4294,6 +4298,12 @@
           subtitle: contentItemForm.subtitle.trim(),
           body: contentItemForm.body.trim(),
           result: contentItemForm.result.trim(),
+          tags: activeContentSectionKey === 'services'
+            ? contentItemForm.tagsText.split('\n').map((item) => item.trim()).filter(Boolean)
+            : undefined,
+          collaborationModes: activeContentSectionKey === 'services'
+            ? contentItemForm.collaborationModesText.split('\n').map((item) => item.trim()).filter(Boolean)
+            : undefined,
           image: contentItemForm.image.trim(),
           publishedAt: contentItemForm.publishedAt.trim(),
           isPopular: contentItemForm.isPopular === true
@@ -6773,6 +6783,30 @@
                     <label className="block text-xs font-bold text-gray-700 mb-1">內容</label>
                     <textarea rows="5" value={contentItemForm.body} onChange={e => setContentItemForm({ ...contentItemForm, body: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none" />
                   </div>
+                  {activeContentSectionKey === 'services' && (
+                    <>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">服務內容色塊文字 <span className="text-gray-400 font-normal">每行一項</span></label>
+                        <textarea
+                          rows="4"
+                          value={contentItemForm.tagsText}
+                          onChange={e => setContentItemForm({ ...contentItemForm, tagsText: e.target.value })}
+                          className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none"
+                          placeholder={'品牌定位梳理\n行銷管道策略\n數位轉型規劃\n議題包裝曝光'}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">合作形式 <span className="text-gray-400 font-normal">每行一項，可留空</span></label>
+                        <textarea
+                          rows="3"
+                          value={contentItemForm.collaborationModesText}
+                          onChange={e => setContentItemForm({ ...contentItemForm, collaborationModesText: e.target.value })}
+                          className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none"
+                          placeholder={'固定月費顧問陪跑\n單次專案合作'}
+                        />
+                      </div>
+                    </>
+                  )}
                   {activeContentSectionKey === 'work' && (
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1">成效 <span className="text-gray-400 font-normal">可留空</span></label>
