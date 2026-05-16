@@ -1964,21 +1964,7 @@
                   </section>
 
                   <section className="grid md:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-10">
-                    {filteredItems.map((item) => {
-                      const logoPalette =
-                        item.badge === 'Connection Lead'
-                          ? { wash: '#c88a88', edge: '#7a3d3a', deep: '#4a1e1d', speck: '#8b4542' }
-                          : item.badge === 'Media Lead'
-                            ? { wash: '#92d8f3', edge: '#3ca6dc', deep: '#0f4f98', speck: '#3d8bc5' }
-                            : item.badge === 'Across Industries'
-                              ? { wash: '#a9d5b0', edge: '#487d53', deep: '#1f4c2c', speck: '#547e53' }
-                              : item.badge === 'Growth Lead'
-                                ? { wash: '#f8be82', edge: '#ec8932', deep: '#bc4d0e', speck: '#d5671c' }
-                                : item.badge === 'SME Lead'
-                                  ? { wash: '#c86aa2', edge: '#96255d', deep: '#5f0d2c', speck: '#a53167' }
-                                  : { wash: '#92d8f3', edge: '#3ca6dc', deep: '#0f4f98', speck: '#3d8bc5' };
-
-                      return (
+                    {filteredItems.map((item) => (
                         <article
                           key={item.id}
                           className="h-full rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm"
@@ -2025,51 +2011,8 @@
                             <div className="absolute right-[78px] bottom-4 w-7 h-7 rounded-full bg-white shadow-[0_4px_10px_rgba(96,165,250,0.08)]"></div>
                             <div className="absolute right-[87px] bottom-[14px] w-3 h-3 rounded-full bg-[#5b8df7] opacity-95"></div>
                             <div className="absolute inset-[12px] rounded-[24px] border border-white/85 pointer-events-none"></div>
-                            <div className="relative z-10 flex items-center gap-4 min-w-0">
-                              <div className="relative w-[78px] h-[78px] shrink-0 overflow-visible">
-                                <div
-                                  className="absolute inset-0 rounded-full"
-                                  style={{
-                                    background: `radial-gradient(circle at 34% 30%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.14) 26%, rgba(255,255,255,0) 44%), radial-gradient(circle at 62% 58%, ${logoPalette.edge} 0%, rgba(255,255,255,0) 26%), radial-gradient(circle at 52% 46%, ${logoPalette.wash} 0%, ${logoPalette.wash}dd 48%, ${logoPalette.edge}cc 84%, ${logoPalette.deep}aa 100%)`,
-                                    filter: 'blur(0.3px)',
-                                    boxShadow: 'inset 0 0 18px rgba(255,255,255,0.18)',
-                                    transform: 'rotate(-7deg) scale(0.98)'
-                                  }}
-                                ></div>
-                                <div
-                                  className="absolute left-[6px] top-[8px] w-[66px] h-[66px] rounded-full opacity-85"
-                                  style={{
-                                    background: `radial-gradient(circle at 58% 34%, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 42%, ${logoPalette.deep}55 74%, rgba(255,255,255,0) 100%), radial-gradient(circle at 28% 68%, ${logoPalette.deep}99 0%, rgba(255,255,255,0) 18%), radial-gradient(circle at 68% 72%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 18%)`,
-                                    filter: 'blur(1.2px)',
-                                    transform: 'rotate(9deg)'
-                                  }}
-                                ></div>
-                                <div
-                                  className="absolute left-[54px] top-[48px] w-[17px] h-[17px] rounded-full bg-white shadow-[0_4px_10px_rgba(70,50,40,0.12)]"
-                                ></div>
-                                <div
-                                  className="absolute left-[58px] top-[52px] w-[9px] h-[9px] rounded-full"
-                                  style={{
-                                    background: `radial-gradient(circle at 34% 34%, ${logoPalette.wash} 0%, ${logoPalette.edge} 58%, ${logoPalette.deep} 100%)`
-                                  }}
-                                ></div>
-                                <div
-                                  className="absolute left-[2px] top-[6px] w-[6px] h-[6px] rounded-full opacity-70"
-                                  style={{
-                                    backgroundColor: logoPalette.speck,
-                                    boxShadow: `12px -6px 0 -1px ${logoPalette.speck}80, 21px 2px 0 -1px ${logoPalette.speck}66, 8px 14px 0 -2px ${logoPalette.speck}66, 64px 5px 0 -2px ${logoPalette.speck}55, 72px 15px 0 -1px ${logoPalette.speck}66, 70px 61px 0 -1px ${logoPalette.speck}88`
-                                  }}
-                                ></div>
-                                <div
-                                  className="absolute left-[10px] top-[18px] w-[58px] h-[50px] rounded-full opacity-35"
-                                  style={{
-                                    border: '1px solid rgba(255,255,255,0.28)',
-                                    filter: 'blur(1px)',
-                                    transform: 'rotate(-12deg)'
-                                  }}
-                                ></div>
-                              </div>
-                              <h3 className="text-[1.7rem] md:text-[1.95rem] font-bold text-[#2f3238] leading-[1.2] whitespace-pre-line">
+                            <div className="relative z-10 min-w-0">
+                              <h3 className="text-[1.7rem] md:text-[1.95rem] font-bold text-[#2f3238] leading-[1.2] whitespace-pre-line max-w-[15ch]">
                                 {item.title}
                               </h3>
                             </div>
@@ -2092,8 +2035,7 @@
                             </div>
                           </div>
                         </article>
-                      );
-                    })}
+                      ))}
                   </section>
                 </div>
               ) : page.key === 'services' ? (
