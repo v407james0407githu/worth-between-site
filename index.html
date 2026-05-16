@@ -1953,30 +1953,18 @@
 
                   <section className="grid md:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-10">
                     {filteredItems.map((item) => {
-                      const badgeColor =
+                      const logoPalette =
                         item.badge === 'Connection Lead'
-                          ? '#5c4fc7'
+                          ? { from: '#5c88ad', to: '#3d5f80', mark: '◐' }
                           : item.badge === 'Media Lead'
-                            ? '#2b6cb0'
+                            ? { from: '#57bfd7', to: '#2fa9c6', mark: '◌' }
                             : item.badge === 'Across Industries'
-                              ? colors.darkGray
+                              ? { from: '#7fa2bf', to: '#5d7f9d', mark: '∞' }
                               : item.badge === 'Growth Lead'
-                              ? colors.orange
-                              : item.badge === 'SME Lead'
-                                ? '#a8612d'
-                                : colors.green;
-                      const logoMark =
-                        item.badge === 'Connection Lead'
-                          ? 'C'
-                          : item.badge === 'Media Lead'
-                            ? 'M'
-                            : item.badge === 'Across Industries'
-                              ? 'A'
-                              : item.badge === 'Growth Lead'
-                                ? 'G'
+                                ? { from: '#f2b36f', to: '#de9150', mark: '+' }
                                 : item.badge === 'SME Lead'
-                                  ? 'S'
-                                  : 'E';
+                                  ? { from: '#d9a679', to: '#bc8459', mark: 'W' }
+                                  : { from: '#82d1bf', to: '#67bea8', mark: 'N1' };
 
                       return (
                         <article
@@ -1986,10 +1974,10 @@
                           <div className="px-8 py-7 bg-white border-b border-gray-100">
                             <div className="flex items-center gap-4 min-w-0">
                               <div
-                                className="w-14 h-14 rounded-full text-white text-xl font-bold flex items-center justify-center shrink-0 shadow-sm"
-                                style={{ backgroundColor: badgeColor }}
+                                className="relative w-14 h-14 rounded-full text-white text-xl font-bold flex items-center justify-center shrink-0 shadow-sm overflow-hidden"
+                                style={{ background: `linear-gradient(135deg, ${logoPalette.from} 0%, ${logoPalette.from} 58%, ${logoPalette.to} 58%, ${logoPalette.to} 100%)` }}
                               >
-                                {logoMark}
+                                <span className="relative z-10">{logoPalette.mark}</span>
                               </div>
                               <h3 className="text-[1.7rem] md:text-[1.95rem] font-bold text-[#2f3238] leading-[1.2] whitespace-pre-line">
                                 {item.title}
