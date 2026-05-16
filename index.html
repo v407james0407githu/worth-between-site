@@ -163,7 +163,7 @@
         intro: '以接近滿版的場景圖作為襯底，把策略、ESG、整合行銷與跨域媒合四條服務線收進同一個完整的顧問型版面裡。',
         badgeLabel: 'Consulting Framework',
         backgroundImage: 'https://images.unsplash.com/photo-1497366412874-3415097a27e7?auto=format&fit=crop&w=1800&q=80',
-        overlayOpacity: 0.76,
+        overlayOpacity: 0.84,
         cards: [
           {
             id: 'service-strategy',
@@ -2745,10 +2745,10 @@
                 <div
                   className="absolute inset-0"
                   style={{
-                    background: `linear-gradient(115deg, rgba(249,250,251,${Math.min(0.98, (servicesContent.overlayOpacity ?? 0.76) + 0.12)}) 8%, rgba(249,250,251,${servicesContent.overlayOpacity ?? 0.76}) 40%, rgba(249,250,251,${Math.max(0.1, (servicesContent.overlayOpacity ?? 0.76) - 0.26)}) 62%, rgba(255,255,255,0.12) 100%)`
+                    background: `linear-gradient(115deg, rgba(15,18,22,${Math.min(0.92, (servicesContent.overlayOpacity ?? 0.84) + 0.08)}) 8%, rgba(15,18,22,${servicesContent.overlayOpacity ?? 0.84}) 40%, rgba(15,18,22,${Math.max(0.22, (servicesContent.overlayOpacity ?? 0.84) - 0.18)}) 68%, rgba(15,18,22,0.12) 100%)`
                   }}
                 ></div>
-                <div className="absolute inset-0 bg-white/6 backdrop-blur-[1px]"></div>
+                <div className="absolute inset-0 bg-black/8 backdrop-blur-[1px]"></div>
 
                 <div className="relative max-w-7xl mx-auto px-6 py-8 md:px-10 md:py-12 lg:px-14 lg:py-16">
                   <MotionOnScroll variant="slide-left" delay={80}>
@@ -3018,6 +3018,7 @@
       const [flashMessage, setFlashMessage] = useState(() => window.localStorage.getItem(ADMIN_FLASH_STORAGE_KEY) || '');
       const [loginForm, setLoginForm] = useState({ email: '', password: '' });
       const [loginError, setLoginError] = useState('');
+      
       const [isAddModalOpen, setIsAddModalOpen] = useState(false);
       const [editingBrandId, setEditingBrandId] = useState(null);
       const [newBrand, setNewBrand] = useState({ name: '', service: '', status: 'Active' });
@@ -3292,6 +3293,19 @@
         deleteHeroConfirmId,
         deleteConfirmId
       ]);
+      useEffect(() => {
+        window.localStorage.setItem(BRANDS_STORAGE_KEY, JSON.stringify(brands));
+      }, [brands]);
+      useEffect(() => {
+        window.localStorage.setItem(SERVICE_TRACKER_STORAGE_KEY, JSON.stringify(normalizeServiceRecords(serviceRecords)));
+      }, [serviceRecords]);
+      useEffect(() => {
+        window.localStorage.setItem(TEAM_ACCESS_STORAGE_KEY, JSON.stringify(teamAccess));
+      }, [teamAccess]);
+      useEffect(() => {
+        window.localStorage.setItem(HOMEPAGE_CONTENT_STORAGE_KEY, JSON.stringify(normalizeHomepageContent(homepageContent)));
+      }, [homepageContent]);
+
       const handleLogin = (e) => {
         e.preventDefault();
         const email = loginForm.email.trim();
@@ -3756,7 +3770,7 @@
             intro: target.intro || '',
             badgeLabel: target.badgeLabel || '',
             backgroundImage: target.backgroundImage || '',
-            overlayOpacity: String(target.overlayOpacity ?? 0.76),
+            overlayOpacity: String(target.overlayOpacity ?? 0.84),
             card1Title: target.cards?.[0]?.title || '',
             card1EnTitle: target.cards?.[0]?.enTitle || '',
             card1Desc: target.cards?.[0]?.desc || '',
@@ -5137,8 +5151,8 @@
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <div>
-                      <h3 className="text-xl font-bold">資料管理</h3>
-                      <p className="text-gray-500 text-sm mt-1">目前以 Supabase 雲端資料為主，瀏覽器會保留本機快取與登入狀態，方便備份、搬移或離線回復。</p>
+                      <h3 className="text-xl font-bold">本機資料管理</h3>
+                      <p className="text-gray-500 text-sm mt-1">管理這個網站儲存在目前瀏覽器的 Banner 資料與登入狀態，適合備份、搬移或重設。</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <input
@@ -5157,14 +5171,10 @@
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
                       <p className="text-gray-500 text-sm font-bold mb-1">已管理資料鍵</p>
                       <p className="text-3xl font-bold">{storageSummary.length}</p>
-                    </div>
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-gray-500 text-sm font-bold mb-1">同步模式</p>
-                      <p className="text-2xl font-bold">{storageState.mode === 'supabase' ? 'Supabase' : 'Local'}</p>
                     </div>
                     <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
                       <p className="text-gray-500 text-sm font-bold mb-1">Banner 筆數</p>
@@ -5176,26 +5186,9 @@
                     </div>
                   </div>
 
-                  <div className={`rounded-xl px-4 py-3 text-sm flex items-start gap-3 ${
-                    storageState.error
-                      ? 'bg-red-50 border border-red-200 text-red-700'
-                      : storageState.mode === 'supabase'
-                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-                        : 'bg-amber-50 border border-amber-200 text-amber-800'
-                  }`}>
-                    <AlertTriangle size={18} className="shrink-0 mt-0.5" />
-                    <div>
-                      {storageState.error
-                        ? `Supabase 同步失敗：${storageState.error}`
-                        : storageState.mode === 'supabase'
-                          ? `目前已連上 Supabase，站台資料會自動同步到資料表 ${SUPABASE_SITE_STATE_TABLE}。${storageState.lastSyncedAt ? ` 最近同步：${storageState.lastSyncedAt}` : ''}`
-                          : '尚未填入 Supabase URL 與 anon key，目前仍使用本機資料。填入設定後會自動切換為雲端同步。'}
-                    </div>
-                  </div>
-
                   <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                      <h4 className="font-bold">目前本機快取</h4>
+                      <h4 className="font-bold">目前本機資料</h4>
                       <button onClick={clearAllStorage} className="px-4 py-2 text-sm font-bold text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
                         清除全部資料
                       </button>
@@ -5222,7 +5215,7 @@
                   <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-start gap-3">
                     <AlertTriangle size={18} className="shrink-0 mt-0.5" />
                     <div>
-                      清除本機快取不會刪除 Supabase 雲端資料，但會移除目前瀏覽器的登入狀態與暫存內容。建議重大修改前先匯出備份。
+                      本機資料只存在目前這台電腦、這個瀏覽器。清除瀏覽器網站資料後，Banner 與登入狀態都會消失。建議重大修改前先匯出備份。
                     </div>
                   </div>
                 </div>
@@ -6249,13 +6242,13 @@
                             min="0"
                             max="0.95"
                             step="0.05"
-                            value={homepageSectionForm.overlayOpacity || '0.76'}
+                            value={homepageSectionForm.overlayOpacity || '0.84'}
                             onChange={e => setHomepageSectionForm({ ...homepageSectionForm, overlayOpacity: e.target.value })}
                             className="w-full accent-[#4e7055]"
                           />
                           <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
                             <span>淡</span>
-                            <span>目前：{homepageSectionForm.overlayOpacity || '0.76'}</span>
+                            <span>目前：{homepageSectionForm.overlayOpacity || '0.84'}</span>
                             <span>深</span>
                           </div>
                         </div>
@@ -6276,10 +6269,19 @@
                         <label className="block text-xs font-bold text-gray-700 mb-2">背景圖預覽</label>
                         <div className="rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
                           {homepageSectionForm.backgroundImage ? (
-                            <div
-                              className="w-full h-48 bg-cover bg-center bg-no-repeat"
-                              style={{ backgroundImage: `url(${homepageSectionForm.backgroundImage})` }}
-                            ></div>
+                            <div className="relative w-full h-48 overflow-hidden">
+                              <div
+                                className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                                style={{ backgroundImage: `url(${homepageSectionForm.backgroundImage})` }}
+                              ></div>
+                              <div
+                                className="absolute inset-0"
+                                style={{
+                                  background: `linear-gradient(115deg, rgba(15,18,22,${Math.min(0.92, Number(homepageSectionForm.overlayOpacity || '0.84') + 0.08)}) 8%, rgba(15,18,22,${Number(homepageSectionForm.overlayOpacity || '0.84')}) 40%, rgba(15,18,22,${Math.max(0.22, Number(homepageSectionForm.overlayOpacity || '0.84') - 0.18)}) 68%, rgba(15,18,22,0.12) 100%)`
+                                }}
+                              ></div>
+                              <div className="absolute inset-0 bg-black/8 backdrop-blur-[1px]"></div>
+                            </div>
                           ) : (
                             <div className="w-full h-48 flex items-center justify-center text-sm text-gray-400">
                               目前尚未設定背景圖
