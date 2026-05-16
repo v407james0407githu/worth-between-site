@@ -2727,12 +2727,12 @@
           </section>
 
           {/* 專業服務 Services */}
-          <section id="services" className="py-24 md:py-32 px-6 bg-white border-t border-gray-200">
+          <section id="services" className="py-24 md:py-32 px-6 bg-[#11161b] border-t border-white/10">
             <div className="max-w-7xl mx-auto">
               <MotionOnScroll variant="fade-up">
-                <SectionLabel text={servicesContent.sectionLabel} color={colors.teal} />
-                <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#3a3a3a] leading-tight">{servicesContent.title}</h2>
-                <p className="text-lg text-gray-500 font-light leading-relaxed max-w-3xl mb-14 whitespace-pre-line">
+                <SectionLabel text={servicesContent.sectionLabel} color="#cbd5e1" />
+                <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-50 leading-tight">{servicesContent.title}</h2>
+                <p className="text-lg text-gray-300 font-light leading-relaxed max-w-3xl mb-14 whitespace-pre-line">
                   {servicesContent.intro}
                 </p>
               </MotionOnScroll>
@@ -2753,11 +2753,11 @@
                 <div className="relative max-w-7xl mx-auto px-6 py-8 md:px-10 md:py-12 lg:px-14 lg:py-16">
                   <MotionOnScroll variant="slide-left" delay={80}>
                     <div className="mb-10 md:mb-12 max-w-3xl">
-                      <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/72 backdrop-blur-md border border-white/70 shadow-sm mb-5">
+                      <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/15 shadow-sm mb-5">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.teal }}></div>
-                        <span className="text-[11px] font-bold uppercase tracking-[0.24em] text-gray-500">{servicesContent.badgeLabel}</span>
+                        <span className="text-[11px] font-bold uppercase tracking-[0.24em] text-gray-200">{servicesContent.badgeLabel}</span>
                       </div>
-                      <p className="text-sm md:text-base text-gray-600 leading-relaxed max-w-2xl whitespace-pre-line">
+                      <p className="text-sm md:text-base text-gray-200/90 leading-relaxed max-w-2xl whitespace-pre-line">
                         我們用同一套顧問邏輯，處理品牌溝通、永續議題、專案落地與跨域資源整合，讓每條服務線都能獨立成立，也能互相支援。
                       </p>
                     </div>
@@ -2766,18 +2766,18 @@
                   <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
                     {(servicesContent.cards || []).map((service, idx) => (
                       <MotionOnScroll key={idx} variant={idx % 2 === 0 ? 'flip-right' : 'flip-left'} delay={idx * 130}>
-                        <div id={service.id} className={`bg-white/88 backdrop-blur-md p-8 md:p-10 border border-white/75 ${service.hoverBorder} transition-all duration-500 group flex flex-col h-full rounded-[24px] shadow-[0_18px_45px_rgba(40,46,54,0.10)] hover:bg-white/94 hover:shadow-[0_28px_55px_rgba(40,46,54,0.14)]`}>
-                          <div className="flex justify-between items-center border-b border-gray-100 pb-6 mb-8">
-                            <div className="text-3xl font-light text-gray-300 group-hover:text-gray-800 transition-colors">{service.num}.</div>
+                        <div id={service.id} className={`bg-[#182029]/82 backdrop-blur-md p-8 md:p-10 border border-white/10 ${service.hoverBorder} transition-all duration-500 group flex flex-col h-full rounded-[24px] shadow-[0_18px_45px_rgba(8,12,18,0.28)] hover:bg-[#1d2630]/88 hover:shadow-[0_28px_55px_rgba(8,12,18,0.34)]`}>
+                          <div className="flex justify-between items-center border-b border-white/10 pb-6 mb-8">
+                            <div className="text-3xl font-light text-white/35 group-hover:text-white/65 transition-colors">{service.num}.</div>
                             <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: service.color }}>{service.enTitle}</div>
                           </div>
-                          <h3 className="text-2xl font-bold text-[#3a3a3a] mb-6">{service.title}</h3>
-                          <p className="text-[15px] text-gray-600 mb-10 flex-grow leading-relaxed font-light whitespace-pre-line">
+                          <h3 className="text-2xl font-bold text-gray-50 mb-6">{service.title}</h3>
+                          <p className="text-[15px] text-gray-200/90 mb-10 flex-grow leading-relaxed font-light whitespace-pre-line">
                             {service.desc}
                           </p>
-                          <div className="bg-gray-50/88 p-5 rounded-2xl border-l-2" style={{ borderColor: service.color }}>
-                            <div className="text-xs font-bold text-[#3a3a3a] mb-2">核心價值：</div>
-                            <div className="text-sm text-gray-600 whitespace-pre-line">{service.target}</div>
+                          <div className="bg-white/6 p-5 rounded-2xl border-l-2" style={{ borderColor: service.color }}>
+                            <div className="text-xs font-bold text-gray-100 mb-2">核心價值：</div>
+                            <div className="text-sm text-gray-200/90 whitespace-pre-line">{service.target}</div>
                           </div>
                         </div>
                       </MotionOnScroll>
