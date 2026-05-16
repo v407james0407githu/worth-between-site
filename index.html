@@ -1967,16 +1967,16 @@
                     {filteredItems.map((item) => {
                       const logoPalette =
                         item.badge === 'Connection Lead'
-                          ? { from: '#71b4e4', mid: '#6b86ea', to: '#7f4dd8' }
+                          ? { from: '#ffad63', mid: '#ff7038', to: '#db3b20', glow: '#ffbf8a' }
                           : item.badge === 'Media Lead'
-                            ? { from: '#63d8ef', mid: '#5dc1e8', to: '#3aa9d5' }
+                            ? { from: '#ffbf72', mid: '#ff7d45', to: '#e44829', glow: '#ffc993' }
                             : item.badge === 'Across Industries'
-                              ? { from: '#7ec2e8', mid: '#80acd8', to: '#6286b5' }
+                              ? { from: '#ffb56b', mid: '#f26a3b', to: '#cf341f', glow: '#ffc487' }
                               : item.badge === 'Growth Lead'
-                                ? { from: '#ffb768', mid: '#ff8a4d', to: '#ff5d3e' }
+                                ? { from: '#ffc16d', mid: '#ff8448', to: '#de4320', glow: '#ffd08f' }
                                 : item.badge === 'SME Lead'
-                                  ? { from: '#ffd86f', mid: '#ff96b6', to: '#f768b2' }
-                                  : { from: '#8ce3b7', mid: '#c6ef59', to: '#6ccab4' };
+                                  ? { from: '#ffbf78', mid: '#ff7d5b', to: '#db3d32', glow: '#ffd4a3' }
+                                  : { from: '#ffb96d', mid: '#ff7540', to: '#d53820', glow: '#ffca91' };
 
                       return (
                         <article
@@ -1985,37 +1985,39 @@
                         >
                           <div className="px-8 py-7 bg-white border-b border-gray-100">
                             <div className="flex items-center gap-4 min-w-0">
-                              <div
-                                className="relative w-[76px] h-[96px] rounded-[10px] bg-white border border-gray-100 shadow-[0_10px_24px_rgba(35,43,54,0.10)] overflow-hidden shrink-0"
-                              >
-                                <div className="absolute left-3 top-4 text-[10px] leading-[0.85] font-black uppercase tracking-[-0.06em] text-black">
-                                  <div>HEAD</div>
-                                  <div>LINE.</div>
-                                </div>
+                              <div className="relative w-[92px] h-[68px] shrink-0 overflow-hidden">
                                 <div
-                                  className="absolute right-2 top-7 text-[4px] leading-[1.2] font-semibold uppercase text-black/70 tracking-[0.18em] text-right"
-                                >
-                                  <div>APR</div>
-                                  <div>2026</div>
-                                </div>
-                                <div
-                                  className="absolute -bottom-3 -left-2 w-[88px] h-[56px]"
+                                  className="absolute -left-2 -bottom-2 w-[100px] h-[62px]"
                                   style={{
-                                    background: `radial-gradient(circle at 22% 38%, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 18%), linear-gradient(135deg, ${logoPalette.from} 0%, ${logoPalette.mid} 56%, ${logoPalette.to} 100%)`,
-                                    borderRadius: '58% 42% 48% 52% / 38% 54% 46% 62%',
-                                    transform: 'rotate(-10deg)'
+                                    background: `radial-gradient(circle at 18% 28%, ${logoPalette.glow} 0%, rgba(255,255,255,0) 22%), linear-gradient(135deg, ${logoPalette.from} 0%, ${logoPalette.mid} 52%, ${logoPalette.to} 100%)`,
+                                    borderRadius: '47% 53% 42% 58% / 43% 34% 66% 57%',
+                                    transform: 'rotate(-8deg)',
+                                    boxShadow: 'inset 0 2px 10px rgba(255,255,255,0.18)'
                                   }}
                                 ></div>
                                 <div
-                                  className="absolute -bottom-1 right-2 w-[18px] h-[18px] rounded-full border-[5px] border-white shadow-sm"
-                                  style={{ backgroundColor: 'rgba(255,255,255,0.92)' }}
+                                  className="absolute left-[15px] bottom-[7px] w-[76px] h-[42px] opacity-90"
+                                  style={{
+                                    background: `linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 45%, ${logoPalette.to} 100%)`,
+                                    borderRadius: '54% 46% 60% 40% / 38% 50% 50% 62%',
+                                    transform: 'rotate(7deg)'
+                                  }}
                                 ></div>
+                                <div className="absolute right-[22px] top-[18px] w-[20px] h-[20px] rounded-full bg-white shadow-[0_6px_12px_rgba(219,59,32,0.16)]"></div>
                                 <div
-                                  className="absolute bottom-5 right-4 w-[10px] h-[10px] rounded-full border-[3px] border-white"
-                                  style={{ backgroundColor: logoPalette.mid }}
+                                  className="absolute right-[26px] top-[22px] w-[12px] h-[12px] rounded-full"
+                                  style={{
+                                    background: `radial-gradient(circle at 35% 35%, ${logoPalette.glow} 0%, ${logoPalette.mid} 48%, ${logoPalette.to} 100%)`
+                                  }}
                                 ></div>
-                                <div className="absolute left-3 top-[38px] w-10 h-[3px] bg-black rounded-full opacity-75"></div>
-                                <div className="absolute left-3 top-[44px] w-8 h-[3px] bg-black rounded-full opacity-55"></div>
+                                <div className="absolute right-[29px] top-[25px] w-[6px] h-[6px] rounded-full bg-[#b93a20]/40"></div>
+                                <div className="absolute left-[16px] bottom-[4px] w-[12px] h-[12px] rounded-full bg-white shadow-[0_4px_10px_rgba(219,59,32,0.12)]"></div>
+                                <div
+                                  className="absolute left-[19px] bottom-[7px] w-[6px] h-[6px] rounded-full"
+                                  style={{
+                                    background: `radial-gradient(circle at 35% 35%, ${logoPalette.glow} 0%, ${logoPalette.mid} 48%, ${logoPalette.to} 100%)`
+                                  }}
+                                ></div>
                               </div>
                               <h3 className="text-[1.7rem] md:text-[1.95rem] font-bold text-[#2f3238] leading-[1.2] whitespace-pre-line">
                                 {item.title}
