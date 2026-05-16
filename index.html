@@ -1967,16 +1967,16 @@
                     {filteredItems.map((item) => {
                       const logoPalette =
                         item.badge === 'Connection Lead'
-                          ? { from: '#5c88ad', to: '#3d5f80', mark: '◐' }
+                          ? { from: '#7bb0d5', to: '#4d79a6', glow: '#d7ebfb', mark: '◐', shape: '46% 54% 60% 40% / 44% 45% 55% 56%' }
                           : item.badge === 'Media Lead'
-                            ? { from: '#57bfd7', to: '#2fa9c6', mark: '◌' }
+                            ? { from: '#72d8ea', to: '#3eb7d2', glow: '#daf6fb', mark: '◌', shape: '58% 42% 48% 52% / 46% 60% 40% 54%' }
                             : item.badge === 'Across Industries'
-                              ? { from: '#7fa2bf', to: '#5d7f9d', mark: '∞' }
+                              ? { from: '#9fc0de', to: '#6f8fb0', glow: '#e2eef9', mark: '∞', shape: '43% 57% 44% 56% / 54% 41% 59% 46%' }
                               : item.badge === 'Growth Lead'
-                                ? { from: '#f2b36f', to: '#de9150', mark: '+' }
+                                ? { from: '#ffc27d', to: '#ff9657', glow: '#fff0dc', mark: '+', shape: '56% 44% 58% 42% / 42% 58% 46% 54%' }
                                 : item.badge === 'SME Lead'
-                                  ? { from: '#d9a679', to: '#bc8459', mark: 'W' }
-                                  : { from: '#82d1bf', to: '#67bea8', mark: 'N1' };
+                                  ? { from: '#efc091', to: '#d39462', glow: '#fbecde', mark: 'W', shape: '45% 55% 57% 43% / 51% 42% 58% 49%' }
+                                  : { from: '#90decc', to: '#67bea8', glow: '#e0f7f0', mark: 'N1', shape: '54% 46% 41% 59% / 49% 58% 42% 51%' };
 
                       return (
                         <article
@@ -1986,10 +1986,21 @@
                           <div className="px-8 py-7 bg-white border-b border-gray-100">
                             <div className="flex items-center gap-4 min-w-0">
                               <div
-                                className="relative w-14 h-14 rounded-full text-white text-xl font-bold flex items-center justify-center shrink-0 shadow-sm overflow-hidden"
-                                style={{ background: `linear-gradient(135deg, ${logoPalette.from} 0%, ${logoPalette.from} 58%, ${logoPalette.to} 58%, ${logoPalette.to} 100%)` }}
+                                className="relative w-[68px] h-[68px] text-white text-[1.15rem] font-bold flex items-center justify-center shrink-0 shadow-[0_14px_28px_rgba(32,52,74,0.14)] overflow-visible"
+                                style={{
+                                  borderRadius: logoPalette.shape,
+                                  background: `radial-gradient(circle at 28% 28%, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0) 34%), linear-gradient(135deg, ${logoPalette.from} 0%, ${logoPalette.from} 52%, ${logoPalette.to} 52%, ${logoPalette.to} 100%)`
+                                }}
                               >
-                                <span className="relative z-10">{logoPalette.mark}</span>
+                                <div
+                                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-[5px] border-white shadow-sm"
+                                  style={{ backgroundColor: logoPalette.glow }}
+                                ></div>
+                                <div
+                                  className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full"
+                                  style={{ backgroundColor: 'rgba(255,255,255,0.78)' }}
+                                ></div>
+                                <span className="relative z-10 tracking-tight">{logoPalette.mark}</span>
                               </div>
                               <h3 className="text-[1.7rem] md:text-[1.95rem] font-bold text-[#2f3238] leading-[1.2] whitespace-pre-line">
                                 {item.title}
