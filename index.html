@@ -164,6 +164,7 @@
         badgeLabel: 'Consulting Framework',
         backgroundImage: 'https://images.unsplash.com/photo-1497366412874-3415097a27e7?auto=format&fit=crop&w=1800&q=80',
         overlayOpacity: 0.84,
+        cardOverlayOpacity: 1.4,
         cards: [
           {
             id: 'service-strategy',
@@ -937,6 +938,9 @@
           overlayOpacity: typeof sourceServices.overlayOpacity === 'number'
             ? Math.min(0.95, Math.max(0, sourceServices.overlayOpacity))
             : defaultHomepageContent.services.overlayOpacity,
+          cardOverlayOpacity: typeof sourceServices.cardOverlayOpacity === 'number'
+            ? Math.min(1.9, Math.max(0, sourceServices.cardOverlayOpacity))
+            : defaultHomepageContent.services.cardOverlayOpacity,
           cards: defaultHomepageContent.services.cards.map((card, index) => ({
             ...card,
             ...(sourceServices.cards?.[index] || {}),
@@ -2506,6 +2510,9 @@
         if (popularDelta !== 0) return popularDelta;
         return String(b.publishedAt || '').localeCompare(String(a.publishedAt || ''));
       });
+      const servicesImageOverlayOpacity = Number(servicesContent.overlayOpacity ?? 0.84);
+      const servicesCardOverlayControl = Number(servicesContent.cardOverlayOpacity ?? 1.4);
+      const servicesCardOverlayOpacity = Math.min(0.95, Math.max(0, servicesCardOverlayControl / 2));
       const featuredInsight = homepageInsightItems.find((item) => item.id === insightsContent.featuredItemId)
         || homepageInsightItemsByLatest[0]
         || null;
@@ -2745,10 +2752,10 @@
                 <div
                   className="absolute inset-0"
                   style={{
-                    background: `linear-gradient(115deg, rgba(15,18,22,${Math.min(0.92, (servicesContent.overlayOpacity ?? 0.84) + 0.08)}) 8%, rgba(15,18,22,${servicesContent.overlayOpacity ?? 0.84}) 40%, rgba(15,18,22,${Math.max(0.22, (servicesContent.overlayOpacity ?? 0.84) - 0.18)}) 68%, rgba(15,18,22,0.12) 100%)`
+                    background: `linear-gradient(115deg, rgba(252,250,246,${Math.min(0.52, servicesImageOverlayOpacity * 0.52)}) 6%, rgba(248,244,237,${Math.min(0.44, servicesImageOverlayOpacity * 0.44)}) 38%, rgba(255,255,255,${Math.min(0.26, servicesImageOverlayOpacity * 0.28)}) 72%, rgba(255,255,255,0.08) 100%)`
                   }}
                 ></div>
-                <div className="absolute inset-0 bg-black/8 backdrop-blur-[1px]"></div>
+                <div className="absolute inset-0 bg-white/6 backdrop-blur-[1px]"></div>
 
                 <div className="relative max-w-7xl mx-auto px-6 py-8 md:px-10 md:py-12 lg:px-14 lg:py-16">
                   <MotionOnScroll variant="slide-left" delay={80}>
@@ -2766,16 +2773,22 @@
                   <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
                     {(servicesContent.cards || []).map((service, idx) => (
                       <MotionOnScroll key={idx} variant={idx % 2 === 0 ? 'flip-right' : 'flip-left'} delay={idx * 130}>
-                        <div id={service.id} className={`bg-[#182029]/82 backdrop-blur-md p-8 md:p-10 border border-white/10 ${service.hoverBorder} transition-all duration-500 group flex flex-col h-full rounded-[24px] shadow-[0_18px_45px_rgba(8,12,18,0.28)] hover:bg-[#1d2630]/88 hover:shadow-[0_28px_55px_rgba(8,12,18,0.34)]`}>
-                          <div className="flex justify-between items-center border-b border-white/10 pb-6 mb-8">
+                        <div id={service.id} className={`relative overflow-hidden bg-[#182029]/82 backdrop-blur-md p-8 md:p-10 border border-white/10 ${service.hoverBorder} transition-all duration-500 group flex flex-col h-full rounded-[24px] shadow-[0_18px_45px_rgba(8,12,18,0.28)] hover:bg-[#1d2630]/88 hover:shadow-[0_28px_55px_rgba(8,12,18,0.34)]`}>
+                          <div
+                            className="absolute inset-0 rounded-[24px] transition-opacity duration-500 group-hover:opacity-90"
+                            style={{
+                              background: `linear-gradient(145deg, rgba(17,24,39,${Math.min(0.95, servicesCardOverlayOpacity + 0.18)}) 0%, rgba(31,41,55,${Math.min(0.86, servicesCardOverlayOpacity)}) 54%, rgba(71,85,105,${Math.max(0.16, servicesCardOverlayOpacity * 0.42)}) 100%)`
+                            }}
+                          ></div>
+                          <div className="relative z-10 flex justify-between items-center border-b border-white/10 pb-6 mb-8">
                             <div className="text-3xl font-light text-white/35 group-hover:text-white/65 transition-colors">{service.num}.</div>
                             <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: service.color }}>{service.enTitle}</div>
                           </div>
-                          <h3 className="text-2xl font-bold text-gray-50 mb-6">{service.title}</h3>
-                          <p className="text-[15px] text-gray-200/90 mb-10 flex-grow leading-relaxed font-light whitespace-pre-line">
+                          <h3 className="relative z-10 text-2xl font-bold text-gray-50 mb-6">{service.title}</h3>
+                          <p className="relative z-10 text-[15px] text-gray-200/90 mb-10 flex-grow leading-relaxed font-light whitespace-pre-line">
                             {service.desc}
                           </p>
-                          <div className="bg-white/6 p-5 rounded-2xl border-l-2" style={{ borderColor: service.color }}>
+                          <div className="relative z-10 bg-white/6 p-5 rounded-2xl border-l-2" style={{ borderColor: service.color }}>
                             <div className="text-xs font-bold text-gray-100 mb-2">核心價值：</div>
                             <div className="text-sm text-gray-200/90 whitespace-pre-line">{service.target}</div>
                           </div>
@@ -3771,6 +3784,7 @@
             badgeLabel: target.badgeLabel || '',
             backgroundImage: target.backgroundImage || '',
             overlayOpacity: String(target.overlayOpacity ?? 0.84),
+            cardOverlayOpacity: String(target.cardOverlayOpacity ?? 1.4),
             card1Title: target.cards?.[0]?.title || '',
             card1EnTitle: target.cards?.[0]?.enTitle || '',
             card1Desc: target.cards?.[0]?.desc || '',
@@ -3846,6 +3860,7 @@
           if (!homepageSectionForm.backgroundImage?.trim()) nextErrors.backgroundImage = '請提供背景圖片';
           else if (!isValidUrl(homepageSectionForm.backgroundImage.trim())) nextErrors.backgroundImage = '請提供有效的圖片網址，或直接上傳圖片';
           if (homepageSectionForm.overlayOpacity === '' || Number.isNaN(Number(homepageSectionForm.overlayOpacity))) nextErrors.overlayOpacity = '請輸入遮罩透明度';
+          if (homepageSectionForm.cardOverlayOpacity === '' || Number.isNaN(Number(homepageSectionForm.cardOverlayOpacity))) nextErrors.cardOverlayOpacity = '請輸入服務卡遮罩強度';
           ['card1Title','card1Desc','card1Target','card2Title','card2Desc','card2Target','card3Title','card3Desc','card3Target','card4Title','card4Desc','card4Target'].forEach((key) => {
             if (!homepageSectionForm[key]?.trim()) nextErrors[key] = '請完整填寫四大區塊內容';
           });
@@ -3918,6 +3933,7 @@
                 badgeLabel: homepageSectionForm.badgeLabel.trim(),
                 backgroundImage: homepageSectionForm.backgroundImage.trim(),
                 overlayOpacity: Math.min(0.95, Math.max(0, Number(homepageSectionForm.overlayOpacity))),
+                cardOverlayOpacity: Math.min(1.9, Math.max(0, Number(homepageSectionForm.cardOverlayOpacity))),
                 cards: prev.services.cards.map((card, index) => ({
                   ...card,
                   title: homepageSectionForm[`card${index + 1}Title`].trim(),
@@ -6235,7 +6251,7 @@
                         <input value={homepageSectionForm.backgroundImage || ''} onChange={e => setHomepageSectionForm({ ...homepageSectionForm, backgroundImage: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-gray-700 mb-1">背景遮罩透明度</label>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">背景圖片淺色遮罩</label>
                         <div className="rounded-xl border border-gray-200 px-4 py-4 bg-white">
                           <input
                             type="range"
@@ -6252,7 +6268,27 @@
                             <span>深</span>
                           </div>
                         </div>
-                        <p className="mt-1 text-xs text-gray-400">建議 0.5 - 0.85，拉越右邊遮罩越明顯。</p>
+                        <p className="mt-1 text-xs text-gray-400">這組只影響背景圖片，顏色為淺色覆蓋；建議 0.35 - 0.85。</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">四張服務卡遮罩強度</label>
+                        <div className="rounded-xl border border-gray-200 px-4 py-4 bg-white">
+                          <input
+                            type="range"
+                            min="0"
+                            max="1.9"
+                            step="0.05"
+                            value={homepageSectionForm.cardOverlayOpacity || '1.4'}
+                            onChange={e => setHomepageSectionForm({ ...homepageSectionForm, cardOverlayOpacity: e.target.value })}
+                            className="w-full accent-[#4e7055]"
+                          />
+                          <div className="mt-3 flex items-center justify-between text-xs text-gray-400">
+                            <span>深</span>
+                            <span>目前：{homepageSectionForm.cardOverlayOpacity || '1.4'}</span>
+                            <span>淺</span>
+                          </div>
+                        </div>
+                        <p className="mt-1 text-xs text-gray-400">這組只影響四張文字卡，刻度範圍是背景圖的兩倍，會套用「由深到淺」的卡片漸層。</p>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-700 mb-2">或直接上傳背景圖</label>
@@ -6277,10 +6313,18 @@
                               <div
                                 className="absolute inset-0"
                                 style={{
-                                  background: `linear-gradient(115deg, rgba(15,18,22,${Math.min(0.92, Number(homepageSectionForm.overlayOpacity || '0.84') + 0.08)}) 8%, rgba(15,18,22,${Number(homepageSectionForm.overlayOpacity || '0.84')}) 40%, rgba(15,18,22,${Math.max(0.22, Number(homepageSectionForm.overlayOpacity || '0.84') - 0.18)}) 68%, rgba(15,18,22,0.12) 100%)`
+                                  background: `linear-gradient(115deg, rgba(252,250,246,${Math.min(0.52, Number(homepageSectionForm.overlayOpacity || '0.84') * 0.52)}) 6%, rgba(248,244,237,${Math.min(0.44, Number(homepageSectionForm.overlayOpacity || '0.84') * 0.44)}) 38%, rgba(255,255,255,${Math.min(0.26, Number(homepageSectionForm.overlayOpacity || '0.84') * 0.28)}) 72%, rgba(255,255,255,0.08) 100%)`
                                 }}
                               ></div>
-                              <div className="absolute inset-0 bg-black/8 backdrop-blur-[1px]"></div>
+                              <div className="absolute inset-0 bg-white/6 backdrop-blur-[1px]"></div>
+                              <div className="absolute inset-x-4 bottom-4 top-16 rounded-[20px] overflow-hidden border border-white/15 shadow-[0_14px_34px_rgba(15,23,42,0.18)]">
+                                <div
+                                  className="absolute inset-0"
+                                  style={{
+                                    background: `linear-gradient(145deg, rgba(17,24,39,${Math.min(0.95, Math.max(0, Number(homepageSectionForm.cardOverlayOpacity || '1.4') / 2) + 0.18)}) 0%, rgba(31,41,55,${Math.min(0.86, Math.max(0, Number(homepageSectionForm.cardOverlayOpacity || '1.4') / 2))}) 54%, rgba(71,85,105,${Math.max(0.16, Math.max(0, Number(homepageSectionForm.cardOverlayOpacity || '1.4') / 2) * 0.42)}) 100%)`
+                                  }}
+                                ></div>
+                              </div>
                             </div>
                           ) : (
                             <div className="w-full h-48 flex items-center justify-center text-sm text-gray-400">
