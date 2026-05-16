@@ -1967,16 +1967,16 @@
                     {filteredItems.map((item) => {
                       const logoPalette =
                         item.badge === 'Connection Lead'
-                          ? { from: '#ffad63', mid: '#ff7038', to: '#db3b20', glow: '#ffbf8a' }
+                          ? { wash: '#c88a88', edge: '#7a3d3a', deep: '#4a1e1d', speck: '#8b4542' }
                           : item.badge === 'Media Lead'
-                            ? { from: '#ffbf72', mid: '#ff7d45', to: '#e44829', glow: '#ffc993' }
+                            ? { wash: '#92d8f3', edge: '#3ca6dc', deep: '#0f4f98', speck: '#3d8bc5' }
                             : item.badge === 'Across Industries'
-                              ? { from: '#ffb56b', mid: '#f26a3b', to: '#cf341f', glow: '#ffc487' }
+                              ? { wash: '#a9d5b0', edge: '#487d53', deep: '#1f4c2c', speck: '#547e53' }
                               : item.badge === 'Growth Lead'
-                                ? { from: '#ffc16d', mid: '#ff8448', to: '#de4320', glow: '#ffd08f' }
+                                ? { wash: '#f8be82', edge: '#ec8932', deep: '#bc4d0e', speck: '#d5671c' }
                                 : item.badge === 'SME Lead'
-                                  ? { from: '#ffbf78', mid: '#ff7d5b', to: '#db3d32', glow: '#ffd4a3' }
-                                  : { from: '#ffb96d', mid: '#ff7540', to: '#d53820', glow: '#ffca91' };
+                                  ? { wash: '#c86aa2', edge: '#96255d', deep: '#5f0d2c', speck: '#a53167' }
+                                  : { wash: '#92d8f3', edge: '#3ca6dc', deep: '#0f4f98', speck: '#3d8bc5' };
 
                       return (
                         <article
@@ -1985,37 +1985,46 @@
                         >
                           <div className="px-8 py-7 bg-white border-b border-gray-100">
                             <div className="flex items-center gap-4 min-w-0">
-                              <div className="relative w-[92px] h-[68px] shrink-0 overflow-hidden">
+                              <div className="relative w-[78px] h-[78px] shrink-0 overflow-visible">
                                 <div
-                                  className="absolute -left-2 -bottom-2 w-[100px] h-[62px]"
+                                  className="absolute inset-0 rounded-full"
                                   style={{
-                                    background: `radial-gradient(circle at 18% 28%, ${logoPalette.glow} 0%, rgba(255,255,255,0) 22%), linear-gradient(135deg, ${logoPalette.from} 0%, ${logoPalette.mid} 52%, ${logoPalette.to} 100%)`,
-                                    borderRadius: '47% 53% 42% 58% / 43% 34% 66% 57%',
-                                    transform: 'rotate(-8deg)',
-                                    boxShadow: 'inset 0 2px 10px rgba(255,255,255,0.18)'
+                                    background: `radial-gradient(circle at 34% 30%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.14) 26%, rgba(255,255,255,0) 44%), radial-gradient(circle at 62% 58%, ${logoPalette.edge} 0%, rgba(255,255,255,0) 26%), radial-gradient(circle at 52% 46%, ${logoPalette.wash} 0%, ${logoPalette.wash}dd 48%, ${logoPalette.edge}cc 84%, ${logoPalette.deep}aa 100%)`,
+                                    filter: 'blur(0.3px)',
+                                    boxShadow: 'inset 0 0 18px rgba(255,255,255,0.18)',
+                                    transform: 'rotate(-7deg) scale(0.98)'
                                   }}
                                 ></div>
                                 <div
-                                  className="absolute left-[15px] bottom-[7px] w-[76px] h-[42px] opacity-90"
+                                  className="absolute left-[6px] top-[8px] w-[66px] h-[66px] rounded-full opacity-85"
                                   style={{
-                                    background: `linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 45%, ${logoPalette.to} 100%)`,
-                                    borderRadius: '54% 46% 60% 40% / 38% 50% 50% 62%',
-                                    transform: 'rotate(7deg)'
+                                    background: `radial-gradient(circle at 58% 34%, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 42%, ${logoPalette.deep}55 74%, rgba(255,255,255,0) 100%), radial-gradient(circle at 28% 68%, ${logoPalette.deep}99 0%, rgba(255,255,255,0) 18%), radial-gradient(circle at 68% 72%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 18%)`,
+                                    filter: 'blur(1.2px)',
+                                    transform: 'rotate(9deg)'
                                   }}
                                 ></div>
-                                <div className="absolute right-[22px] top-[18px] w-[20px] h-[20px] rounded-full bg-white shadow-[0_6px_12px_rgba(219,59,32,0.16)]"></div>
                                 <div
-                                  className="absolute right-[26px] top-[22px] w-[12px] h-[12px] rounded-full"
+                                  className="absolute left-[54px] top-[48px] w-[17px] h-[17px] rounded-full bg-white shadow-[0_4px_10px_rgba(70,50,40,0.12)]"
+                                ></div>
+                                <div
+                                  className="absolute left-[58px] top-[52px] w-[9px] h-[9px] rounded-full"
                                   style={{
-                                    background: `radial-gradient(circle at 35% 35%, ${logoPalette.glow} 0%, ${logoPalette.mid} 48%, ${logoPalette.to} 100%)`
+                                    background: `radial-gradient(circle at 34% 34%, ${logoPalette.wash} 0%, ${logoPalette.edge} 58%, ${logoPalette.deep} 100%)`
                                   }}
                                 ></div>
-                                <div className="absolute right-[29px] top-[25px] w-[6px] h-[6px] rounded-full bg-[#b93a20]/40"></div>
-                                <div className="absolute left-[16px] bottom-[4px] w-[12px] h-[12px] rounded-full bg-white shadow-[0_4px_10px_rgba(219,59,32,0.12)]"></div>
                                 <div
-                                  className="absolute left-[19px] bottom-[7px] w-[6px] h-[6px] rounded-full"
+                                  className="absolute left-[2px] top-[6px] w-[6px] h-[6px] rounded-full opacity-70"
                                   style={{
-                                    background: `radial-gradient(circle at 35% 35%, ${logoPalette.glow} 0%, ${logoPalette.mid} 48%, ${logoPalette.to} 100%)`
+                                    backgroundColor: logoPalette.speck,
+                                    boxShadow: `12px -6px 0 -1px ${logoPalette.speck}80, 21px 2px 0 -1px ${logoPalette.speck}66, 8px 14px 0 -2px ${logoPalette.speck}66, 64px 5px 0 -2px ${logoPalette.speck}55, 72px 15px 0 -1px ${logoPalette.speck}66, 70px 61px 0 -1px ${logoPalette.speck}88`
+                                  }}
+                                ></div>
+                                <div
+                                  className="absolute left-[10px] top-[18px] w-[58px] h-[50px] rounded-full opacity-35"
+                                  style={{
+                                    border: '1px solid rgba(255,255,255,0.28)',
+                                    filter: 'blur(1px)',
+                                    transform: 'rotate(-12deg)'
                                   }}
                                 ></div>
                               </div>
