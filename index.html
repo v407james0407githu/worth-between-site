@@ -1370,6 +1370,9 @@
       const domRef = useRef();
 
       useEffect(() => {
+        const fallbackTimer = window.setTimeout(() => {
+          setIsVisible(true);
+        }, 1200 + delay);
         const observer = new IntersectionObserver(entries => {
           entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -1380,8 +1383,11 @@
         }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
         
         if (domRef.current) observer.observe(domRef.current);
-        return () => observer.disconnect();
-      }, []);
+        return () => {
+          window.clearTimeout(fallbackTimer);
+          observer.disconnect();
+        };
+      }, [delay]);
 
       return (
         <div 
@@ -1399,6 +1405,9 @@
       const domRef = useRef();
 
       useEffect(() => {
+        const fallbackTimer = window.setTimeout(() => {
+          setIsVisible(true);
+        }, 1200 + delay);
         const observer = new IntersectionObserver(entries => {
           entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -1409,8 +1418,11 @@
         }, { threshold: 0.12, rootMargin: "0px 0px -60px 0px" });
 
         if (domRef.current) observer.observe(domRef.current);
-        return () => observer.disconnect();
-      }, []);
+        return () => {
+          window.clearTimeout(fallbackTimer);
+          observer.disconnect();
+        };
+      }, [delay]);
 
       const variantStyles = {
         'fade-up': {
