@@ -2829,12 +2829,14 @@
                           <li className="flex gap-3"><CheckCircle2 size={20} className="text-[#4e7055] shrink-0 mt-0.5"/><span className="whitespace-pre-line">{homepageWorkItems[0].body}</span></li>
                         </ul>
                       </div>
-                      <div className="bg-white p-8 border border-gray-200 border-l-4 border-l-[#cc7333] shadow-sm">
-                        <h4 className="text-xs font-bold text-[#cc7333] mb-3 uppercase tracking-widest">The Result 具體成果</h4>
-                        <p className="text-xl font-bold text-[#3a3a3a] leading-relaxed">
-                          <span className="whitespace-pre-line">{homepageWorkItems[0].body}</span>
-                        </p>
-                      </div>
+                      {homepageWorkItems[0].result && (
+                        <div className="bg-white p-8 border border-gray-200 border-l-4 border-l-[#cc7333] shadow-sm">
+                          <h4 className="text-xs font-bold text-[#cc7333] mb-3 uppercase tracking-widest">The Result 具體成果</h4>
+                          <p className="text-xl font-bold text-[#3a3a3a] leading-relaxed">
+                            <span className="whitespace-pre-line">{homepageWorkItems[0].result}</span>
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </MotionOnScroll>}
@@ -2861,12 +2863,14 @@
                           <li className="flex gap-3"><CheckCircle2 size={20} className="text-[#356569] shrink-0 mt-0.5"/><span className="whitespace-pre-line">{homepageWorkItems[1].body}</span></li>
                         </ul>
                       </div>
-                      <div className="bg-white p-8 border border-gray-200 border-l-4 border-l-[#356569] shadow-sm">
-                        <h4 className="text-xs font-bold text-[#356569] mb-3 uppercase tracking-widest">The Result 具體成果</h4>
-                        <p className="text-xl font-bold text-[#3a3a3a] leading-relaxed">
-                          <span className="whitespace-pre-line">{homepageWorkItems[1].body}</span>
-                        </p>
-                      </div>
+                      {homepageWorkItems[1].result && (
+                        <div className="bg-white p-8 border border-gray-200 border-l-4 border-l-[#356569] shadow-sm">
+                          <h4 className="text-xs font-bold text-[#356569] mb-3 uppercase tracking-widest">The Result 具體成果</h4>
+                          <p className="text-xl font-bold text-[#3a3a3a] leading-relaxed">
+                            <span className="whitespace-pre-line">{homepageWorkItems[1].result}</span>
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </MotionOnScroll>}
@@ -3088,7 +3092,7 @@
       const [draggedCategoryName, setDraggedCategoryName] = useState(null);
       const [isContentItemModalOpen, setIsContentItemModalOpen] = useState(false);
       const [editingContentItemId, setEditingContentItemId] = useState(null);
-      const [contentItemForm, setContentItemForm] = useState({ category: '', title: '', subtitle: '', body: '', image: '', publishedAt: '', isPopular: false });
+      const [contentItemForm, setContentItemForm] = useState({ category: '', title: '', subtitle: '', body: '', result: '', image: '', publishedAt: '', isPopular: false });
       const [contentItemErrors, setContentItemErrors] = useState({});
       const [isCompressingContentImage, setIsCompressingContentImage] = useState(false);
       const [contentDeleteTarget, setContentDeleteTarget] = useState(null);
@@ -4161,6 +4165,7 @@
             title: item.title || '',
             subtitle: item.subtitle || '',
             body: item.body || '',
+            result: item.result || '',
             image: item.image || '',
             publishedAt: item.publishedAt || new Date().toISOString().split('T')[0],
             isPopular: item.isPopular === true
@@ -4172,6 +4177,7 @@
             title: '',
             subtitle: '',
             body: '',
+            result: '',
             image: activeContentSection?.heroImage || '',
             publishedAt: new Date().toISOString().split('T')[0],
             isPopular: false
@@ -4201,6 +4207,7 @@
           title: contentItemForm.title.trim(),
           subtitle: contentItemForm.subtitle.trim(),
           body: contentItemForm.body.trim(),
+          result: contentItemForm.result.trim(),
           image: contentItemForm.image.trim(),
           publishedAt: contentItemForm.publishedAt.trim(),
           isPopular: contentItemForm.isPopular === true
@@ -6680,6 +6687,19 @@
                     <label className="block text-xs font-bold text-gray-700 mb-1">內容</label>
                     <textarea rows="5" value={contentItemForm.body} onChange={e => setContentItemForm({ ...contentItemForm, body: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none" />
                   </div>
+                  {activeContentSectionKey === 'work' && (
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">成效 <span className="text-gray-400 font-normal">可留空</span></label>
+                      <textarea
+                        rows="4"
+                        value={contentItemForm.result}
+                        onChange={e => setContentItemForm({ ...contentItemForm, result: e.target.value })}
+                        className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none"
+                        placeholder="例如：成效：影片總觀看 150萬+　·　FB觸及 107萬+"
+                      />
+                      <p className="mt-2 text-xs text-gray-400">未填寫時，前台不會顯示成效區塊。</p>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-2">或直接上傳圖片</label>
                     <input
