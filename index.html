@@ -4431,37 +4431,19 @@
       };
 
       const handleHeroImageUpload = async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-        if (!isSupportedImageFile(file)) {
-          setHeroFormErrors({ bgImage: `目前僅支援 ${SUPPORTED_IMAGE_LABEL} 格式。` });
-          event.target.value = '';
-          return;
-        }
-        if (file.size > MAX_UPLOAD_BYTES) {
-          const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
-          setHeroFormErrors({ bgImage: `圖片約 ${fileSizeMB} MB，超過 2 MB。請先壓縮後再上傳。` });
-          event.target.value = '';
-          return;
-        }
-        setIsCompressingHeroImage(true);
-        setHeroFormErrors((prev) => {
-          const next = { ...prev };
-          delete next.bgImage;
-          return next;
+        await uploadImageToField({
+          event,
+          setLoading: setIsCompressingHeroImage,
+          onSuccess: (value) => {
+            setHeroForm((prev) => ({ ...prev, bgImage: value }));
+            setHeroFormErrors((prev) => {
+              const next = { ...prev };
+              delete next.bgImage;
+              return next;
+            });
+          },
+          onError: (message) => setHeroFormErrors({ bgImage: message })
         });
-
-        try {
-          const compressed = await compressImageFileToWebP(file);
-          const compressedKb = Math.round(compressed.sizeBytes / 1024);
-          setHeroForm((prev) => ({ ...prev, bgImage: compressed.dataUrl }));
-          setFlashMessage(`圖片已轉成 WebP，壓縮後約 ${compressedKb} KB。`);
-        } catch {
-          setHeroFormErrors({ bgImage: '圖片壓縮失敗，請改用較小的圖片，或直接填入圖片網址。' });
-        } finally {
-          setIsCompressingHeroImage(false);
-          event.target.value = '';
-        }
       };
 
       const exportHeroSlides = () => {
