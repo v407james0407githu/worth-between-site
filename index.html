@@ -35,7 +35,7 @@
       LogOut, Plus, Edit, Trash2, ExternalLink, 
       TrendingUp, Globe, Briefcase, Target, Building2, Quote,
       ChevronLeft, ChevronUp, ChevronDown, GripVertical, Image as ImageIcon, ArrowUp, ArrowDown, Eye, EyeOff,
-      Download, Upload, AlertTriangle, HardDrive, Search, Bold, List, Link as LinkIcon, Code2, Pilcrow, PenSquare
+      Download, Upload, AlertTriangle, HardDrive, Search, Bold, List, Link as LinkIcon, Code2, Strikethrough, Underline
     } from 'lucide-react';
 
     // --- 企業色彩配置 ---
@@ -2107,6 +2107,7 @@
       const [isScrolled, setIsScrolled] = useState(false);
       const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
       const [bannerOffset, setBannerOffset] = useState(0);
+      const renderedBodyRef = useRef(null);
       const [advisorFromCardTransition, setAdvisorFromCardTransition] = useState(() => (
         page.key === 'advisors' && window.localStorage.getItem(ADVISOR_TRANSITION_STORAGE_KEY) === 'card-open'
       ));
@@ -2140,6 +2141,22 @@
         }, 1200);
         return () => window.clearTimeout(timer);
       }, [isAdvisorsPage, item.id]);
+      useEffect(() => {
+        if (!renderedBodyRef.current || !item.bodyHtml) return;
+        const codeBlocks = renderedBodyRef.current.querySelectorAll('pre.wb-live-code');
+        codeBlocks.forEach((block) => {
+          const iframe = document.createElement('iframe');
+          iframe.setAttribute('title', '文章程式碼預覽');
+          iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+          iframe.style.width = '100%';
+          iframe.style.border = '0';
+          iframe.style.background = 'transparent';
+          iframe.style.display = 'block';
+          iframe.style.minHeight = '120px';
+          iframe.srcdoc = block.textContent || '';
+          block.replaceWith(iframe);
+        });
+      }, [item.bodyHtml]);
 
       const goContact = () => {
         window.localStorage.setItem(PENDING_SCROLL_STORAGE_KEY, 'contact');
@@ -2440,6 +2457,7 @@
                 <div className="max-w-4xl mx-auto">
                   {item.bodyHtml ? (
                     <div
+                      ref={renderedBodyRef}
                       className="max-w-none text-gray-700 leading-relaxed whitespace-normal [&_h2]:text-[1.9rem] md:[&_h2]:text-[2.2rem] [&_h2]:font-bold [&_h2]:leading-[1.35] [&_h2]:text-black [&_h2]:mt-12 [&_h2]:mb-5 [&_h3]:text-[1.35rem] md:[&_h3]:text-[1.55rem] [&_h3]:font-semibold [&_h3]:leading-[1.6] [&_h3]:text-black [&_h3]:mt-10 [&_h3]:mb-4 [&_p]:text-[1.05rem] md:[&_p]:text-[1.12rem] [&_p]:leading-[2.05] [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:my-8 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-10 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200"
                       dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
                     />
@@ -4408,7 +4426,7 @@
             subheading: '<h3>副標題</h3>',
             bullet: '<ul><li>重點一</li><li>重點二</li><li>重點三</li></ul>',
             quote: '<blockquote>請在此輸入引述內容</blockquote>',
-            code: '<p><code>程式碼區塊</code></p>',
+            code: '<pre class="wb-live-code"><code>&lt;div style="padding:24px;color:white;background:black;"&gt;在此輸入程式碼&lt;/div&gt;</code></pre><p><br></p>',
             divider: '<hr>',
             link: '<p><a href="https://example.com" target="_blank" rel="noopener noreferrer">連結名稱</a></p>',
             file: '<p>附件名稱：請貼上檔案連結</p>',
@@ -6894,9 +6912,19 @@
                               action: () => execInsightRichCommand('bold')
                             },
                             {
-                              key: 'paragraph',
-                              icon: <Pilcrow size={18} />,
-                              action: () => execInsightRichCommand('formatBlock', '<p>')
+                              key: 'list',
+                              icon: <List size={18} />,
+                              action: () => execInsightRichCommand('insertUnorderedList')
+                            },
+                            {
+                              key: 'strikethrough',
+                              icon: <Strikethrough size={18} />,
+                              action: () => execInsightRichCommand('strikeThrough')
+                            },
+                            {
+                              key: 'underline',
+                              icon: <Underline size={18} />,
+                              action: () => execInsightRichCommand('underline')
                             },
                             {
                               key: 'link',
@@ -6918,19 +6946,12 @@
                               action: () => {
                                 const selection = window.getSelection();
                                 const selectedText = selection ? selection.toString() : '';
-                                if (!selectedText) return;
-                                insertInsightHtmlAtSelection(`<code>${selectedText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`);
+                                const escaped = (selectedText || '<div style="padding:24px;color:white;background:black;">在此輸入程式碼</div>')
+                                  .replace(/&/g, '&amp;')
+                                  .replace(/</g, '&lt;')
+                                  .replace(/>/g, '&gt;');
+                                insertInsightHtmlAtSelection(`<pre class="wb-live-code"><code>${escaped}</code></pre><p><br></p>`);
                               }
-                            },
-                            {
-                              key: 'delete',
-                              icon: <Trash2 size={18} />,
-                              action: () => execInsightRichCommand('delete')
-                            },
-                            {
-                              key: 'edit',
-                              icon: <PenSquare size={18} />,
-                              action: () => closeInsightContextMenu()
                             }
                           ].map((item) => (
                             <button
@@ -6962,13 +6983,6 @@
                             <option value="center">≣</option>
                             <option value="right">≡›</option>
                           </select>
-                          <button
-                            type="button"
-                            onClick={() => execInsightRichCommand('insertUnorderedList')}
-                            className="flex h-10 w-11 items-center justify-center border-r border-gray-200 text-[#1f2329] transition-colors hover:bg-gray-50"
-                          >
-                            <List size={18} />
-                          </button>
                         </div>
                       )}
                       {Object.keys(contentItemErrors).length > 0 && (
@@ -7089,7 +7103,7 @@
                             suppressContentEditableWarning
                             onInput={handleInsightRichBodyInput}
                             onContextMenu={e => handleInsightContextMenu(e, 'body')}
-                            className="min-h-[380px] text-[1.12rem] md:text-[1.22rem] leading-[2.05] text-[#616975] outline-none [&_h2]:text-[2rem] [&_h2]:font-bold [&_h2]:leading-[1.45] [&_h2]:text-black [&_h2]:mt-10 [&_h2]:mb-5 [&_h3]:text-[1.5rem] [&_h3]:font-semibold [&_h3]:leading-[1.6] [&_h3]:text-black [&_h3]:mt-8 [&_h3]:mb-4 [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-8 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200"
+                            className="min-h-[380px] text-[1.12rem] md:text-[1.22rem] leading-[2.05] text-[#616975] outline-none [&_h2]:text-[2rem] [&_h2]:font-bold [&_h2]:leading-[1.45] [&_h2]:text-black [&_h2]:mt-10 [&_h2]:mb-5 [&_h3]:text-[1.5rem] [&_h3]:font-semibold [&_h3]:leading-[1.6] [&_h3]:text-black [&_h3]:mt-8 [&_h3]:mb-4 [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-8 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200 [&_pre.wb-live-code]:my-8 [&_pre.wb-live-code]:overflow-x-auto [&_pre.wb-live-code]:rounded-[28px] [&_pre.wb-live-code]:bg-black [&_pre.wb-live-code]:px-9 [&_pre.wb-live-code]:py-8 [&_pre.wb-live-code]:text-[15px] [&_pre.wb-live-code]:leading-7 [&_pre.wb-live-code]:text-white [&_pre.wb-live-code_code]:bg-transparent [&_pre.wb-live-code_code]:p-0 [&_pre.wb-live-code_code]:text-white"
                           />
                           {activeContentSectionKey === 'services' && (
                             <div className="mt-14 space-y-8">
