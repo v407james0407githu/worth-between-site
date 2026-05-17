@@ -1088,44 +1088,44 @@
           if (defaultPage.key === 'work' && String(item.id) === '301') {
             return {
               ...item,
-              category: '食品快消 · CSR傳播',
-              title: '台灣知名堅果食品品牌',
-              subtitle: 'ESG Lead',
-              body: '舊產品包裝罐回收再製計畫，媒合社福機構參與清洗分類，落實循環經濟與社會共融。執行多元媒體管道，包含5分鐘紀錄片、短影音系列、廣編文章及永續平台曝光。',
-              badge: 'ESG Lead',
-              result: '成效：影片總觀看 150萬+　·　FB觸及 107萬+　·　網站PV 29,019'
+              category: item.category ?? '食品快消 · CSR傳播',
+              title: item.title ?? '台灣知名堅果食品品牌',
+              subtitle: item.subtitle ?? 'ESG Lead',
+              body: item.body ?? '舊產品包裝罐回收再製計畫，媒合社福機構參與清洗分類，落實循環經濟與社會共融。執行多元媒體管道，包含5分鐘紀錄片、短影音系列、廣編文章及永續平台曝光。',
+              badge: item.badge ?? 'ESG Lead',
+              result: item.result ?? '成效：影片總觀看 150萬+　·　FB觸及 107萬+　·　網站PV 29,019'
             };
           }
           if (defaultPage.key === 'work' && String(item.id) === '302') {
             return {
               ...item,
-              category: '零售 · 永續溝通',
-              title: '台灣最大連鎖超商',
-              subtitle: 'ESG Lead',
-              body: '永續議題傳播專案，透過主流新聞台黃金時段、YT影音、廣編文章、FB社群等多管道擴散，協助品牌在主流媒體建立永續形象。',
-              badge: 'ESG Lead',
-              result: '成效：電視觸及 77.4萬　·　YT觀看 21萬　·　FB觸及 51.5萬'
+              category: item.category ?? '零售 · 永續溝通',
+              title: item.title ?? '台灣最大連鎖超商',
+              subtitle: item.subtitle ?? 'ESG Lead',
+              body: item.body ?? '永續議題傳播專案，透過主流新聞台黃金時段、YT影音、廣編文章、FB社群等多管道擴散，協助品牌在主流媒體建立永續形象。',
+              badge: item.badge ?? 'ESG Lead',
+              result: item.result ?? '成效：電視觸及 77.4萬　·　YT觀看 21萬　·　FB觸及 51.5萬'
             };
           }
           if (defaultPage.key === 'work' && String(item.id) === '303') {
             return {
               ...item,
-              category: '服務業 · 品牌社會影響力',
-              title: '台灣50年服務業集團',
-              subtitle: 'Connection Lead',
-              body: '完成台灣史上首例大型瀕危動物國際輸出。橫跨兩年，在疫情、零前例法規、輿論風險三重挑戰下，統籌台日雙方法規協調、跨部門整合與公關管理。',
-              badge: 'Connection Lead',
-              result: '成效：全球媒體曝光近千則　·　新聞翻譯超過10種語言　·　台灣首例瀕危動物輸出'
+              category: item.category ?? '服務業 · 品牌社會影響力',
+              title: item.title ?? '台灣50年服務業集團',
+              subtitle: item.subtitle ?? 'Connection Lead',
+              body: item.body ?? '完成台灣史上首例大型瀕危動物國際輸出。橫跨兩年，在疫情、零前例法規、輿論風險三重挑戰下，統籌台日雙方法規協調、跨部門整合與公關管理。',
+              badge: item.badge ?? 'Connection Lead',
+              result: item.result ?? '成效：全球媒體曝光近千則　·　新聞翻譯超過10種語言　·　台灣首例瀕危動物輸出'
             };
           }
           if (defaultPage.key === 'work' && String(item.id) === '308') {
             return {
               ...item,
-              category: '跨產業 · 服務版圖',
-              title: '曾服務產業',
-              subtitle: 'Across Industries',
-              body: '汽車　精品　美妝　食品快消　3C家電　遊戲娛樂　電商　航空　零售　飯店服務業　教育　傳統製造業　金融',
-              badge: 'Across Industries',
+              category: item.category ?? '跨產業 · 服務版圖',
+              title: item.title ?? '曾服務產業',
+              subtitle: item.subtitle ?? 'Across Industries',
+              body: item.body ?? '汽車　精品　美妝　食品快消　3C家電　遊戲娛樂　電商　航空　零售　飯店服務業　教育　傳統製造業　金融',
+              badge: item.badge ?? 'Across Industries',
               result: ''
             };
           }
