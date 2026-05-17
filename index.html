@@ -3177,6 +3177,7 @@
       ];
       const activeContentSection = contentPages.find((page) => page.key === activeContentSectionKey) || contentPages[0];
       const activeContentConfig = activeContentSection ? buildContentPageConfig(activeContentSection) : sitePageConfigs[0];
+      const isInsightContentSection = activeContentSection?.key === 'insights';
       const homepageSectionOptions = [
         { key: 'about', label: '關於我們', description: '首頁 About 區塊的標題、段落與統計資訊' },
         { key: 'services', label: '專業服務', description: '首頁服務區塊的標題、前言與底圖' },
@@ -4387,7 +4388,7 @@
             image: activeContentSection?.heroImage || '',
             publishedAt: new Date().toISOString().split('T')[0],
             isPopular: false,
-            editorStatus: activeContentSectionKey === 'insights' ? 'draft' : 'published'
+            editorStatus: isInsightContentSection ? 'draft' : 'published'
           });
         }
         closeInsightContextMenu();
@@ -4401,7 +4402,7 @@
         const nextErrors = {};
         if (!contentItemForm.category.trim()) nextErrors.category = '請選擇子分類';
         if (!contentItemForm.title.trim()) nextErrors.title = '請輸入標題';
-        const isInsightDraft = activeContentSectionKey === 'insights' && nextEditorStatus === 'draft';
+        const isInsightDraft = isInsightContentSection && nextEditorStatus === 'draft';
         if (!isInsightDraft) {
           if (!contentItemForm.subtitle.trim()) nextErrors.subtitle = '請輸入摘要';
           if (!contentItemForm.body.trim()) nextErrors.body = '請輸入內容';
@@ -4421,7 +4422,7 @@
           title: contentItemForm.title.trim(),
           subtitle: contentItemForm.subtitle.trim(),
           body: contentItemForm.body.trim(),
-          bodyHtml: activeContentSectionKey === 'insights'
+          bodyHtml: isInsightContentSection
             ? (contentItemForm.bodyHtml || plainTextToRichHtml(contentItemForm.body)).trim()
             : undefined,
           result: contentItemForm.result.trim(),
@@ -6875,7 +6876,7 @@
                     </label>
                   </div>
                   <div className="flex items-center gap-3">
-                    {activeContentSectionKey === 'insights' && (
+                    {isInsightContentSection && (
                       <button
                         type="button"
                         onClick={() => saveContentItemForm(null, 'draft')}
@@ -6886,18 +6887,18 @@
                     )}
                     <button
                       type="button"
-                      onClick={() => saveContentItemForm(null, activeContentSectionKey === 'insights' ? 'published' : null)}
+                      onClick={() => saveContentItemForm(null, isInsightContentSection ? 'published' : null)}
                       className="px-5 py-2.5 text-sm font-bold text-white bg-[#4e7055] rounded-xl hover:bg-[#3a5240] transition-colors"
                     >
-                      {activeContentSectionKey === 'insights' ? '發佈文章' : '儲存內容'}
+                      {isInsightContentSection ? '發佈文章' : '儲存內容'}
                     </button>
                   </div>
                 </div>
 
-                <form onSubmit={(e) => saveContentItemForm(e, activeContentSectionKey === 'insights' ? 'published' : null)} className="flex-1 min-h-0 flex">
+                <form onSubmit={(e) => saveContentItemForm(e, isInsightContentSection ? 'published' : null)} className="flex-1 min-h-0 flex">
                   <div className="flex-1 overflow-y-auto">
                     <div className="max-w-5xl mx-auto px-10 py-10">
-                      {activeContentSectionKey === 'insights' && (
+                      {isInsightContentSection && (
                         <div className="sticky top-0 z-30 -mx-10 mb-8 border-b border-gray-200 bg-white/95 backdrop-blur">
                           <div className="max-w-5xl mx-auto flex flex-wrap items-center gap-2 px-10 py-3">
                             <input
