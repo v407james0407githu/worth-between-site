@@ -2438,9 +2438,16 @@
 
               <section className="py-20 md:py-24 px-6">
                 <div className="max-w-4xl mx-auto">
-                  <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-line">
-                    {item.body}
-                  </div>
+                  {item.bodyHtml ? (
+                    <div
+                      className="max-w-none text-gray-700 leading-relaxed whitespace-normal [&_h2]:text-[1.9rem] md:[&_h2]:text-[2.2rem] [&_h2]:font-bold [&_h2]:leading-[1.35] [&_h2]:text-[#2f3238] [&_h2]:mt-12 [&_h2]:mb-5 [&_h3]:text-[1.35rem] md:[&_h3]:text-[1.55rem] [&_h3]:font-semibold [&_h3]:leading-[1.6] [&_h3]:text-[#6b7280] [&_h3]:mt-10 [&_h3]:mb-4 [&_p]:text-[1.05rem] md:[&_p]:text-[1.12rem] [&_p]:leading-[2.05] [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:my-8 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-10 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200"
+                      dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
+                    />
+                  ) : (
+                    <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-line">
+                      {item.body}
+                    </div>
+                  )}
                   <div className="mt-16 grid md:grid-cols-2 gap-4">
                     <button
                       onClick={() => previousItem && (window.location.hash = buildContentItemRoute(page.key, previousItem.id))}
@@ -3083,7 +3090,7 @@
       const [draggedCategoryName, setDraggedCategoryName] = useState(null);
       const [isContentItemModalOpen, setIsContentItemModalOpen] = useState(false);
       const [editingContentItemId, setEditingContentItemId] = useState(null);
-      const [contentItemForm, setContentItemForm] = useState({ category: '', title: '', subtitle: '', body: '', result: '', tagsText: '', collaborationModesText: '', image: '', publishedAt: '', isPopular: false, editorStatus: 'published' });
+      const [contentItemForm, setContentItemForm] = useState({ category: '', title: '', subtitle: '', body: '', bodyHtml: '', result: '', tagsText: '', collaborationModesText: '', image: '', publishedAt: '', isPopular: false, editorStatus: 'published' });
       const [insightInsertMenuOpen, setInsightInsertMenuOpen] = useState(false);
       const [contentItemErrors, setContentItemErrors] = useState({});
       const [isCompressingContentImage, setIsCompressingContentImage] = useState(false);
@@ -3092,6 +3099,8 @@
       const [insightContextMenu, setInsightContextMenu] = useState({ open: false, x: 0, y: 0, target: 'body', start: 0, end: 0 });
       const insightTitleInputRef = useRef(null);
       const insightBodyInputRef = useRef(null);
+      const insightRichBodyRef = useRef(null);
+      const insightSelectionRangeRef = useRef(null);
       const storageSummary = [
         {
           key: HERO_SLIDES_STORAGE_KEY,
@@ -3148,6 +3157,20 @@
       ];
       const activeHomepageSectionMeta = homepageSectionOptions.find((section) => section.key === activeHomepageSectionKey) || homepageSectionOptions[0];
       const activeHomepageSection = homepageContent[activeHomepageSectionKey];
+      const richHtmlToPlainText = (html) => {
+        if (!html) return '';
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        return (temp.innerText || temp.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+      };
+      const plainTextToRichHtml = (text) => {
+        const value = String(text || '').trim();
+        if (!value) return '<p><br></p>';
+        return value
+          .split(/\n{2,}/)
+          .map((paragraph) => `<p>${paragraph.split('\n').map((line) => line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')).join('<br>')}</p>`)
+          .join('');
+      };
       const resizeInsightTextarea = (element) => {
         if (!element) return;
         element.style.height = 'auto';
@@ -3157,76 +3180,67 @@
         resizeInsightTextarea(insightTitleInputRef.current);
         resizeInsightTextarea(insightBodyInputRef.current);
       };
-      const getInsightCombinedBodyValue = () => `${contentItemForm.subtitle ? `${contentItemForm.subtitle}\n\n` : ''}${contentItemForm.body || ''}`;
-      const setInsightCombinedBodyValue = (rawValue) => {
-        const separatorIndex = rawValue.indexOf('\n\n');
-        const hasExplicitSplit = separatorIndex >= 0;
-        const nextSubtitle = hasExplicitSplit ? rawValue.slice(0, separatorIndex) : '';
-        const nextBody = hasExplicitSplit ? rawValue.slice(separatorIndex + 2) : rawValue;
+      const closeInsightContextMenu = () => setInsightContextMenu((prev) => ({ ...prev, open: false }));
+      const syncInsightRichBodyDom = (htmlValue) => {
+        if (!insightRichBodyRef.current) return;
+        if (insightRichBodyRef.current.innerHTML !== htmlValue) {
+          insightRichBodyRef.current.innerHTML = htmlValue || '<p><br></p>';
+        }
+      };
+      const handleInsightRichBodyInput = () => {
+        if (!insightRichBodyRef.current) return;
+        const nextHtml = insightRichBodyRef.current.innerHTML;
+        const nextBody = richHtmlToPlainText(nextHtml);
         setContentItemForm((prev) => ({
           ...prev,
-          subtitle: nextSubtitle,
+          bodyHtml: nextHtml,
           body: nextBody
         }));
       };
-      const closeInsightContextMenu = () => setInsightContextMenu((prev) => ({ ...prev, open: false }));
-      const focusInsightFieldSelection = (target, start, end) => {
-        const element = target === 'title' ? insightTitleInputRef.current : insightBodyInputRef.current;
-        if (!element) return;
-        window.requestAnimationFrame(() => {
-          element.focus();
-          if (typeof element.setSelectionRange === 'function') {
-            element.setSelectionRange(start, end);
-          }
-          resizeInsightTextarea(element);
-        });
+      const restoreInsightSelection = () => {
+        if (!insightSelectionRangeRef.current) return false;
+        const selection = window.getSelection();
+        if (!selection) return false;
+        selection.removeAllRanges();
+        selection.addRange(insightSelectionRangeRef.current);
+        return true;
       };
-      const updateInsightFieldValue = (target, nextValue, selectionStart = null, selectionEnd = null) => {
-        if (target === 'title') {
-          setContentItemForm((prev) => ({ ...prev, title: nextValue }));
-        } else {
-          setInsightCombinedBodyValue(nextValue);
-        }
-        if (selectionStart !== null && selectionEnd !== null) {
-          focusInsightFieldSelection(target, selectionStart, selectionEnd);
-        }
+      const execInsightRichCommand = (command, value = null) => {
+        if (!restoreInsightSelection()) return;
+        document.execCommand(command, false, value);
+        handleInsightRichBodyInput();
+        closeInsightContextMenu();
       };
-      const getInsightFieldValue = (target) => (target === 'title' ? contentItemForm.title || '' : getInsightCombinedBodyValue());
-      const prefixSelectedLines = (selectedText, prefix) => selectedText
-        .split('\n')
-        .map((line) => `${prefix}${line}`)
-        .join('\n');
-      const applyInsightSelectionTransform = (transform) => {
-        if (!insightContextMenu.open) return;
-        const { target, start, end } = insightContextMenu;
-        const value = getInsightFieldValue(target);
-        const selectedText = value.slice(start, end);
-        const result = transform(selectedText, value, start, end);
-        if (!result) {
-          closeInsightContextMenu();
-          return;
+      const insertInsightHtmlAtSelection = (html) => {
+        if (!restoreInsightSelection()) {
+          insightRichBodyRef.current?.focus();
         }
-        const normalized = typeof result === 'string'
-          ? { text: result, selectionStart: start, selectionEnd: start + result.length }
-          : result;
-        const nextValue = `${value.slice(0, start)}${normalized.text}${value.slice(end)}`;
-        updateInsightFieldValue(target, nextValue, normalized.selectionStart, normalized.selectionEnd);
+        document.execCommand('insertHTML', false, html);
+        handleInsightRichBodyInput();
         closeInsightContextMenu();
       };
       const handleInsightContextMenu = (event, target) => {
-        const { selectionStart = 0, selectionEnd = 0, value = '' } = event.currentTarget;
-        if (selectionStart === selectionEnd || !value.slice(selectionStart, selectionEnd).trim()) {
+        if (target !== 'body') {
+          closeInsightContextMenu();
+          return;
+        }
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0 || !selection.toString().trim()) {
+          closeInsightContextMenu();
+          return;
+        }
+        const range = selection.getRangeAt(0);
+        if (!insightRichBodyRef.current || !insightRichBodyRef.current.contains(range.commonAncestorContainer)) {
           closeInsightContextMenu();
           return;
         }
         event.preventDefault();
+        insightSelectionRangeRef.current = range.cloneRange();
         setInsightContextMenu({
           open: true,
           x: Math.min(event.clientX, window.innerWidth - 540),
           y: Math.max(24, event.clientY - 56),
-          target,
-          start: selectionStart,
-          end: selectionEnd
+          target
         });
       };
       const closeBrandModal = () => {
@@ -3279,8 +3293,12 @@
       useLayoutEffect(() => {
         if (!isContentItemModalOpen) return;
         syncInsightEditorHeights();
+        syncInsightRichBodyDom(contentItemForm.bodyHtml || plainTextToRichHtml(contentItemForm.body));
         const frameId = window.requestAnimationFrame(syncInsightEditorHeights);
-        const timeoutId = window.setTimeout(syncInsightEditorHeights, 120);
+        const timeoutId = window.setTimeout(() => {
+          syncInsightEditorHeights();
+          syncInsightRichBodyDom(contentItemForm.bodyHtml || plainTextToRichHtml(contentItemForm.body));
+        }, 120);
         const handleResize = () => syncInsightEditorHeights();
         window.addEventListener('resize', handleResize);
         return () => {
@@ -3288,7 +3306,7 @@
           window.clearTimeout(timeoutId);
           window.removeEventListener('resize', handleResize);
         };
-      }, [isContentItemModalOpen, contentItemForm.title, contentItemForm.subtitle, contentItemForm.body]);
+      }, [isContentItemModalOpen, contentItemForm.title, contentItemForm.subtitle, contentItemForm.body, contentItemForm.bodyHtml]);
       useEffect(() => {
         if (!insightContextMenu.open) return;
         const dismissMenu = () => closeInsightContextMenu();
@@ -4271,6 +4289,7 @@
             title: item.title ?? '',
             subtitle: item.subtitle ?? '',
             body: item.body ?? '',
+            bodyHtml: item.bodyHtml ?? plainTextToRichHtml(item.body ?? ''),
             result: item.result ?? '',
             tagsText: Array.isArray(item.tags) ? item.tags.join('\n') : '',
             collaborationModesText: Array.isArray(item.collaborationModes) ? item.collaborationModes.join('\n') : '',
@@ -4286,6 +4305,7 @@
             title: '',
             subtitle: '',
             body: '',
+            bodyHtml: '<p><br></p>',
             result: '',
             tagsText: '',
             collaborationModesText: '',
@@ -4327,6 +4347,9 @@
           title: contentItemForm.title.trim(),
           subtitle: contentItemForm.subtitle.trim(),
           body: contentItemForm.body.trim(),
+          bodyHtml: activeContentSectionKey === 'insights'
+            ? (contentItemForm.bodyHtml || plainTextToRichHtml(contentItemForm.body)).trim()
+            : undefined,
           result: contentItemForm.result.trim(),
           tags: activeContentSectionKey === 'services'
             ? contentItemForm.tagsText.split('\n').map((item) => item.trim()).filter(Boolean)
@@ -4378,6 +4401,23 @@
       };
 
       const insertInsightSnippet = (type) => {
+        if (activeContentSectionKey === 'insights') {
+          const richSnippets = {
+            paragraph: '<p>新段落內容</p>',
+            heading: '<h2>主標題</h2>',
+            subheading: '<h3>副標題</h3>',
+            bullet: '<ul><li>重點一</li><li>重點二</li><li>重點三</li></ul>',
+            quote: '<blockquote>請在此輸入引述內容</blockquote>',
+            code: '<p><code>程式碼區塊</code></p>',
+            divider: '<hr>',
+            link: '<p><a href="https://example.com" target="_blank" rel="noopener noreferrer">連結名稱</a></p>',
+            file: '<p>附件名稱：請貼上檔案連結</p>',
+            image: '<p>圖片說明：請搭配上方封面圖或內文補充描述</p>'
+          };
+          insertInsightHtmlAtSelection(richSnippets[type] || '<p><br></p>');
+          setInsightInsertMenuOpen(false);
+          return;
+        }
         const snippets = {
           paragraph: '\n新段落內容\n',
           heading: '\n【主標題】\n',
@@ -6862,11 +6902,11 @@
                             onChange={(event) => {
                               const value = event.target.value;
                               if (value === 'heading') {
-                                applyInsightSelectionTransform((selectedText) => prefixSelectedLines(selectedText, '【主標題】'));
+                                execInsightRichCommand('formatBlock', '<h2>');
                               } else if (value === 'subheading') {
-                                applyInsightSelectionTransform((selectedText) => prefixSelectedLines(selectedText, '【副標題】'));
+                                execInsightRichCommand('formatBlock', '<h3>');
                               } else if (value === 'paragraph') {
-                                applyInsightSelectionTransform((selectedText) => selectedText.replace(/^[【】主副標題•>「」`\-\s]+/gm, '').trim() || selectedText);
+                                execInsightRichCommand('formatBlock', '<p>');
                               }
                               event.target.value = '';
                             }}
@@ -6881,22 +6921,22 @@
                             {
                               key: 'bold',
                               icon: <Bold size={18} />,
-                              action: () => applyInsightSelectionTransform((selectedText) => `**${selectedText}**`)
+                              action: () => execInsightRichCommand('bold')
                             },
                             {
                               key: 'align',
                               icon: <AlignLeft size={18} />,
-                              action: () => applyInsightSelectionTransform((selectedText) => `［置中］${selectedText}［/置中］`)
+                              action: () => execInsightRichCommand('justifyCenter')
                             },
                             {
                               key: 'list',
                               icon: <List size={18} />,
-                              action: () => applyInsightSelectionTransform((selectedText) => prefixSelectedLines(selectedText, '• '))
+                              action: () => execInsightRichCommand('insertUnorderedList')
                             },
                             {
                               key: 'paragraph',
                               icon: <Pilcrow size={18} />,
-                              action: () => applyInsightSelectionTransform((selectedText) => selectedText)
+                              action: () => execInsightRichCommand('formatBlock', '<p>')
                             },
                             {
                               key: 'link',
@@ -6904,23 +6944,28 @@
                               action: () => {
                                 const url = window.prompt('請輸入連結網址', 'https://');
                                 if (!url) return;
-                                applyInsightSelectionTransform((selectedText) => `${selectedText}：${url}`);
+                                execInsightRichCommand('createLink', url);
                               }
                             },
                             {
                               key: 'quote',
                               icon: <Quote size={18} />,
-                              action: () => applyInsightSelectionTransform((selectedText) => `「${selectedText}」`)
+                              action: () => execInsightRichCommand('formatBlock', '<blockquote>')
                             },
                             {
                               key: 'code',
                               icon: <Code2 size={18} />,
-                              action: () => applyInsightSelectionTransform((selectedText) => `\`${selectedText}\``)
+                              action: () => {
+                                const selection = window.getSelection();
+                                const selectedText = selection ? selection.toString() : '';
+                                if (!selectedText) return;
+                                insertInsightHtmlAtSelection(`<code>${selectedText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`);
+                              }
                             },
                             {
                               key: 'delete',
                               icon: <Trash2 size={18} />,
-                              action: () => applyInsightSelectionTransform(() => ({ text: '', selectionStart: insightContextMenu.start, selectionEnd: insightContextMenu.start }))
+                              action: () => execInsightRichCommand('delete')
                             },
                             {
                               key: 'edit',
@@ -6946,7 +6991,7 @@
                       )}
 
                       <div className="mb-6 flex items-center justify-end text-sm text-gray-400">
-                        {`${(contentItemForm.title || '').length + (contentItemForm.subtitle || '').length + (contentItemForm.body || '').length} 個字元`}
+                        {`${(contentItemForm.title || '').length + (contentItemForm.subtitle || '').length + richHtmlToPlainText(contentItemForm.bodyHtml || '').length} 個字元`}
                       </div>
 
                       <div className="relative mb-10">
@@ -7039,19 +7084,25 @@
                             value={contentItemForm.title}
                             onChange={e => setContentItemForm({ ...contentItemForm, title: e.target.value })}
                             onInput={e => resizeInsightTextarea(e.currentTarget)}
-                            onContextMenu={e => handleInsightContextMenu(e, 'title')}
                             placeholder="文章標題"
                             className="w-full min-h-[4.6rem] bg-transparent border-0 outline-none overflow-hidden resize-none pt-1 text-[3rem] md:text-[3.4rem] font-bold text-[#8d8d8d] placeholder:text-[#9d9d9d] leading-[1.15] mb-12 whitespace-pre-wrap break-words"
                           />
                           <textarea
                             ref={insightBodyInputRef}
-                            rows="12"
-                            value={`${contentItemForm.subtitle ? `${contentItemForm.subtitle}\n\n` : ''}${contentItemForm.body}`}
-                            onChange={e => setInsightCombinedBodyValue(e.target.value)}
+                            rows="2"
+                            value={contentItemForm.subtitle}
+                            onChange={e => setContentItemForm({ ...contentItemForm, subtitle: e.target.value })}
                             onInput={e => resizeInsightTextarea(e.currentTarget)}
+                            className="w-full bg-transparent border-0 outline-none overflow-hidden resize-none text-[1.9rem] leading-[1.7] text-[#8d8d8d] placeholder:text-[#9d9d9d] mb-8 whitespace-pre-wrap break-words"
+                            placeholder="請在這裡輸入文章摘要。"
+                          />
+                          <div
+                            ref={insightRichBodyRef}
+                            contentEditable
+                            suppressContentEditableWarning
+                            onInput={handleInsightRichBodyInput}
                             onContextMenu={e => handleInsightContextMenu(e, 'body')}
-                            className="w-full bg-transparent border-0 outline-none overflow-hidden resize-none text-[1.12rem] md:text-[1.22rem] leading-[2.05] text-[#616975] placeholder:text-[#9d9d9d] min-h-[380px] whitespace-pre-wrap break-words"
-                            placeholder="請在這裡輸入文章摘要與正文內容。"
+                            className="min-h-[380px] text-[1.12rem] md:text-[1.22rem] leading-[2.05] text-[#616975] outline-none [&_h2]:text-[2rem] [&_h2]:font-bold [&_h2]:leading-[1.45] [&_h2]:text-[#3a3a3a] [&_h2]:mt-10 [&_h2]:mb-5 [&_h3]:text-[1.5rem] [&_h3]:font-semibold [&_h3]:leading-[1.6] [&_h3]:text-[#6b7280] [&_h3]:mt-8 [&_h3]:mb-4 [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-8 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200"
                           />
                           {activeContentSectionKey === 'services' && (
                             <div className="mt-14 space-y-8">
