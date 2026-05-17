@@ -6820,36 +6820,6 @@
 
           {isContentItemModalOpen && (
             <div className="fixed inset-0 bg-white z-50 flex">
-              <aside className="w-[320px] border-r border-gray-200 bg-[#fbfbfa] px-8 py-10 overflow-y-auto shrink-0">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="text-3xl font-bold text-[#3a3a3a]">編輯指南</div>
-                  <button onClick={closeContentItemModal} className="text-gray-400 hover:text-gray-600"><ChevronLeft size={24} /></button>
-                </div>
-                <div className="space-y-3 text-[15px]">
-                  {[
-                    ['paragraph', '添加'],
-                    ['heading', '主標題'],
-                    ['subheading', '副標題'],
-                    ['divider', '分隔線'],
-                    ['quote', '引述'],
-                    ['bullet', '重點清單'],
-                    ['link', '關聯'],
-                    ['file', '文件上傳'],
-                    ['code', '程式碼']
-                  ].map(([key, label]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => insertInsightSnippet(key)}
-                      className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left text-gray-700 hover:bg-white hover:shadow-sm transition-all"
-                    >
-                      <span className="w-7 text-center text-gray-400">+</span>
-                      <span className="font-semibold">{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </aside>
-
               <div className="flex-1 flex flex-col min-w-0">
                 <div className="h-16 border-b border-gray-200 px-8 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-4">
