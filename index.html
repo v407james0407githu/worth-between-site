@@ -919,22 +919,22 @@
           ...defaultHomepageContent.about,
           ...sourceAbout,
           paragraphs: [
-            sourceAbout.paragraphs?.[0] || defaultHomepageContent.about.paragraphs[0],
-            sourceAbout.paragraphs?.[1] || defaultHomepageContent.about.paragraphs[1]
+            sourceAbout.paragraphs?.[0] ?? defaultHomepageContent.about.paragraphs[0],
+            sourceAbout.paragraphs?.[1] ?? defaultHomepageContent.about.paragraphs[1]
           ],
           stats: defaultHomepageContent.about.stats.map((stat, index) => ({
             ...stat,
             ...(aboutStats[index] || {}),
-            value: aboutStats[index]?.value || stat.value,
-            label: aboutStats[index]?.label || stat.label,
-            description: aboutStats[index]?.description || stat.description,
-            accent: aboutStats[index]?.accent || stat.accent
+            value: aboutStats[index]?.value ?? stat.value,
+            label: aboutStats[index]?.label ?? stat.label,
+            description: aboutStats[index]?.description ?? stat.description,
+            accent: aboutStats[index]?.accent ?? stat.accent
           }))
         },
         services: {
           ...defaultHomepageContent.services,
           ...sourceServices,
-          backgroundImage: sourceServices.backgroundImage || defaultHomepageContent.services.backgroundImage,
+          backgroundImage: sourceServices.backgroundImage ?? defaultHomepageContent.services.backgroundImage,
           overlayOpacity: typeof sourceServices.overlayOpacity === 'number'
             ? Math.min(0.95, Math.max(0, sourceServices.overlayOpacity))
             : defaultHomepageContent.services.overlayOpacity,
@@ -944,14 +944,14 @@
           cards: defaultHomepageContent.services.cards.map((card, index) => ({
             ...card,
             ...(sourceServices.cards?.[index] || {}),
-            id: sourceServices.cards?.[index]?.id || card.id,
-            num: sourceServices.cards?.[index]?.num || card.num,
-            title: sourceServices.cards?.[index]?.title || card.title,
-            enTitle: sourceServices.cards?.[index]?.enTitle || card.enTitle,
-            desc: sourceServices.cards?.[index]?.desc || card.desc,
-            target: sourceServices.cards?.[index]?.target || card.target,
-            color: sourceServices.cards?.[index]?.color || card.color,
-            hoverBorder: sourceServices.cards?.[index]?.hoverBorder || card.hoverBorder
+            id: sourceServices.cards?.[index]?.id ?? card.id,
+            num: sourceServices.cards?.[index]?.num ?? card.num,
+            title: sourceServices.cards?.[index]?.title ?? card.title,
+            enTitle: sourceServices.cards?.[index]?.enTitle ?? card.enTitle,
+            desc: sourceServices.cards?.[index]?.desc ?? card.desc,
+            target: sourceServices.cards?.[index]?.target ?? card.target,
+            color: sourceServices.cards?.[index]?.color ?? card.color,
+            hoverBorder: sourceServices.cards?.[index]?.hoverBorder ?? card.hoverBorder
           }))
         },
         work: {
@@ -976,7 +976,7 @@
         footer: {
           ...defaultHomepageContent.footer,
           ...(source.footer || {}),
-          faviconUrl: source.footer?.faviconUrl || defaultHomepageContent.footer.faviconUrl
+          faviconUrl: source.footer?.faviconUrl ?? defaultHomepageContent.footer.faviconUrl
         }
       };
     };
@@ -998,12 +998,12 @@
           return {
             ...mergedItem,
             id: mergedItem.id ?? Number(`${defaultPage.key.length}${index + 1}${Date.now()}`),
-            category: mergedItem.category || [...defaultCategorySet][0] || '未分類',
-            title: mergedItem.title || '',
-            subtitle: mergedItem.subtitle || '',
-            body: mergedItem.body || '',
-            image: mergedItem.image || '',
-            publishedAt: mergedItem.publishedAt || new Date().toISOString().split('T')[0],
+            category: mergedItem.category ?? [...defaultCategorySet][0] ?? '未分類',
+            title: mergedItem.title ?? '',
+            subtitle: mergedItem.subtitle ?? '',
+            body: mergedItem.body ?? '',
+            image: mergedItem.image ?? '',
+            publishedAt: mergedItem.publishedAt ?? new Date().toISOString().split('T')[0],
             isPopular: mergedItem.isPopular === true,
             sortOrder: mergedItem.sortOrder ?? index + 1
           };
@@ -1013,12 +1013,12 @@
             .map((item, index) => ({
               ...item,
               id: item.id ?? Number(`${defaultPage.key.length}${index + 1}${Date.now()}`),
-              category: item.category || [...defaultCategorySet][0] || '未分類',
-              title: item.title || '',
-              subtitle: item.subtitle || '',
-              body: item.body || '',
-              image: item.image || '',
-              publishedAt: item.publishedAt || new Date().toISOString().split('T')[0],
+              category: item.category ?? [...defaultCategorySet][0] ?? '未分類',
+              title: item.title ?? '',
+              subtitle: item.subtitle ?? '',
+              body: item.body ?? '',
+              image: item.image ?? '',
+              publishedAt: item.publishedAt ?? new Date().toISOString().split('T')[0],
               isPopular: item.isPopular === true,
               sortOrder: item.sortOrder ?? (defaultPage.items?.length || 0) + index + 1
             }))
@@ -1038,51 +1038,51 @@
             return {
               ...item,
               category: '媒體',
-              title: item.title || '媒體策略與採購',
+              title: item.title ?? '媒體策略與採購',
               subtitle: 'Media Lead',
-              body: item.body || '20年以上媒體端實戰經驗，從策略規劃到實際採購落地。理解品牌高度與個性，為每個品牌量身打造最適合的媒體配置與內容主軸。',
-              tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : ['平網媒體採購', 'OTT 串流廣告', 'LINE OA 顧問', 'LINE Ads', '電視節目置入', '戲劇商業合作', '議題包裝策展']
+              body: item.body ?? '20年以上媒體端實戰經驗，從策略規劃到實際採購落地。理解品牌高度與個性，為每個品牌量身打造最適合的媒體配置與內容主軸。',
+              tags: Array.isArray(item.tags) ? item.tags : ['平網媒體採購', 'OTT 串流廣告', 'LINE OA 顧問', 'LINE Ads', '電視節目置入', '戲劇商業合作', '議題包裝策展']
             };
           }
           if (defaultPage.key === 'services' && String(item.id) === '202') {
             return {
               ...item,
               category: 'ESG',
-              title: item.title || 'ESG 議題溝通與培育',
+              title: item.title ?? 'ESG 議題溝通與培育',
               subtitle: 'ESG Lead',
-              body: item.body || '從本業找到真實的社會價值，而非另設公益部門。陪伴品牌從資源盤點、議題培育到對外傳播，走完從內部實踐到市場感知的完整路徑。',
-              tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : ['ESG資源盤點', '議題培育', 'ESG傳播規劃', '課程培訓共學', '永續報告溝通']
+              body: item.body ?? '從本業找到真實的社會價值，而非另設公益部門。陪伴品牌從資源盤點、議題培育到對外傳播，走完從內部實踐到市場感知的完整路徑。',
+              tags: Array.isArray(item.tags) ? item.tags : ['ESG資源盤點', '議題培育', 'ESG傳播規劃', '課程培訓共學', '永續報告溝通']
             };
           }
           if (defaultPage.key === 'services' && String(item.id) === '203') {
             return {
               ...item,
               category: '整合行銷',
-              title: item.title || '整合行銷與全案統籌',
+              title: item.title ?? '整合行銷與全案統籌',
               subtitle: 'Growth Lead',
-              body: item.body || '好的策略，需要有人把它變成真實發生的事。從規劃到落地，涵蓋媒體代理、內容營運與活動策劃，讓每一分行銷預算都花在真正有效的地方。',
-              tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : ['整合行銷規劃', '媒體代理', '內容營運', '活動策劃', '全案執行統籌']
+              body: item.body ?? '好的策略，需要有人把它變成真實發生的事。從規劃到落地，涵蓋媒體代理、內容營運與活動策劃，讓每一分行銷預算都花在真正有效的地方。',
+              tags: Array.isArray(item.tags) ? item.tags : ['整合行銷規劃', '媒體代理', '內容營運', '活動策劃', '全案執行統籌']
             };
           }
           if (defaultPage.key === 'services' && String(item.id) === '204') {
             return {
               ...item,
               category: '媒合',
-              title: item.title || '跨域資源媒合',
+              title: item.title ?? '跨域資源媒合',
               subtitle: 'Connection Lead',
-              body: item.body || '品牌的成長，往往發生在意想不到的連結之間。協助品牌找到跨域合作夥伴、公部門資源與異業結盟機會，讓品牌不只在市場上被看見，更在對的生態圈裡生根。',
-              tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : ['異業合作媒合', '公部門資源連結', '國際合作統籌', '品牌社會影響力']
+              body: item.body ?? '品牌的成長，往往發生在意想不到的連結之間。協助品牌找到跨域合作夥伴、公部門資源與異業結盟機會，讓品牌不只在市場上被看見，更在對的生態圈裡生根。',
+              tags: Array.isArray(item.tags) ? item.tags : ['異業合作媒合', '公部門資源連結', '國際合作統籌', '品牌社會影響力']
             };
           }
           if (defaultPage.key === 'services' && String(item.id) === '205') {
             return {
               ...item,
               category: '中小企業',
-              title: item.title || '中小企業行銷顧問',
+              title: item.title ?? '中小企業行銷顧問',
               subtitle: 'SME Lead',
-              body: item.body || '你的事業有底蘊，但市場還不知道你的故事。WB把服務大品牌20年的媒體與行銷專業，帶給傳統產業與家族企業——協助轉型、重塑品牌，讓下一個世代看見你。',
-              tags: Array.isArray(item.tags) && item.tags.length > 0 ? item.tags : ['品牌定位梳理', '行銷管道策略', '數位轉型規劃', '議題包裝曝光'],
-              collaborationModes: Array.isArray(item.collaborationModes) && item.collaborationModes.length > 0 ? item.collaborationModes : ['固定月費顧問陪跑', '單次專案合作']
+              body: item.body ?? '你的事業有底蘊，但市場還不知道你的故事。WB把服務大品牌20年的媒體與行銷專業，帶給傳統產業與家族企業——協助轉型、重塑品牌，讓下一個世代看見你。',
+              tags: Array.isArray(item.tags) ? item.tags : ['品牌定位梳理', '行銷管道策略', '數位轉型規劃', '議題包裝曝光'],
+              collaborationModes: Array.isArray(item.collaborationModes) ? item.collaborationModes : ['固定月費顧問陪跑', '單次專案合作']
             };
           }
           if (defaultPage.key === 'work' && String(item.id) === '301') {
@@ -1156,16 +1156,16 @@
           ...defaultPage,
           ...incomingPage,
           key: defaultPage.key,
-          label: incomingPage.label || defaultPage.label,
+          label: incomingPage.label ?? defaultPage.label,
           route: defaultPage.route,
-          themeColor: incomingPage.themeColor || defaultPage.themeColor,
-          heroTag: incomingPage.heroTag || defaultPage.heroTag,
-          heroTitle: incomingPage.heroTitle || defaultPage.heroTitle,
-          heroSubtitle: incomingPage.heroSubtitle || defaultPage.heroSubtitle,
+          themeColor: incomingPage.themeColor ?? defaultPage.themeColor,
+          heroTag: incomingPage.heroTag ?? defaultPage.heroTag,
+          heroTitle: incomingPage.heroTitle ?? defaultPage.heroTitle,
+          heroSubtitle: incomingPage.heroSubtitle ?? defaultPage.heroSubtitle,
           intro: incomingPage.intro ?? defaultPage.intro,
-          seoTitle: incomingPage.seoTitle || defaultPage.seoTitle,
-          seoDescription: incomingPage.seoDescription || defaultPage.seoDescription,
-          heroImage: incomingPage.heroImage || defaultPage.heroImage,
+          seoTitle: incomingPage.seoTitle ?? defaultPage.seoTitle,
+          seoDescription: incomingPage.seoDescription ?? defaultPage.seoDescription,
+          heroImage: incomingPage.heroImage ?? defaultPage.heroImage,
           heroImagePositionX: clampPercent(incomingPage.heroImagePositionX, defaultPage.heroImagePositionX ?? 50),
           heroImagePositionY: clampPercent(incomingPage.heroImagePositionY, defaultPage.heroImagePositionY ?? 32),
           overlayOpacity: typeof incomingPage.overlayOpacity === 'number'
@@ -3701,16 +3701,16 @@
         if (!targetSection) return;
         setActiveContentSectionKey(targetSection.key);
         setSectionForm({
-          heroTag: targetSection.heroTag || '',
-          heroTitle: targetSection.heroTitle || '',
-          heroSubtitle: targetSection.heroSubtitle || '',
-          intro: targetSection.intro || '',
-          heroImage: targetSection.heroImage || '',
+          heroTag: targetSection.heroTag ?? '',
+          heroTitle: targetSection.heroTitle ?? '',
+          heroSubtitle: targetSection.heroSubtitle ?? '',
+          intro: targetSection.intro ?? '',
+          heroImage: targetSection.heroImage ?? '',
           heroImagePositionX: targetSection.heroImagePositionX ?? 50,
           heroImagePositionY: targetSection.heroImagePositionY ?? 32,
           overlayOpacity: String(targetSection.overlayOpacity ?? 0.72),
-          seoTitle: targetSection.seoTitle || '',
-          seoDescription: targetSection.seoDescription || ''
+          seoTitle: targetSection.seoTitle ?? '',
+          seoDescription: targetSection.seoDescription ?? ''
         });
         setSectionFormErrors({});
         setIsSectionModalOpen(true);
@@ -3753,79 +3753,79 @@
         setActiveHomepageSectionKey(sectionKey);
         if (sectionKey === 'about') {
           setHomepageSectionForm({
-            sectionLabel: target.sectionLabel || '',
-            title: target.title || '',
-            paragraph1: target.paragraphs?.[0] || '',
-            paragraph2: target.paragraphs?.[1] || '',
-            highlight: target.highlight || '',
-            stat1Value: target.stats?.[0]?.value || '',
-            stat1Label: target.stats?.[0]?.label || '',
-            stat1Description: target.stats?.[0]?.description || '',
-            stat2Value: target.stats?.[1]?.value || '',
-            stat2Label: target.stats?.[1]?.label || '',
-            stat2Description: target.stats?.[1]?.description || ''
+            sectionLabel: target.sectionLabel ?? '',
+            title: target.title ?? '',
+            paragraph1: target.paragraphs?.[0] ?? '',
+            paragraph2: target.paragraphs?.[1] ?? '',
+            highlight: target.highlight ?? '',
+            stat1Value: target.stats?.[0]?.value ?? '',
+            stat1Label: target.stats?.[0]?.label ?? '',
+            stat1Description: target.stats?.[0]?.description ?? '',
+            stat2Value: target.stats?.[1]?.value ?? '',
+            stat2Label: target.stats?.[1]?.label ?? '',
+            stat2Description: target.stats?.[1]?.description ?? ''
           });
         } else if (sectionKey === 'services') {
           setHomepageSectionForm({
-            sectionLabel: target.sectionLabel || '',
-            title: target.title || '',
-            intro: target.intro || '',
-            badgeLabel: target.badgeLabel || '',
-            backgroundImage: target.backgroundImage || '',
+            sectionLabel: target.sectionLabel ?? '',
+            title: target.title ?? '',
+            intro: target.intro ?? '',
+            badgeLabel: target.badgeLabel ?? '',
+            backgroundImage: target.backgroundImage ?? '',
             overlayOpacity: String(target.overlayOpacity ?? 0.84),
             cardOverlayOpacity: String(target.cardOverlayOpacity ?? 1.4),
-            card1Title: target.cards?.[0]?.title || '',
-            card1EnTitle: target.cards?.[0]?.enTitle || '',
-            card1Desc: target.cards?.[0]?.desc || '',
-            card1Target: target.cards?.[0]?.target || '',
-            card2Title: target.cards?.[1]?.title || '',
-            card2EnTitle: target.cards?.[1]?.enTitle || '',
-            card2Desc: target.cards?.[1]?.desc || '',
-            card2Target: target.cards?.[1]?.target || '',
-            card3Title: target.cards?.[2]?.title || '',
-            card3EnTitle: target.cards?.[2]?.enTitle || '',
-            card3Desc: target.cards?.[2]?.desc || '',
-            card3Target: target.cards?.[2]?.target || '',
-            card4Title: target.cards?.[3]?.title || '',
-            card4EnTitle: target.cards?.[3]?.enTitle || '',
-            card4Desc: target.cards?.[3]?.desc || '',
-            card4Target: target.cards?.[3]?.target || ''
+            card1Title: target.cards?.[0]?.title ?? '',
+            card1EnTitle: target.cards?.[0]?.enTitle ?? '',
+            card1Desc: target.cards?.[0]?.desc ?? '',
+            card1Target: target.cards?.[0]?.target ?? '',
+            card2Title: target.cards?.[1]?.title ?? '',
+            card2EnTitle: target.cards?.[1]?.enTitle ?? '',
+            card2Desc: target.cards?.[1]?.desc ?? '',
+            card2Target: target.cards?.[1]?.target ?? '',
+            card3Title: target.cards?.[2]?.title ?? '',
+            card3EnTitle: target.cards?.[2]?.enTitle ?? '',
+            card3Desc: target.cards?.[2]?.desc ?? '',
+            card3Target: target.cards?.[2]?.target ?? '',
+            card4Title: target.cards?.[3]?.title ?? '',
+            card4EnTitle: target.cards?.[3]?.enTitle ?? '',
+            card4Desc: target.cards?.[3]?.desc ?? '',
+            card4Target: target.cards?.[3]?.target ?? ''
           });
         } else if (sectionKey === 'work') {
           setHomepageSectionForm({
-            sectionLabel: target.sectionLabel || '',
-            title: target.title || ''
+            sectionLabel: target.sectionLabel ?? '',
+            title: target.title ?? ''
           });
         } else if (sectionKey === 'insights') {
           setHomepageSectionForm({
-            sectionLabel: target.sectionLabel || '',
-            title: target.title || '',
+            sectionLabel: target.sectionLabel ?? '',
+            title: target.title ?? '',
             featuredItemId: target.featuredItemId ? String(target.featuredItemId) : '',
             secondaryItemId1: target.secondaryItemIds?.[0] ? String(target.secondaryItemIds[0]) : '',
             secondaryItemId2: target.secondaryItemIds?.[1] ? String(target.secondaryItemIds[1]) : ''
           });
         } else if (sectionKey === 'contact') {
           setHomepageSectionForm({
-            sectionLabel: target.sectionLabel || '',
-            titlePrefix: target.titlePrefix || '',
-            titleHighlight: target.titleHighlight || '',
-            titleSuffix: target.titleSuffix || '',
-            description: target.description || '',
-            email: target.email || '',
-            formTitle: target.formTitle || '',
-            submitLabel: target.submitLabel || '',
-            serviceOptions: Array.isArray(target.serviceOptions) && target.serviceOptions.length > 0
+            sectionLabel: target.sectionLabel ?? '',
+            titlePrefix: target.titlePrefix ?? '',
+            titleHighlight: target.titleHighlight ?? '',
+            titleSuffix: target.titleSuffix ?? '',
+            description: target.description ?? '',
+            email: target.email ?? '',
+            formTitle: target.formTitle ?? '',
+            submitLabel: target.submitLabel ?? '',
+            serviceOptions: Array.isArray(target.serviceOptions)
               ? [...target.serviceOptions]
               : [...defaultHomepageContent.contact.serviceOptions]
           });
         } else if (sectionKey === 'footer') {
           setHomepageSectionForm({
-            copyrightText: target.copyrightText || '',
-            faviconUrl: target.faviconUrl || defaultHomepageContent.footer.faviconUrl,
-            facebookUrl: target.facebookUrl || '',
-            instagramUrl: target.instagramUrl || '',
-            threadsUrl: target.threadsUrl || '',
-            linkedinUrl: target.linkedinUrl || ''
+            copyrightText: target.copyrightText ?? '',
+            faviconUrl: target.faviconUrl ?? defaultHomepageContent.footer.faviconUrl,
+            facebookUrl: target.facebookUrl ?? '',
+            instagramUrl: target.instagramUrl ?? '',
+            threadsUrl: target.threadsUrl ?? '',
+            linkedinUrl: target.linkedinUrl ?? ''
           });
         }
         setHomepageSectionErrors({});
@@ -4148,15 +4148,15 @@
         if (item) {
           setEditingContentItemId(item.id);
           setContentItemForm({
-            category: item.category || defaultCategory,
-            title: item.title || '',
-            subtitle: item.subtitle || '',
-            body: item.body || '',
-            result: item.result || '',
+            category: item.category ?? defaultCategory,
+            title: item.title ?? '',
+            subtitle: item.subtitle ?? '',
+            body: item.body ?? '',
+            result: item.result ?? '',
             tagsText: Array.isArray(item.tags) ? item.tags.join('\n') : '',
             collaborationModesText: Array.isArray(item.collaborationModes) ? item.collaborationModes.join('\n') : '',
-            image: item.image || '',
-            publishedAt: item.publishedAt || new Date().toISOString().split('T')[0],
+            image: item.image ?? '',
+            publishedAt: item.publishedAt ?? new Date().toISOString().split('T')[0],
             isPopular: item.isPopular === true
           });
         } else {
