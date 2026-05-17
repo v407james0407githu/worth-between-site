@@ -2420,7 +2420,7 @@
                   <button onClick={() => { navigateToRouteTop(page.route); }} className="text-sm font-bold flex items-center gap-2 text-white/80 hover:text-white mb-4">
                     <ChevronLeft size={16} /> 返回 {page.label}
                   </button>
-                  <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-3">{item.title}</h1>
+                  <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-3 text-black">{item.title}</h1>
                   <p className="text-sm md:text-lg text-white/80 font-light leading-relaxed max-w-3xl whitespace-pre-line">{item.subtitle}</p>
                 </div>
               </div>
@@ -2440,7 +2440,7 @@
                 <div className="max-w-4xl mx-auto">
                   {item.bodyHtml ? (
                     <div
-                      className="max-w-none text-gray-700 leading-relaxed whitespace-normal [&_h2]:text-[1.9rem] md:[&_h2]:text-[2.2rem] [&_h2]:font-bold [&_h2]:leading-[1.35] [&_h2]:text-[#2f3238] [&_h2]:mt-12 [&_h2]:mb-5 [&_h3]:text-[1.35rem] md:[&_h3]:text-[1.55rem] [&_h3]:font-semibold [&_h3]:leading-[1.6] [&_h3]:text-[#6b7280] [&_h3]:mt-10 [&_h3]:mb-4 [&_p]:text-[1.05rem] md:[&_p]:text-[1.12rem] [&_p]:leading-[2.05] [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:my-8 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-10 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200"
+                      className="max-w-none text-gray-700 leading-relaxed whitespace-normal [&_h2]:text-[1.9rem] md:[&_h2]:text-[2.2rem] [&_h2]:font-bold [&_h2]:leading-[1.35] [&_h2]:text-black [&_h2]:mt-12 [&_h2]:mb-5 [&_h3]:text-[1.35rem] md:[&_h3]:text-[1.55rem] [&_h3]:font-semibold [&_h3]:leading-[1.6] [&_h3]:text-black [&_h3]:mt-10 [&_h3]:mb-4 [&_p]:text-[1.05rem] md:[&_p]:text-[1.12rem] [&_p]:leading-[2.05] [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:my-8 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-10 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200"
                       dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
                     />
                   ) : (
@@ -7072,7 +7072,7 @@
                             onChange={e => setContentItemForm({ ...contentItemForm, title: e.target.value })}
                             onInput={e => resizeInsightTextarea(e.currentTarget)}
                             placeholder="文章標題"
-                            className="w-full min-h-[4.6rem] bg-transparent border-0 outline-none overflow-hidden resize-none pt-1 text-[3rem] md:text-[3.4rem] font-bold text-[#8d8d8d] placeholder:text-[#9d9d9d] leading-[1.15] mb-12 whitespace-pre-wrap break-words"
+                            className="w-full min-h-[4.6rem] bg-transparent border-0 outline-none overflow-hidden resize-none pt-1 text-[3rem] md:text-[3.4rem] font-bold text-black placeholder:text-[#9d9d9d] leading-[1.15] mb-12 whitespace-pre-wrap break-words"
                           />
                           <textarea
                             ref={insightBodyInputRef}
@@ -7089,7 +7089,7 @@
                             suppressContentEditableWarning
                             onInput={handleInsightRichBodyInput}
                             onContextMenu={e => handleInsightContextMenu(e, 'body')}
-                            className="min-h-[380px] text-[1.12rem] md:text-[1.22rem] leading-[2.05] text-[#616975] outline-none [&_h2]:text-[2rem] [&_h2]:font-bold [&_h2]:leading-[1.45] [&_h2]:text-[#3a3a3a] [&_h2]:mt-10 [&_h2]:mb-5 [&_h3]:text-[1.5rem] [&_h3]:font-semibold [&_h3]:leading-[1.6] [&_h3]:text-[#6b7280] [&_h3]:mt-8 [&_h3]:mb-4 [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-8 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200"
+                            className="min-h-[380px] text-[1.12rem] md:text-[1.22rem] leading-[2.05] text-[#616975] outline-none [&_h2]:text-[2rem] [&_h2]:font-bold [&_h2]:leading-[1.45] [&_h2]:text-black [&_h2]:mt-10 [&_h2]:mb-5 [&_h3]:text-[1.5rem] [&_h3]:font-semibold [&_h3]:leading-[1.6] [&_h3]:text-black [&_h3]:mt-8 [&_h3]:mb-4 [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-8 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200"
                           />
                           {activeContentSectionKey === 'services' && (
                             <div className="mt-14 space-y-8">
