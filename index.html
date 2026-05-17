@@ -1002,6 +1002,7 @@
             title: mergedItem.title ?? '',
             subtitle: mergedItem.subtitle ?? '',
             body: mergedItem.body ?? '',
+            bodyHtml: mergedItem.bodyHtml ?? '',
             image: mergedItem.image ?? '',
             publishedAt: mergedItem.publishedAt ?? new Date().toISOString().split('T')[0],
             isPopular: mergedItem.isPopular === true,
@@ -1017,6 +1018,7 @@
               title: item.title ?? '',
               subtitle: item.subtitle ?? '',
               body: item.body ?? '',
+              bodyHtml: item.bodyHtml ?? '',
               image: item.image ?? '',
               publishedAt: item.publishedAt ?? new Date().toISOString().split('T')[0],
               isPopular: item.isPopular === true,
@@ -2157,6 +2159,7 @@
           block.replaceWith(iframe);
         });
       }, [item.bodyHtml]);
+      const articlePublishedLabel = item.publishedAt ? item.publishedAt.replace(/-/g, '/') : '';
 
       const goContact = () => {
         window.localStorage.setItem(PENDING_SCROLL_STORAGE_KEY, 'contact');
@@ -2437,24 +2440,33 @@
                   <button onClick={() => { navigateToRouteTop(page.route); }} className="text-sm font-bold flex items-center gap-2 text-white/80 hover:text-white mb-4">
                     <ChevronLeft size={16} /> 返回 {page.label}
                   </button>
-                  <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-3 text-black">{item.title}</h1>
-                  <p className="text-sm md:text-lg text-white/80 font-light leading-relaxed max-w-3xl whitespace-pre-line">{item.subtitle}</p>
                 </div>
               </div>
             </div>
           </section>
 
           <>
-              <section className="py-12 md:py-16 px-6 bg-[#f5f5f2] border-b border-gray-200">
-                <div className="max-w-5xl mx-auto">
-                  <div className="aspect-[16/9] rounded-sm overflow-hidden border border-gray-200 bg-gray-200">
+              <section className="py-16 md:py-20 px-6">
+                <div className="max-w-2xl mx-auto">
+                  <h1 className="text-[2.35rem] md:text-[3.45rem] font-bold leading-[1.18] text-black tracking-tight whitespace-pre-line">
+                    {item.title}
+                  </h1>
+                  <div className="mt-6 border-b border-gray-200 pb-4 text-sm md:text-[15px] text-gray-500">
+                    {articlePublishedLabel ? `刊登時間・${articlePublishedLabel}` : '刊登時間未設定'}
+                  </div>
+                  <div className="mt-10 aspect-[16/9] rounded-sm overflow-hidden border border-gray-200 bg-gray-200">
                     <img src={item.image || page.heroImage} alt={item.title} className="w-full h-full object-cover" />
                   </div>
                 </div>
               </section>
 
-              <section className="py-20 md:py-24 px-6">
-                <div className="max-w-4xl mx-auto">
+              <section className="pb-20 md:pb-24 px-6">
+                <div className="max-w-2xl mx-auto">
+                  {item.subtitle && (
+                    <p className="mb-8 text-[1.2rem] md:text-[1.35rem] leading-[1.9] text-gray-500 whitespace-pre-line">
+                      {item.subtitle}
+                    </p>
+                  )}
                   {item.bodyHtml ? (
                     <div
                       ref={renderedBodyRef}
