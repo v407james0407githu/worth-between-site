@@ -5242,8 +5242,18 @@
 
                       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                          <h4 className="font-bold">內容列表</h4>
-                          <span className="text-sm text-gray-500">{activeContentSection.items.length} 筆</span>
+                          <div className="flex items-center gap-4">
+                            <h4 className="font-bold">內容列表</h4>
+                            <span className="text-sm text-gray-500">{activeContentSection.items.length} 筆</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => openContentItemModal()}
+                            className="px-4 py-2 bg-[#4e7055] text-white rounded-lg flex items-center gap-2 text-sm font-bold hover:bg-[#3a5240] transition-colors"
+                          >
+                            <Plus size={16} />
+                            {activeContentSectionKey === 'insights' ? '新增文章' : '新增內容'}
+                          </button>
                         </div>
                         <div className="divide-y divide-gray-100">
                           {sortContentItems(activeContentSection.items).map((item, index) => (
