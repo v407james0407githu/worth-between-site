@@ -26,7 +26,7 @@
   <div id="root"></div>
 
   <script type="text/babel" data-type="module">
-    import React, { useState, useEffect, useRef } from 'react';
+    import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
     import { createRoot } from 'react-dom/client';
     import { createClient } from '@supabase/supabase-js';
     import { 
@@ -3150,8 +3150,12 @@
       const activeHomepageSection = homepageContent[activeHomepageSectionKey];
       const resizeInsightTextarea = (element) => {
         if (!element) return;
-        element.style.height = '0px';
-        element.style.height = `${element.scrollHeight}px`;
+        element.style.height = 'auto';
+        element.style.height = `${element.scrollHeight + 8}px`;
+      };
+      const syncInsightEditorHeights = () => {
+        resizeInsightTextarea(insightTitleInputRef.current);
+        resizeInsightTextarea(insightBodyInputRef.current);
       };
       const getInsightCombinedBodyValue = () => `${contentItemForm.subtitle ? `${contentItemForm.subtitle}\n\n` : ''}${contentItemForm.body || ''}`;
       const setInsightCombinedBodyValue = (rawValue) => {
@@ -3272,10 +3276,18 @@
         closeInsightContextMenu();
         setInsightInsertMenuOpen(false);
       };
-      useEffect(() => {
+      useLayoutEffect(() => {
         if (!isContentItemModalOpen) return;
-        resizeInsightTextarea(insightTitleInputRef.current);
-        resizeInsightTextarea(insightBodyInputRef.current);
+        syncInsightEditorHeights();
+        const frameId = window.requestAnimationFrame(syncInsightEditorHeights);
+        const timeoutId = window.setTimeout(syncInsightEditorHeights, 120);
+        const handleResize = () => syncInsightEditorHeights();
+        window.addEventListener('resize', handleResize);
+        return () => {
+          window.cancelAnimationFrame(frameId);
+          window.clearTimeout(timeoutId);
+          window.removeEventListener('resize', handleResize);
+        };
       }, [isContentItemModalOpen, contentItemForm.title, contentItemForm.subtitle, contentItemForm.body]);
       useEffect(() => {
         if (!insightContextMenu.open) return;
@@ -7029,7 +7041,7 @@
                             onInput={e => resizeInsightTextarea(e.currentTarget)}
                             onContextMenu={e => handleInsightContextMenu(e, 'title')}
                             placeholder="文章標題"
-                            className="w-full bg-transparent border-0 outline-none overflow-hidden resize-none text-[3rem] md:text-[3.4rem] font-bold text-[#8d8d8d] placeholder:text-[#9d9d9d] leading-[1.15] mb-12 whitespace-pre-wrap break-words"
+                            className="w-full min-h-[4.6rem] bg-transparent border-0 outline-none overflow-hidden resize-none pt-1 text-[3rem] md:text-[3.4rem] font-bold text-[#8d8d8d] placeholder:text-[#9d9d9d] leading-[1.15] mb-12 whitespace-pre-wrap break-words"
                           />
                           <textarea
                             ref={insightBodyInputRef}
