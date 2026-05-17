@@ -3121,7 +3121,6 @@
       const [isContentItemModalOpen, setIsContentItemModalOpen] = useState(false);
       const [editingContentItemId, setEditingContentItemId] = useState(null);
       const [contentItemForm, setContentItemForm] = useState({ category: '', title: '', subtitle: '', body: '', bodyHtml: '', result: '', tagsText: '', collaborationModesText: '', image: '', publishedAt: '', isPopular: false, editorStatus: 'published' });
-      const [insightInsertMenuOpen, setInsightInsertMenuOpen] = useState(false);
       const [contentItemErrors, setContentItemErrors] = useState({});
       const [isCompressingContentImage, setIsCompressingContentImage] = useState(false);
       const [contentDeleteTarget, setContentDeleteTarget] = useState(null);
@@ -3318,7 +3317,6 @@
         setEditingContentItemId(null);
         setContentItemErrors({});
         closeInsightContextMenu();
-        setInsightInsertMenuOpen(false);
       };
       useLayoutEffect(() => {
         if (!isContentItemModalOpen) return;
@@ -4345,7 +4343,6 @@
             editorStatus: activeContentSectionKey === 'insights' ? 'draft' : 'published'
           });
         }
-        setInsightInsertMenuOpen(false);
         closeInsightContextMenu();
         setContentItemErrors({});
         setIsContentItemModalOpen(true);
@@ -4428,44 +4425,6 @@
           },
           onError: (message) => setContentItemErrors({ image: message })
         });
-      };
-
-      const insertInsightSnippet = (type) => {
-        if (activeContentSectionKey === 'insights') {
-          const richSnippets = {
-            paragraph: '<p>新段落內容</p>',
-            heading: '<h2>主標題</h2>',
-            subheading: '<h3>副標題</h3>',
-            bullet: '<ul><li>重點一</li><li>重點二</li><li>重點三</li></ul>',
-            quote: '<blockquote>請在此輸入引述內容</blockquote>',
-            code: '<pre class="wb-live-code"><code>&lt;div style="padding:24px;color:white;background:black;"&gt;在此輸入程式碼&lt;/div&gt;</code></pre><p><br></p>',
-            divider: '<hr>',
-            link: '<p><a href="https://example.com" target="_blank" rel="noopener noreferrer">連結名稱</a></p>',
-            file: '<p>附件名稱：請貼上檔案連結</p>',
-            image: '<p>圖片說明：請搭配上方封面圖或內文補充描述</p>'
-          };
-          insertInsightHtmlAtSelection(richSnippets[type] || '<p><br></p>');
-          setInsightInsertMenuOpen(false);
-          return;
-        }
-        const snippets = {
-          paragraph: '\n新段落內容\n',
-          heading: '\n【主標題】\n',
-          subheading: '\n【副標題】\n',
-          bullet: '\n• 重點一\n• 重點二\n• 重點三\n',
-          quote: '\n「請在此輸入引述內容」\n',
-          code: '\n[程式碼區塊]\n',
-          divider: '\n────────────\n',
-          link: '\n連結名稱：https://example.com\n',
-          file: '\n附件名稱：請貼上檔案連結\n',
-          image: '\n圖片說明：請搭配上方封面圖或內文補充描述\n'
-        };
-        const nextSnippet = snippets[type] || '\n';
-        setContentItemForm((prev) => ({
-          ...prev,
-          body: `${prev.body || ''}${nextSnippet}`.replace(/^\n/, '')
-        }));
-        setInsightInsertMenuOpen(false);
       };
 
       const confirmDeleteContentItem = () => {
@@ -7008,39 +6967,6 @@
                       </div>
 
                       <div className="relative mb-10">
-                        <button
-                          type="button"
-                          onClick={() => setInsightInsertMenuOpen((prev) => !prev)}
-                          className="absolute left-[-3rem] top-14 w-10 h-10 rounded-full border border-gray-200 bg-white text-gray-500 hover:text-[#3a3a3a] hover:border-gray-300 shadow-sm"
-                        >
-                          {insightInsertMenuOpen ? <X size={18} className="mx-auto" /> : <Plus size={18} className="mx-auto" />}
-                        </button>
-                        {insightInsertMenuOpen && (
-                          <div className="absolute left-[-1rem] top-0 z-10 w-56 rounded-2xl border border-gray-200 bg-white shadow-xl overflow-hidden">
-                            <div className="px-4 py-3 text-sm font-bold text-gray-500 border-b border-gray-100">插入</div>
-                            {[
-                              ['paragraph', '添加段落'],
-                              ['image', '影像'],
-                              ['heading', '主標題'],
-                              ['subheading', '副標題'],
-                              ['bullet', '重點清單'],
-                              ['quote', '引述'],
-                              ['code', '程式碼'],
-                              ['divider', '分向線'],
-                              ['file', '文件']
-                            ].map(([key, label]) => (
-                              <button
-                                key={key}
-                                type="button"
-                                onClick={() => insertInsightSnippet(key)}
-                                className="block w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                              >
-                                {label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-
                         <div className="mx-auto max-w-xl">
                           <label className="block">
                             <input
