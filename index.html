@@ -6894,11 +6894,6 @@
                               action: () => execInsightRichCommand('bold')
                             },
                             {
-                              key: 'list',
-                              icon: <List size={18} />,
-                              action: () => execInsightRichCommand('insertUnorderedList')
-                            },
-                            {
                               key: 'paragraph',
                               icon: <Pilcrow size={18} />,
                               action: () => execInsightRichCommand('formatBlock', '<p>')
@@ -6960,13 +6955,20 @@
                               }
                               event.target.value = '';
                             }}
-                            className="h-10 border-0 border-l border-gray-200 bg-transparent px-3 text-sm font-bold text-[#3a3a3a] outline-none"
+                            className="h-10 min-w-[52px] border-0 border-r border-gray-200 bg-transparent px-3 text-center text-sm font-bold text-[#3a3a3a] outline-none"
                           >
-                            <option value="">對齊</option>
-                            <option value="left">置左</option>
-                            <option value="center">置中</option>
-                            <option value="right">置右</option>
+                            <option value="">≡</option>
+                            <option value="left">≡</option>
+                            <option value="center">≣</option>
+                            <option value="right">≡›</option>
                           </select>
+                          <button
+                            type="button"
+                            onClick={() => execInsightRichCommand('insertUnorderedList')}
+                            className="flex h-10 w-11 items-center justify-center border-r border-gray-200 text-[#1f2329] transition-colors hover:bg-gray-50"
+                          >
+                            <List size={18} />
+                          </button>
                         </div>
                       )}
                       {Object.keys(contentItemErrors).length > 0 && (
