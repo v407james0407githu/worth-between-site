@@ -35,7 +35,7 @@
       LogOut, Plus, Edit, Trash2, ExternalLink, 
       TrendingUp, Globe, Briefcase, Target, Building2, Quote,
       ChevronLeft, ChevronUp, ChevronDown, GripVertical, Image as ImageIcon, ArrowUp, ArrowDown, Eye, EyeOff,
-      Download, Upload, AlertTriangle, HardDrive, Search
+      Download, Upload, AlertTriangle, HardDrive, Search, Bold, AlignLeft, List, Link as LinkIcon, Code2, Pilcrow, PenSquare
     } from 'lucide-react';
 
     // --- 企業色彩配置 ---
@@ -3089,6 +3089,7 @@
       const [isCompressingContentImage, setIsCompressingContentImage] = useState(false);
       const [contentDeleteTarget, setContentDeleteTarget] = useState(null);
       const [draggedContentItemId, setDraggedContentItemId] = useState(null);
+      const [insightContextMenu, setInsightContextMenu] = useState({ open: false, x: 0, y: 0, target: 'body', start: 0, end: 0 });
       const insightTitleInputRef = useRef(null);
       const insightBodyInputRef = useRef(null);
       const storageSummary = [
@@ -3152,6 +3153,78 @@
         element.style.height = '0px';
         element.style.height = `${element.scrollHeight}px`;
       };
+      const getInsightCombinedBodyValue = () => `${contentItemForm.subtitle ? `${contentItemForm.subtitle}\n\n` : ''}${contentItemForm.body || ''}`;
+      const setInsightCombinedBodyValue = (rawValue) => {
+        const separatorIndex = rawValue.indexOf('\n\n');
+        const hasExplicitSplit = separatorIndex >= 0;
+        const nextSubtitle = hasExplicitSplit ? rawValue.slice(0, separatorIndex) : '';
+        const nextBody = hasExplicitSplit ? rawValue.slice(separatorIndex + 2) : rawValue;
+        setContentItemForm((prev) => ({
+          ...prev,
+          subtitle: nextSubtitle,
+          body: nextBody
+        }));
+      };
+      const closeInsightContextMenu = () => setInsightContextMenu((prev) => ({ ...prev, open: false }));
+      const focusInsightFieldSelection = (target, start, end) => {
+        const element = target === 'title' ? insightTitleInputRef.current : insightBodyInputRef.current;
+        if (!element) return;
+        window.requestAnimationFrame(() => {
+          element.focus();
+          if (typeof element.setSelectionRange === 'function') {
+            element.setSelectionRange(start, end);
+          }
+          resizeInsightTextarea(element);
+        });
+      };
+      const updateInsightFieldValue = (target, nextValue, selectionStart = null, selectionEnd = null) => {
+        if (target === 'title') {
+          setContentItemForm((prev) => ({ ...prev, title: nextValue }));
+        } else {
+          setInsightCombinedBodyValue(nextValue);
+        }
+        if (selectionStart !== null && selectionEnd !== null) {
+          focusInsightFieldSelection(target, selectionStart, selectionEnd);
+        }
+      };
+      const getInsightFieldValue = (target) => (target === 'title' ? contentItemForm.title || '' : getInsightCombinedBodyValue());
+      const prefixSelectedLines = (selectedText, prefix) => selectedText
+        .split('\n')
+        .map((line) => `${prefix}${line}`)
+        .join('\n');
+      const applyInsightSelectionTransform = (transform) => {
+        if (!insightContextMenu.open) return;
+        const { target, start, end } = insightContextMenu;
+        const value = getInsightFieldValue(target);
+        const selectedText = value.slice(start, end);
+        const result = transform(selectedText, value, start, end);
+        if (!result) {
+          closeInsightContextMenu();
+          return;
+        }
+        const normalized = typeof result === 'string'
+          ? { text: result, selectionStart: start, selectionEnd: start + result.length }
+          : result;
+        const nextValue = `${value.slice(0, start)}${normalized.text}${value.slice(end)}`;
+        updateInsightFieldValue(target, nextValue, normalized.selectionStart, normalized.selectionEnd);
+        closeInsightContextMenu();
+      };
+      const handleInsightContextMenu = (event, target) => {
+        const { selectionStart = 0, selectionEnd = 0, value = '' } = event.currentTarget;
+        if (selectionStart === selectionEnd || !value.slice(selectionStart, selectionEnd).trim()) {
+          closeInsightContextMenu();
+          return;
+        }
+        event.preventDefault();
+        setInsightContextMenu({
+          open: true,
+          x: Math.min(event.clientX, window.innerWidth - 540),
+          y: Math.max(24, event.clientY - 56),
+          target,
+          start: selectionStart,
+          end: selectionEnd
+        });
+      };
       const closeBrandModal = () => {
         setIsAddModalOpen(false);
         setEditingBrandId(null);
@@ -3202,6 +3275,16 @@
         resizeInsightTextarea(insightTitleInputRef.current);
         resizeInsightTextarea(insightBodyInputRef.current);
       }, [isContentItemModalOpen, activeContentSectionKey, contentItemForm.title, contentItemForm.subtitle, contentItemForm.body]);
+      useEffect(() => {
+        if (!insightContextMenu.open) return;
+        const dismissMenu = () => closeInsightContextMenu();
+        window.addEventListener('click', dismissMenu);
+        window.addEventListener('scroll', dismissMenu, true);
+        return () => {
+          window.removeEventListener('click', dismissMenu);
+          window.removeEventListener('scroll', dismissMenu, true);
+        };
+      }, [insightContextMenu.open]);
       const hasOpenAdminModal = (
         isHeroModalOpen ||
         isServiceModalOpen ||
@@ -3240,6 +3323,11 @@
         const handleKeyDown = (event) => {
           if (event.key !== 'Escape') return;
           event.preventDefault();
+
+          if (insightContextMenu.open) {
+            closeInsightContextMenu();
+            return;
+          }
 
           if (contentDeleteTarget) {
             setContentDeleteTarget(null);
@@ -3308,6 +3396,7 @@
         isAddModalOpen,
         isCategoryModalOpen,
         isContentItemModalOpen,
+        insightContextMenu.open,
         contentDeleteTarget,
         deleteHeroConfirmId,
         deleteConfirmId
@@ -6735,6 +6824,94 @@
                 <form onSubmit={(e) => saveContentItemForm(e, 'published')} className="flex-1 min-h-0 flex">
                   <div className="flex-1 overflow-y-auto">
                     <div className="max-w-5xl mx-auto px-10 py-10">
+                      {insightContextMenu.open && (
+                        <div
+                          className="fixed z-[80] flex items-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl"
+                          style={{ left: `${insightContextMenu.x}px`, top: `${insightContextMenu.y}px` }}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <select
+                            defaultValue=""
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              if (value === 'heading') {
+                                applyInsightSelectionTransform((selectedText) => prefixSelectedLines(selectedText, '【主標題】'));
+                              } else if (value === 'subheading') {
+                                applyInsightSelectionTransform((selectedText) => prefixSelectedLines(selectedText, '【副標題】'));
+                              } else if (value === 'paragraph') {
+                                applyInsightSelectionTransform((selectedText) => selectedText.replace(/^[【】主副標題•>「」`\-\s]+/gm, '').trim() || selectedText);
+                              }
+                              event.target.value = '';
+                            }}
+                            className="h-10 border-0 border-r border-gray-200 bg-transparent px-3 text-sm font-bold text-[#3a3a3a] outline-none"
+                          >
+                            <option value="">標題</option>
+                            <option value="heading">主標題</option>
+                            <option value="subheading">副標題</option>
+                            <option value="paragraph">一般段落</option>
+                          </select>
+                          {[
+                            {
+                              key: 'bold',
+                              icon: <Bold size={18} />,
+                              action: () => applyInsightSelectionTransform((selectedText) => `**${selectedText}**`)
+                            },
+                            {
+                              key: 'align',
+                              icon: <AlignLeft size={18} />,
+                              action: () => applyInsightSelectionTransform((selectedText) => `［置中］${selectedText}［/置中］`)
+                            },
+                            {
+                              key: 'list',
+                              icon: <List size={18} />,
+                              action: () => applyInsightSelectionTransform((selectedText) => prefixSelectedLines(selectedText, '• '))
+                            },
+                            {
+                              key: 'paragraph',
+                              icon: <Pilcrow size={18} />,
+                              action: () => applyInsightSelectionTransform((selectedText) => selectedText)
+                            },
+                            {
+                              key: 'link',
+                              icon: <LinkIcon size={18} />,
+                              action: () => {
+                                const url = window.prompt('請輸入連結網址', 'https://');
+                                if (!url) return;
+                                applyInsightSelectionTransform((selectedText) => `${selectedText}：${url}`);
+                              }
+                            },
+                            {
+                              key: 'quote',
+                              icon: <Quote size={18} />,
+                              action: () => applyInsightSelectionTransform((selectedText) => `「${selectedText}」`)
+                            },
+                            {
+                              key: 'code',
+                              icon: <Code2 size={18} />,
+                              action: () => applyInsightSelectionTransform((selectedText) => `\`${selectedText}\``)
+                            },
+                            {
+                              key: 'delete',
+                              icon: <Trash2 size={18} />,
+                              action: () => applyInsightSelectionTransform(() => ({ text: '', selectionStart: insightContextMenu.start, selectionEnd: insightContextMenu.start }))
+                            },
+                            {
+                              key: 'edit',
+                              icon: <PenSquare size={18} />,
+                              action: () => closeInsightContextMenu()
+                            }
+                          ].map((item) => (
+                            <button
+                              key={item.key}
+                              type="button"
+                              onClick={item.action}
+                              className="flex h-10 w-11 items-center justify-center border-r border-gray-200 text-[#1f2329] transition-colors hover:bg-gray-50 last:border-r-0"
+                            >
+                              {item.icon}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       {Object.keys(contentItemErrors).length > 0 && (
                         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 mb-6">
                           {Object.values(contentItemErrors)[0]}
@@ -6835,6 +7012,7 @@
                             value={contentItemForm.title}
                             onChange={e => setContentItemForm({ ...contentItemForm, title: e.target.value })}
                             onInput={e => resizeInsightTextarea(e.currentTarget)}
+                            onContextMenu={e => handleInsightContextMenu(e, 'title')}
                             placeholder="文章標題"
                             className="w-full bg-transparent border-0 outline-none overflow-hidden resize-none text-[3rem] md:text-[3.4rem] font-bold text-[#8d8d8d] placeholder:text-[#9d9d9d] leading-[1.15] mb-12 whitespace-pre-wrap break-words"
                           />
@@ -6842,19 +7020,9 @@
                             ref={insightBodyInputRef}
                             rows="12"
                             value={`${contentItemForm.subtitle ? `${contentItemForm.subtitle}\n\n` : ''}${contentItemForm.body}`}
-                            onChange={e => {
-                              const raw = e.target.value;
-                              const separatorIndex = raw.indexOf('\n\n');
-                              const hasExplicitSplit = separatorIndex >= 0;
-                              const nextSubtitle = hasExplicitSplit ? raw.slice(0, separatorIndex) : '';
-                              const nextBody = hasExplicitSplit ? raw.slice(separatorIndex + 2) : raw;
-                              setContentItemForm({
-                                ...contentItemForm,
-                                subtitle: nextSubtitle,
-                                body: nextBody
-                              });
-                            }}
+                            onChange={e => setInsightCombinedBodyValue(e.target.value)}
                             onInput={e => resizeInsightTextarea(e.currentTarget)}
+                            onContextMenu={e => handleInsightContextMenu(e, 'body')}
                             className="w-full bg-transparent border-0 outline-none overflow-hidden resize-none text-[2rem] leading-[2.2] text-[#8d8d8d] placeholder:text-[#9d9d9d] min-h-[380px] whitespace-pre-wrap break-words"
                             placeholder="請在這裡輸入文章摘要與正文內容。"
                           />
