@@ -3089,6 +3089,8 @@
       const [isCompressingContentImage, setIsCompressingContentImage] = useState(false);
       const [contentDeleteTarget, setContentDeleteTarget] = useState(null);
       const [draggedContentItemId, setDraggedContentItemId] = useState(null);
+      const insightTitleInputRef = useRef(null);
+      const insightBodyInputRef = useRef(null);
       const storageSummary = [
         {
           key: HERO_SLIDES_STORAGE_KEY,
@@ -3145,6 +3147,11 @@
       ];
       const activeHomepageSectionMeta = homepageSectionOptions.find((section) => section.key === activeHomepageSectionKey) || homepageSectionOptions[0];
       const activeHomepageSection = homepageContent[activeHomepageSectionKey];
+      const resizeInsightTextarea = (element) => {
+        if (!element) return;
+        element.style.height = '0px';
+        element.style.height = `${element.scrollHeight}px`;
+      };
       const closeBrandModal = () => {
         setIsAddModalOpen(false);
         setEditingBrandId(null);
@@ -3190,6 +3197,11 @@
         setEditingContentItemId(null);
         setContentItemErrors({});
       };
+      useEffect(() => {
+        if (!isContentItemModalOpen || activeContentSectionKey !== 'insights') return;
+        resizeInsightTextarea(insightTitleInputRef.current);
+        resizeInsightTextarea(insightBodyInputRef.current);
+      }, [isContentItemModalOpen, activeContentSectionKey, contentItemForm.title, contentItemForm.subtitle, contentItemForm.body]);
       const hasOpenAdminModal = (
         isHeroModalOpen ||
         isServiceModalOpen ||
@@ -6722,7 +6734,7 @@
 
                 <form onSubmit={(e) => saveContentItemForm(e, 'published')} className="flex-1 min-h-0 flex">
                   <div className="flex-1 overflow-y-auto">
-                    <div className="max-w-4xl mx-auto px-10 py-10">
+                    <div className="max-w-5xl mx-auto px-10 py-10">
                       {Object.keys(contentItemErrors).length > 0 && (
                         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 mb-6">
                           {Object.values(contentItemErrors)[0]}
@@ -6816,15 +6828,19 @@
                       </div>
 
                       <div className="relative min-h-[520px]">
-                        <div className="max-w-5xl mx-auto">
-                          <input
+                        <div className="max-w-4xl mx-auto">
+                          <textarea
+                            ref={insightTitleInputRef}
+                            rows="1"
                             value={contentItemForm.title}
                             onChange={e => setContentItemForm({ ...contentItemForm, title: e.target.value })}
+                            onInput={e => resizeInsightTextarea(e.currentTarget)}
                             placeholder="文章標題"
-                            className="w-full bg-transparent border-0 outline-none text-[3rem] md:text-[3.4rem] font-bold text-[#8d8d8d] placeholder:text-[#9d9d9d] leading-[1.15] mb-12"
+                            className="w-full bg-transparent border-0 outline-none overflow-hidden resize-none text-[3rem] md:text-[3.4rem] font-bold text-[#8d8d8d] placeholder:text-[#9d9d9d] leading-[1.15] mb-12 whitespace-pre-wrap break-words"
                           />
                           <textarea
-                            rows="18"
+                            ref={insightBodyInputRef}
+                            rows="12"
                             value={`${contentItemForm.subtitle ? `${contentItemForm.subtitle}\n\n` : ''}${contentItemForm.body}`}
                             onChange={e => {
                               const raw = e.target.value;
@@ -6838,7 +6854,8 @@
                                 body: nextBody
                               });
                             }}
-                            className="w-full bg-transparent border-0 outline-none text-[2rem] leading-[2.2] text-[#8d8d8d] placeholder:text-[#9d9d9d] resize-none min-h-[380px]"
+                            onInput={e => resizeInsightTextarea(e.currentTarget)}
+                            className="w-full bg-transparent border-0 outline-none overflow-hidden resize-none text-[2rem] leading-[2.2] text-[#8d8d8d] placeholder:text-[#9d9d9d] min-h-[380px] whitespace-pre-wrap break-words"
                             placeholder="請在這裡輸入文章摘要與正文內容。"
                           />
                         </div>
