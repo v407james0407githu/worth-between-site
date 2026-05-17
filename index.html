@@ -1900,18 +1900,18 @@
                           <div
                             className="bg-white/72 border border-gray-300 rounded-full aspect-square w-full mx-auto p-10 md:p-12 shadow-[0_18px_40px_rgba(58,58,58,0.04)] backdrop-blur-[1px] flex items-center relative overflow-hidden"
                           >
-                            <div className={`flex w-full ${index === 1 ? 'flex-col items-center justify-start gap-7 pt-[6.3rem] md:pt-[6.9rem] px-8 md:px-10' : 'items-start gap-6 -translate-y-5 md:-translate-y-7'}`}>
+                            <div className={`flex w-full ${index === 1 ? 'flex-col items-center justify-start gap-5 pt-[6.4rem] md:pt-[7rem] px-8 md:px-10 text-center' : 'items-start gap-6 -translate-y-5 md:-translate-y-7'}`}>
                               <div className={`${index === 1 ? 'text-[4.2rem] md:text-[4.8rem] text-center' : 'text-[4.5rem] md:text-[5.2rem]'} font-bold text-[#2f3238] leading-none shrink-0`}>
                                 {stat.value}
                                 <span style={{ color: stat.accent || colors.orange }}>
                                   {String(stat.value).endsWith('+') || String(stat.value).endsWith('%') ? '' : '+'}
                                 </span>
                               </div>
-                              <div className={index === 1 ? 'w-full flex items-start justify-center gap-5 md:gap-7 text-left' : 'pt-2'}>
-                                <div className={`${index === 1 ? 'text-[1.55rem] md:text-[1.7rem] leading-[1.2] max-w-[6.1em] shrink-0' : 'text-2xl'} font-bold text-[#2f3238] whitespace-pre-line`}>
+                              <div className={index === 1 ? 'w-full max-w-[15em] mx-auto' : 'pt-2'}>
+                                <div className={`${index === 1 ? 'text-2xl leading-[1.2] mb-3' : 'text-2xl'} font-bold text-[#2f3238] whitespace-pre-line`}>
                                   {stat.label}
                                 </div>
-                                <div className={`${index === 1 ? 'text-[0.92rem] leading-[1.7] max-w-[10.5em] pt-1' : 'text-lg'} text-gray-400 whitespace-pre-line`}>
+                                <div className={`${index === 1 ? 'text-lg leading-[1.7]' : 'text-lg'} text-gray-400 whitespace-pre-line`}>
                                   {stat.description}
                                 </div>
                               </div>
