@@ -6855,7 +6855,7 @@
             </div>
           )}
 
-          {isContentItemModalOpen && (
+          {isContentItemModalOpen && isInsightContentSection && (
             <div className="fixed inset-0 bg-white z-50 flex">
               <div className="flex-1 flex flex-col min-w-0">
                 <div className="h-16 border-b border-gray-200 px-8 flex items-center justify-between shrink-0">
@@ -7246,6 +7246,117 @@
                         </div>
                       </div>
                     </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {isContentItemModalOpen && !isInsightContentSection && (
+            <div className="fixed inset-0 bg-[#3a3a3a]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl p-5 md:p-6 w-full max-w-2xl shadow-xl max-h-[88vh] overflow-hidden flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-[#3a3a3a]">{editingContentItemId ? '編輯內容' : '新增內容'}</h3>
+                  <button onClick={() => setIsContentItemModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
+                </div>
+                <form onSubmit={saveContentItemForm} className="space-y-4 overflow-y-auto pr-1">
+                  {Object.keys(contentItemErrors).length > 0 && (
+                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      {Object.values(contentItemErrors)[0]}
+                    </div>
+                  )}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">子分類</label>
+                      <select value={contentItemForm.category} onChange={e => setContentItemForm({ ...contentItemForm, category: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
+                        {(activeContentSection?.categories || []).map((category) => (
+                          <option key={category} value={category}>{category}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">圖片網址</label>
+                      <input value={contentItemForm.image} onChange={e => setContentItemForm({ ...contentItemForm, image: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">發佈日期</label>
+                      <input type="date" value={contentItemForm.publishedAt} onChange={e => setContentItemForm({ ...contentItemForm, publishedAt: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
+                    </div>
+                    <div className="flex items-end">
+                      <label className="inline-flex items-center gap-3 text-sm font-bold text-gray-700">
+                        <input type="checkbox" checked={contentItemForm.isPopular} onChange={e => setContentItemForm({ ...contentItemForm, isPopular: e.target.checked })} className="w-4 h-4" />
+                        設為置頂文章
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">標題</label>
+                    <input value={contentItemForm.title} onChange={e => setContentItemForm({ ...contentItemForm, title: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">摘要</label>
+                    <input value={contentItemForm.subtitle} onChange={e => setContentItemForm({ ...contentItemForm, subtitle: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">內容</label>
+                    <textarea rows="5" value={contentItemForm.body} onChange={e => setContentItemForm({ ...contentItemForm, body: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none" />
+                  </div>
+                  {activeContentSectionKey === 'services' && (
+                    <>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">服務內容色塊文字 <span className="text-gray-400 font-normal">每行一項</span></label>
+                        <textarea
+                          rows="4"
+                          value={contentItemForm.tagsText}
+                          onChange={e => setContentItemForm({ ...contentItemForm, tagsText: e.target.value })}
+                          className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none"
+                          placeholder={'品牌定位梳理\n行銷管道策略\n數位轉型規劃\n議題包裝曝光'}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">合作形式 <span className="text-gray-400 font-normal">每行一項，可留空</span></label>
+                        <textarea
+                          rows="3"
+                          value={contentItemForm.collaborationModesText}
+                          onChange={e => setContentItemForm({ ...contentItemForm, collaborationModesText: e.target.value })}
+                          className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none"
+                          placeholder={'固定月費顧問陪跑\n單次專案合作'}
+                        />
+                      </div>
+                    </>
+                  )}
+                  {activeContentSectionKey === 'work' && (
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">成效 <span className="text-gray-400 font-normal">可留空</span></label>
+                      <textarea
+                        rows="4"
+                        value={contentItemForm.result}
+                        onChange={e => setContentItemForm({ ...contentItemForm, result: e.target.value })}
+                        className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none"
+                        placeholder="例如：成效：影片總觀看 150萬+　·　FB觸及 107萬+"
+                      />
+                      <p className="mt-2 text-xs text-gray-400">未填寫時，前台不會顯示成效區塊。</p>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-2">或直接上傳圖片</label>
+                    <input
+                      type="file"
+                      accept={SUPPORTED_IMAGE_ACCEPT}
+                      onChange={handleContentItemImageUpload}
+                      disabled={isCompressingContentImage}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-[#4e7055] file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-[#3a5240] disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                    <p className="mt-2 text-xs text-gray-400">{isCompressingContentImage ? '內容圖片壓縮中...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，上傳後會自動轉 WebP 並壓到約 70 KB。`}</p>
+                  </div>
+                  <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] min-h-[180px]">
+                    <img src={contentItemForm.image || activeContentSection?.heroImage} alt="Content preview" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 sticky bottom-0 bg-white">
+                    <button type="button" onClick={() => setIsContentItemModalOpen(false)} className="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition-colors">取消</button>
+                    <button type="submit" className="px-5 py-2.5 bg-[#4e7055] text-white font-bold rounded-lg hover:bg-[#3a5240] transition-colors">儲存內容</button>
                   </div>
                 </form>
               </div>
