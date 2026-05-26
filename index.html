@@ -35,7 +35,7 @@
       LogOut, Plus, Edit, Trash2, ExternalLink, 
       TrendingUp, Globe, Briefcase, Target, Building2, Quote,
       ChevronLeft, ChevronUp, ChevronDown, GripVertical, Image as ImageIcon, ArrowUp, ArrowDown, Eye, EyeOff,
-      Download, Upload, AlertTriangle, HardDrive, Search, Bold, List, ListOrdered, Link as LinkIcon, Code2, Strikethrough, Underline
+      Download, Upload, Search, Bold, List, ListOrdered, Link as LinkIcon, Code2, Strikethrough, Underline
     } from 'lucide-react';
 
     // --- 企業色彩配置 ---
@@ -65,7 +65,6 @@
     const PENDING_HOME_TOP_KEY = 'worth-between-pending-home-top';
     const PENDING_ROUTE_TOP_KEY = 'worth-between-pending-route-top';
     const ADVISOR_TRANSITION_STORAGE_KEY = 'worth-between-advisor-transition';
-    const STORAGE_BACKUP_VERSION = '1.0.0';
     const SUPABASE_URL = window.WORTH_BETWEEN_SUPABASE_URL || 'https://zbhicnnchroqyxrgbqfr.supabase.co';
     const SUPABASE_ANON_KEY = window.WORTH_BETWEEN_SUPABASE_ANON_KEY || 'sb_publishable_WUlK1Vu0YfpNeM89zuxyDg_SLN5jfK-';
     const SUPABASE_SITE_STATE_TABLE = 'site_state';
@@ -291,7 +290,7 @@
           id: 1,
           name: 'Admin',
           description: '可管理所有內容、Banner 與權限設定。',
-          permissions: ['dashboard:view', 'hero:view', 'hero:manage', 'content:view', 'content:manage', 'team:view', 'team:manage', 'storage:view', 'storage:manage']
+          permissions: ['dashboard:view', 'hero:view', 'hero:manage', 'content:view', 'content:manage', 'team:view', 'team:manage']
         },
         {
           id: 2,
@@ -364,15 +363,13 @@
       '首頁管理',
       '內容管理',
       '權限角色管理',
-      '本機資料管理',
       '資料新增編輯刪除'
     ];
     const permissionMatrix = [
       { key: 'dashboard', label: '儀表板', permissions: [{ key: 'dashboard:view', label: '檢視' }] },
       { key: 'hero', label: '首頁管理', permissions: [{ key: 'hero:view', label: '檢視' }, { key: 'hero:manage', label: '管理' }] },
       { key: 'content', label: '內容管理', permissions: [{ key: 'content:view', label: '檢視' }, { key: 'content:manage', label: '管理' }] },
-      { key: 'team', label: '權限角色', permissions: [{ key: 'team:view', label: '檢視' }, { key: 'team:manage', label: '管理' }] },
-      { key: 'storage', label: '本機資料', permissions: [{ key: 'storage:view', label: '檢視' }, { key: 'storage:manage', label: '管理' }] }
+      { key: 'team', label: '權限角色', permissions: [{ key: 'team:view', label: '檢視' }, { key: 'team:manage', label: '管理' }] }
     ];
     const sitePageConfigs = [
       { key: 'about', label: '關於我們', route: '#/about', color: colors.green, enLabel: 'About' },
@@ -3058,8 +3055,7 @@
       serviceRecords,
       setServiceRecords,
       teamAccess,
-      setTeamAccess,
-      storageState
+      setTeamAccess
     }) => {
       const [isAuthenticated, setIsAuthenticated] = useState(() => window.localStorage.getItem(ADMIN_AUTH_STORAGE_KEY) === 'true');
       const [activeTab, setActiveTab] = useState('dashboard');
@@ -3091,7 +3087,7 @@
       const [roleFormError, setRoleFormError] = useState('');
       const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
       useEffect(() => {
-        if (activeTab === 'brands' || activeTab === 'services') {
+        if (activeTab === 'brands' || activeTab === 'services' || activeTab === 'storage') {
           setActiveTab('dashboard');
         }
       }, [activeTab]);
@@ -3110,7 +3106,6 @@
       const [deleteHeroConfirmId, setDeleteHeroConfirmId] = useState(null);
       const [draggedHeroId, setDraggedHeroId] = useState(null);
       const heroImportInputRef = useRef(null);
-      const storageImportInputRef = useRef(null);
       const sortedHeroSlides = sortSlides(heroSlides);
       const activeHeroSlides = sortedHeroSlides.filter((slide) => slide.isActive !== false);
       const [activeContentSectionKey, setActiveContentSectionKey] = useState('about');
@@ -3141,38 +3136,6 @@
       const insightRichBodyRef = useRef(null);
       const insightSelectionRangeRef = useRef(null);
       const insightBodyMediaInputRef = useRef(null);
-      const storageSummary = [
-        {
-          key: HERO_SLIDES_STORAGE_KEY,
-          label: 'Banner 資料',
-          description: '首頁輪播圖、排序、啟用狀態與文案',
-          size: window.localStorage.getItem(HERO_SLIDES_STORAGE_KEY)?.length || 0
-        },
-        {
-          key: CONTENT_PAGES_STORAGE_KEY,
-          label: '內容頁資料',
-          description: '關於我們、專業服務、案例實績、觀點文章的頁面內容',
-          size: window.localStorage.getItem(CONTENT_PAGES_STORAGE_KEY)?.length || 0
-        },
-        {
-          key: HOMEPAGE_CONTENT_STORAGE_KEY,
-          label: '首頁內容',
-          description: '首頁各段落的標題、文字與使用中的圖片',
-          size: window.localStorage.getItem(HOMEPAGE_CONTENT_STORAGE_KEY)?.length || 0
-        },
-        {
-          key: TEAM_ACCESS_STORAGE_KEY,
-          label: '權限角色資料',
-          description: '角色、權限與後台成員資料',
-          size: window.localStorage.getItem(TEAM_ACCESS_STORAGE_KEY)?.length || 0
-        },
-        {
-          key: ADMIN_AUTH_STORAGE_KEY,
-          label: '登入狀態',
-          description: '後台是否保持登入',
-          size: window.localStorage.getItem(ADMIN_AUTH_STORAGE_KEY)?.length || 0
-        }
-      ];
       const activeContentSection = contentPages.find((page) => page.key === activeContentSectionKey) || contentPages[0];
       const activeContentConfig = activeContentSection ? buildContentPageConfig(activeContentSection) : sitePageConfigs[0];
       const isInsightContentSection = activeContentSection?.key === 'insights';
@@ -4749,166 +4712,6 @@
         setFlashMessage('首頁 Banner 已重設為預設內容。');
       };
 
-      const exportStorageBackup = () => {
-        const payload = {
-          version: STORAGE_BACKUP_VERSION,
-          exportedAt: new Date().toISOString(),
-          heroSlides: normalizeHeroSlides(heroSlides),
-          homepageContent: normalizeHomepageContent(homepageContent),
-          contentPages: normalizeContentPages(contentPages),
-          brands,
-          serviceRecords,
-          teamAccess,
-          adminAuth: window.localStorage.getItem(ADMIN_AUTH_STORAGE_KEY) === 'true'
-        };
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `worth-between-local-backup-${new Date().toISOString().slice(0, 10)}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
-      };
-
-      const importStorageBackup = async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-        const shouldImport = window.confirm('匯入備份會覆蓋目前 Banner 資料，並更新登入狀態。確定要繼續嗎？');
-        if (!shouldImport) {
-          event.target.value = '';
-          return;
-        }
-
-        try {
-          const text = await file.text();
-          const parsed = JSON.parse(text);
-          if (!parsed?.version) {
-            throw new Error('missing-version');
-          }
-          if (parsed.version !== STORAGE_BACKUP_VERSION) {
-            throw new Error('unsupported-version');
-          }
-          if (!parsed || !Array.isArray(parsed.heroSlides) || parsed.heroSlides.length === 0) {
-            throw new Error('invalid');
-          }
-
-          const normalizedSlides = normalizeHeroSlides(
-            parsed.heroSlides.map((slide, index) => ({
-              id: slide.id ?? Date.now() + index,
-              tag: slide.tag || '',
-              title: slide.title || '',
-              subtitle: slide.subtitle || '',
-              bgImage: slide.bgImage || '',
-              accent: slide.accent || colors.orange,
-              isActive: slide.isActive !== false,
-              sortOrder: slide.sortOrder ?? index + 1
-            }))
-          );
-
-          const hasInvalidSlide = normalizedSlides.some((slide) => !slide.title.trim() || !slide.subtitle.trim() || !slide.bgImage.trim());
-          if (hasInvalidSlide) throw new Error('invalid');
-          const normalizedHomepageContent = normalizeHomepageContent(parsed.homepageContent || defaultHomepageContent);
-          const normalizedPages = normalizeContentPages(parsed.contentPages || defaultContentPages);
-          const normalizedBrands = Array.isArray(parsed.brands) && parsed.brands.length > 0
-            ? parsed.brands
-            : defaultBrands;
-          const normalizedServiceRecords = Array.isArray(parsed.serviceRecords) && parsed.serviceRecords.length > 0
-            ? parsed.serviceRecords
-            : defaultServiceRecords;
-          const normalizedTeamAccess = parsed.teamAccess?.roles && parsed.teamAccess?.members
-            ? parsed.teamAccess
-            : defaultTeamAccess;
-
-          setHeroSlides(normalizedSlides);
-          setHomepageContent(normalizedHomepageContent);
-          setContentPages(normalizedPages);
-          setBrands(normalizedBrands);
-          setServiceRecords(normalizedServiceRecords);
-          setTeamAccess(normalizedTeamAccess);
-          if (parsed.adminAuth) {
-            setIsAuthenticated(true);
-            window.localStorage.setItem(ADMIN_AUTH_STORAGE_KEY, 'true');
-          } else {
-            setIsAuthenticated(false);
-            window.localStorage.removeItem(ADMIN_AUTH_STORAGE_KEY);
-          }
-          setFlashMessage(`本機資料備份匯入完成。備份版本 ${parsed.version} 已成功套用。`);
-        } catch (error) {
-          if (error.message === 'missing-version') {
-            alert('匯入失敗：這份備份沒有版本號，無法確認格式是否相容。請使用新版匯出功能重新建立備份。');
-          } else if (error.message === 'unsupported-version') {
-            alert(`匯入失敗：這份備份版本與目前系統不相容。支援版本為 ${STORAGE_BACKUP_VERSION}。`);
-          } else {
-            alert('匯入失敗：請確認備份 JSON 格式正確，且版本號可被目前系統支援。');
-          }
-        } finally {
-          event.target.value = '';
-        }
-      };
-
-      const clearStorageItem = (key) => {
-        const shouldClear = window.confirm(`確定要清除「${key}」嗎？此動作無法復原。`);
-        if (!shouldClear) return;
-
-        if (key === HERO_SLIDES_STORAGE_KEY) {
-          setHeroSlides(defaultHeroSlides.map((slide) => ({ ...slide })));
-          window.localStorage.removeItem(key);
-          setFlashMessage('Banner 本機資料已清除，首頁輪播已恢復為預設內容。');
-        } else if (key === HOMEPAGE_CONTENT_STORAGE_KEY) {
-          setHomepageContent(normalizeHomepageContent(defaultHomepageContent));
-          window.localStorage.removeItem(key);
-          setFlashMessage('首頁段落內容已重設為預設值。');
-        } else if (key === CONTENT_PAGES_STORAGE_KEY) {
-          setContentPages(normalizeContentPages(defaultContentPages));
-          window.localStorage.removeItem(key);
-          setFlashMessage('四個內容子頁已恢復為預設內容。');
-        } else if (key === BRANDS_STORAGE_KEY) {
-          setBrands(defaultBrands);
-          window.localStorage.removeItem(key);
-          setFlashMessage('這組隱藏資料已恢復為預設內容。');
-        } else if (key === SERVICE_TRACKER_STORAGE_KEY) {
-          setServiceRecords(defaultServiceRecords);
-          window.localStorage.removeItem(key);
-          setFlashMessage('這組隱藏資料已恢復為預設內容。');
-        } else if (key === TEAM_ACCESS_STORAGE_KEY) {
-          setTeamAccess(defaultTeamAccess);
-          window.localStorage.removeItem(key);
-          setFlashMessage('權限角色資料已恢復為預設內容。');
-        } else if (key === ADMIN_AUTH_STORAGE_KEY) {
-          setIsAuthenticated(false);
-          window.localStorage.removeItem(ADMIN_AUTH_STORAGE_KEY);
-          const message = '登入狀態已清除，請重新登入。';
-          window.localStorage.setItem(ADMIN_FLASH_STORAGE_KEY, message);
-          setFlashMessage(message);
-          return;
-        } else {
-          window.localStorage.removeItem(key);
-          setFlashMessage(`本機資料「${key}」已清除。`);
-        }
-      };
-
-      const clearAllStorage = () => {
-        const shouldClear = window.confirm('確定要清除這個網站的所有本機資料嗎？會移除 Banner 自訂內容與登入狀態。');
-        if (!shouldClear) return;
-        const message = '已清除所有本機資料，Banner 已重設並請重新登入。';
-        window.localStorage.setItem(ADMIN_FLASH_STORAGE_KEY, message);
-        window.localStorage.removeItem(HERO_SLIDES_STORAGE_KEY);
-        window.localStorage.removeItem(HOMEPAGE_CONTENT_STORAGE_KEY);
-        window.localStorage.removeItem(CONTENT_PAGES_STORAGE_KEY);
-        window.localStorage.removeItem(BRANDS_STORAGE_KEY);
-        window.localStorage.removeItem(SERVICE_TRACKER_STORAGE_KEY);
-        window.localStorage.removeItem(TEAM_ACCESS_STORAGE_KEY);
-        window.localStorage.removeItem(ADMIN_AUTH_STORAGE_KEY);
-        setHeroSlides(defaultHeroSlides.map((slide) => ({ ...slide })));
-        setHomepageContent(normalizeHomepageContent(defaultHomepageContent));
-        setContentPages(normalizeContentPages(defaultContentPages));
-        setBrands(defaultBrands);
-        setServiceRecords(defaultServiceRecords);
-        setTeamAccess(defaultTeamAccess);
-        setFlashMessage(message);
-        setIsAuthenticated(false);
-        window.location.hash = '#/private-manager';
-      };
       const exportBrandsCsv = () => {
         const rows = [['品牌名稱', '服務類型', '狀態', '最後更新']];
         sortedFilteredBrands.forEach((brand) => {
@@ -5003,9 +4806,6 @@
               <button onClick={() => setActiveTab('content')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'content' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
                 <FileText size={18} /> 內容管理
               </button>
-              <button onClick={() => setActiveTab('storage')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'storage' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
-                <HardDrive size={18} /> 本機資料管理
-              </button>
               <button onClick={() => setActiveTab('team')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'team' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
                 <Users size={18} /> 權限與角色
               </button>
@@ -5026,7 +4826,6 @@
                 {activeTab === 'dashboard' && '總覽儀表板 Overview'}
                 {activeTab === 'hero-slider' && '首頁管理 Home Management'}
                 {activeTab === 'content' && '內容管理 Content CMS'}
-                {activeTab === 'storage' && '本機資料管理 Local Storage'}
                 {activeTab === 'team' && '權限與角色 Team Access'}
               </h2>
               <div className="flex items-center gap-4">
@@ -5373,80 +5172,6 @@
                           ))}
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'storage' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="text-xl font-bold">本機資料管理</h3>
-                      <p className="text-gray-500 text-sm mt-1">管理這個網站儲存在目前瀏覽器的 Banner 資料與登入狀態，適合備份、搬移或重設。</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <input
-                        ref={storageImportInputRef}
-                        type="file"
-                        accept="application/json"
-                        onChange={importStorageBackup}
-                        className="hidden"
-                      />
-                      <button onClick={() => storageImportInputRef.current?.click()} className="px-4 py-2 bg-white text-[#3a3a3a] rounded-lg flex items-center gap-2 text-sm font-bold border border-gray-200 hover:bg-gray-50 transition-colors">
-                        <Upload size={16}/> 匯入備份
-                      </button>
-                      <button onClick={exportStorageBackup} className="px-4 py-2 bg-white text-[#3a3a3a] rounded-lg flex items-center gap-2 text-sm font-bold border border-gray-200 hover:bg-gray-50 transition-colors">
-                        <Download size={16}/> 匯出全部資料
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-gray-500 text-sm font-bold mb-1">已管理資料鍵</p>
-                      <p className="text-3xl font-bold">{storageSummary.length}</p>
-                    </div>
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-gray-500 text-sm font-bold mb-1">Banner 筆數</p>
-                      <p className="text-3xl font-bold">{heroSlides.length}</p>
-                    </div>
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-gray-500 text-sm font-bold mb-1">登入狀態</p>
-                      <p className="text-3xl font-bold">{isAuthenticated ? 'ON' : 'OFF'}</p>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                      <h4 className="font-bold">目前本機資料</h4>
-                      <button onClick={clearAllStorage} className="px-4 py-2 text-sm font-bold text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
-                        清除全部資料
-                      </button>
-                    </div>
-                    <div className="divide-y divide-gray-100">
-                      {storageSummary.map((item) => (
-                        <div key={item.key} className="px-6 py-5 flex items-center justify-between gap-6">
-                          <div>
-                            <div className="font-bold text-[#3a3a3a]">{item.label}</div>
-                            <div className="text-sm text-gray-500 mt-1">{item.description}</div>
-                            <div className="text-xs text-gray-400 mt-2 font-mono">{item.key}</div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <div className="text-sm text-gray-500">約 {item.size} bytes</div>
-                            <button onClick={() => clearStorageItem(item.key)} className="px-4 py-2 text-sm font-bold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                              清除此項
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800 flex items-start gap-3">
-                    <AlertTriangle size={18} className="shrink-0 mt-0.5" />
-                    <div>
-                      本機資料只存在目前這台電腦、這個瀏覽器。清除瀏覽器網站資料後，Banner 與登入狀態都會消失。建議重大修改前先匯出備份。
                     </div>
                   </div>
                 </div>
@@ -7125,7 +6850,6 @@
             setServiceRecords={setServiceRecords}
             teamAccess={teamAccess}
             setTeamAccess={setTeamAccess}
-            storageState={storageState}
           />
         );
       }
