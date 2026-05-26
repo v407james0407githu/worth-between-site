@@ -1433,6 +1433,14 @@
           hidden: { opacity: 0, transform: 'translate3d(0, 48px, 0) scale(0.985)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         },
+        'soft-scale': {
+          hidden: { opacity: 0, transform: 'translate3d(0, 34px, 0) scale(0.955)' },
+          visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
+        },
+        'blur-up': {
+          hidden: { opacity: 0, transform: 'translate3d(0, 42px, 0) scale(0.99)', filter: 'blur(12px)' },
+          visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)', filter: 'blur(0px)' }
+        },
         'slide-left': {
           hidden: { opacity: 0, transform: 'translate3d(-56px, 18px, 0)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0)' }
@@ -1441,6 +1449,14 @@
           hidden: { opacity: 0, transform: 'translate3d(56px, 18px, 0)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0)' }
         },
+        'drift-up-left': {
+          hidden: { opacity: 0, transform: 'translate3d(-42px, 44px, 0) scale(0.985)' },
+          visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
+        },
+        'drift-up-right': {
+          hidden: { opacity: 0, transform: 'translate3d(42px, 44px, 0) scale(0.985)' },
+          visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
+        },
         'flip-right': {
           hidden: { opacity: 0, transform: 'perspective(1400px) rotateY(-12deg) translate3d(46px, 18px, 0) scale(0.985)' },
           visible: { opacity: 1, transform: 'perspective(1400px) rotateY(0deg) translate3d(0, 0, 0) scale(1)' }
@@ -1448,6 +1464,14 @@
         'flip-left': {
           hidden: { opacity: 0, transform: 'perspective(1400px) rotateY(12deg) translate3d(-46px, 18px, 0) scale(0.985)' },
           visible: { opacity: 1, transform: 'perspective(1400px) rotateY(0deg) translate3d(0, 0, 0) scale(1)' }
+        },
+        'tilt-rise': {
+          hidden: { opacity: 0, transform: 'perspective(1400px) rotateX(10deg) translate3d(0, 54px, 0) scale(0.982)' },
+          visible: { opacity: 1, transform: 'perspective(1400px) rotateX(0deg) translate3d(0, 0, 0) scale(1)' }
+        },
+        'reveal-up': {
+          hidden: { opacity: 0, transform: 'translate3d(0, 56px, 0)', clipPath: 'inset(12% 0 0 0)' },
+          visible: { opacity: 1, transform: 'translate3d(0, 0, 0)', clipPath: 'inset(0 0 0 0)' }
         }
       };
 
@@ -1459,7 +1483,8 @@
           className={className}
           style={{
             transformStyle: 'preserve-3d',
-            transition: 'opacity 1100ms cubic-bezier(0.16, 1, 0.3, 1), transform 1100ms cubic-bezier(0.16, 1, 0.3, 1)',
+            willChange: 'opacity, transform, filter, clip-path',
+            transition: 'opacity 1100ms cubic-bezier(0.16, 1, 0.3, 1), transform 1100ms cubic-bezier(0.16, 1, 0.3, 1), filter 1100ms cubic-bezier(0.16, 1, 0.3, 1), clip-path 1100ms cubic-bezier(0.16, 1, 0.3, 1)',
             transitionDelay: `${delay}ms`,
             ...(isVisible ? selected.visible : selected.hidden)
           }}
@@ -1674,7 +1699,9 @@
           {page.key !== 'services' && page.intro && String(page.intro).trim() && (
             <section className="py-12 md:py-16 bg-[#f5f5f2] border-b border-gray-200">
               <div className="max-w-7xl mx-auto px-6">
-                <p className="text-gray-500 leading-relaxed max-w-3xl whitespace-pre-line">{page.intro}</p>
+                <MotionOnScroll variant="blur-up">
+                  <p className="text-gray-500 leading-relaxed max-w-3xl whitespace-pre-line">{page.intro}</p>
+                </MotionOnScroll>
               </div>
             </section>
           )}
@@ -1741,8 +1768,9 @@
                 <div className="grid lg:grid-cols-12 gap-10 xl:gap-16">
                   <div className="lg:col-span-7">
                     <div className="grid md:grid-cols-2 gap-8">
-                      {filteredItems.map((item) => (
-                        <article
+                      {filteredItems.map((item, index) => (
+                        <MotionOnScroll key={item.id} variant={index % 2 === 0 ? 'drift-up-left' : 'soft-scale'} delay={index * 90}>
+                          <article
                           key={item.id}
                           className="bg-white border border-gray-200 rounded-sm overflow-hidden shadow-sm hover:shadow-lg transition-shadow cursor-pointer flex flex-col h-full"
                           onClick={() => {
@@ -1762,7 +1790,8 @@
                               </div>
                             </div>
                           </div>
-                        </article>
+                          </article>
+                        </MotionOnScroll>
                       ))}
                     </div>
                     {filteredItems.length === 0 && (
@@ -1774,7 +1803,8 @@
 
                   <aside className="lg:col-span-5">
                     <div className="space-y-8 lg:sticky top-28">
-                      <div className="bg-white border border-gray-200 rounded-sm overflow-hidden">
+                      <MotionOnScroll variant="tilt-rise">
+                        <div className="bg-white border border-gray-200 rounded-sm overflow-hidden">
                         <div className="flex">
                           <input
                             value={insightSearchTerm}
@@ -1789,9 +1819,11 @@
                         <div className="px-6 py-3 text-sm text-gray-500 border-t border-gray-200 bg-gray-50">
                           搜尋結果共 <span className="font-bold text-[#3a3a3a]">{filteredItems.length}</span> 筆
                         </div>
-                      </div>
+                        </div>
+                      </MotionOnScroll>
 
-                      <div className="bg-white border border-gray-200 rounded-sm p-8">
+                      <MotionOnScroll variant="flip-right" delay={80}>
+                        <div className="bg-white border border-gray-200 rounded-sm p-8">
                         <h3 className="text-3xl font-bold mb-6">近期文章</h3>
                         <div className="w-16 h-[2px] mb-8" style={{ backgroundColor: page.themeColor || config.color }}></div>
                         <div className="space-y-6">
@@ -1805,9 +1837,11 @@
                             </button>
                           ))}
                         </div>
-                      </div>
+                        </div>
+                      </MotionOnScroll>
 
-                      <div className="bg-white border border-gray-200 rounded-sm p-8">
+                      <MotionOnScroll variant="drift-up-right" delay={140}>
+                        <div className="bg-white border border-gray-200 rounded-sm p-8">
                         <h3 className="text-3xl font-bold mb-6">熱門文章</h3>
                         <div className="w-16 h-[2px] mb-8" style={{ backgroundColor: page.themeColor || config.color }}></div>
                         <div className="space-y-6">
@@ -1823,9 +1857,11 @@
                             <div className="text-sm text-gray-400">尚未指定熱門文章。</div>
                           )}
                         </div>
-                      </div>
+                        </div>
+                      </MotionOnScroll>
 
-                      <div className="bg-white border border-gray-200 rounded-sm p-8">
+                      <MotionOnScroll variant="soft-scale" delay={200}>
+                        <div className="bg-white border border-gray-200 rounded-sm p-8">
                         <h3 className="text-3xl font-bold mb-6">分類</h3>
                         <div className="w-16 h-[2px] mb-8" style={{ backgroundColor: page.themeColor || config.color }}></div>
                         <div className="space-y-6">
@@ -1843,9 +1879,11 @@
                             );
                           })}
                         </div>
-                      </div>
+                        </div>
+                      </MotionOnScroll>
 
-                      <div className="bg-white border border-gray-200 rounded-sm p-8">
+                      <MotionOnScroll variant="blur-up" delay={260}>
+                        <div className="bg-white border border-gray-200 rounded-sm p-8">
                         <h3 className="text-3xl font-bold mb-6">社群平台</h3>
                         <div className="w-16 h-[2px] mb-8" style={{ backgroundColor: page.themeColor || config.color }}></div>
                         <div className="space-y-6">
@@ -1866,7 +1904,8 @@
                             </a>
                           ))}
                         </div>
-                      </div>
+                        </div>
+                      </MotionOnScroll>
                     </div>
                   </aside>
                 </div>
@@ -1971,8 +2010,9 @@
                   </section>
 
                   <section className="grid md:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-10">
-                    {filteredItems.map((item) => (
-                        <article
+                    {filteredItems.map((item, index) => (
+                        <MotionOnScroll key={item.id} variant={index % 3 === 0 ? 'soft-scale' : index % 3 === 1 ? 'drift-up-left' : 'drift-up-right'} delay={index * 90}>
+                          <article
                           key={item.id}
                           className="h-full rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm"
                         >
@@ -2001,13 +2041,14 @@
                             </div>
                           </div>
                         </article>
+                        </MotionOnScroll>
                       ))}
                   </section>
                 </div>
               ) : page.key === 'services' ? (
                 <div className="space-y-12">
                   <section className="space-y-10 max-w-5xl mx-auto">
-                    {filteredItems.map((item) => {
+                    {filteredItems.map((item, index) => {
                       const smeTagStyles = [
                         { backgroundColor: '#eef6fb', color: '#111111' },
                         { backgroundColor: '#eef7f3', color: '#111111' },
@@ -2016,50 +2057,52 @@
                       ];
 
                       return (
-                        <article
-                          key={item.id}
-                          className="border border-gray-200 bg-white shadow-sm overflow-hidden px-10 py-12 md:px-14 md:py-16"
-                        >
-                          <div className="max-w-5xl mx-auto">
-                            <div className="text-center mb-12">
-                              <h3 className="text-[2.4rem] md:text-[3rem] font-bold text-[#2f3238] leading-tight whitespace-pre-line">
-                                {item.title}
-                              </h3>
-                            </div>
-                            <div className="max-w-4xl mx-auto space-y-7 text-center">
-                              <p className="text-[1.15rem] md:text-[1.35rem] text-[#2f3238] leading-[1.95] whitespace-pre-line">
-                                {item.body}
-                              </p>
-                            </div>
-                            {Array.isArray(item.tags) && item.tags.length > 0 && (
-                              <div className="mt-14 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                                {item.tags.slice(0, 4).map((tag, index) => (
-                                  <div
-                                    key={tag}
-                                    className="rounded-[28px] px-8 py-7 text-center text-[1.05rem] md:text-[1.15rem] font-bold leading-snug shadow-[0_12px_28px_rgba(22,34,48,0.05)]"
-                                    style={smeTagStyles[index] || smeTagStyles[smeTagStyles.length - 1]}
-                                  >
-                                    {tag}
-                                  </div>
-                                ))}
+                        <MotionOnScroll key={item.id} variant={index % 2 === 0 ? 'reveal-up' : 'tilt-rise'} delay={index * 100}>
+                          <article
+                            className="border border-gray-200 bg-white shadow-sm overflow-hidden px-10 py-12 md:px-14 md:py-16"
+                          >
+                            <div className="max-w-5xl mx-auto">
+                              <div className="text-center mb-12">
+                                <h3 className="text-[2.4rem] md:text-[3rem] font-bold text-[#2f3238] leading-tight whitespace-pre-line">
+                                  {item.title}
+                                </h3>
                               </div>
-                            )}
-                            {Array.isArray(item.collaborationModes) && item.collaborationModes.length > 0 && (
-                              <p className="mt-10 text-[16px] md:text-[17px] leading-relaxed text-gray-500 text-center whitespace-pre-line">
-                                <span className="font-bold text-[#2f3238]">合作形式：</span>{' '}
-                                {item.collaborationModes.join('　')}
-                              </p>
-                            )}
-                          </div>
-                        </article>
+                              <div className="max-w-4xl mx-auto space-y-7 text-center">
+                                <p className="text-[1.15rem] md:text-[1.35rem] text-[#2f3238] leading-[1.95] whitespace-pre-line">
+                                  {item.body}
+                                </p>
+                              </div>
+                              {Array.isArray(item.tags) && item.tags.length > 0 && (
+                                <div className="mt-14 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+                                  {item.tags.slice(0, 4).map((tag, index) => (
+                                    <div
+                                      key={tag}
+                                      className="rounded-[28px] px-8 py-7 text-center text-[1.05rem] md:text-[1.15rem] font-bold leading-snug shadow-[0_12px_28px_rgba(22,34,48,0.05)]"
+                                      style={smeTagStyles[index] || smeTagStyles[smeTagStyles.length - 1]}
+                                    >
+                                      {tag}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {Array.isArray(item.collaborationModes) && item.collaborationModes.length > 0 && (
+                                <p className="mt-10 text-[16px] md:text-[17px] leading-relaxed text-gray-500 text-center whitespace-pre-line">
+                                  <span className="font-bold text-[#2f3238]">合作形式：</span>{' '}
+                                  {item.collaborationModes.join('　')}
+                                </p>
+                              )}
+                            </div>
+                          </article>
+                        </MotionOnScroll>
                       );
                     })}
                   </section>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
-                  {filteredItems.map((item) => (
-                    <article
+                  {filteredItems.map((item, index) => (
+                    <MotionOnScroll key={item.id} variant={index % 2 === 0 ? 'drift-up-left' : 'flip-right'} delay={index * 90}>
+                      <article
                       key={item.id}
                       className="bg-white border border-gray-200 rounded-sm overflow-hidden shadow-sm hover:shadow-lg transition-shadow cursor-pointer"
                       onClick={() => {
@@ -2081,7 +2124,8 @@
                           查看完整內容 <ArrowRight size={16} />
                         </div>
                       </div>
-                    </article>
+                      </article>
+                    </MotionOnScroll>
                   ))}
                 </div>
                   )}
@@ -2092,13 +2136,17 @@
 
           <section className="py-20 bg-[#2a2a2a] text-white">
             <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">{config.enLabel}</div>
-                <h3 className="text-3xl md:text-4xl font-bold">想把這一頁延伸成更完整的品牌內容嗎？</h3>
-              </div>
-              <button onClick={goContact} className="px-8 py-4 rounded-sm font-bold text-white flex items-center gap-3" style={{ backgroundColor: page.themeColor || config.color }}>
-                聯繫我們 <ArrowRight size={18} />
-              </button>
+              <MotionOnScroll variant="drift-up-left" className="flex-1">
+                <div>
+                  <div className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">{config.enLabel}</div>
+                  <h3 className="text-3xl md:text-4xl font-bold">想把這一頁延伸成更完整的品牌內容嗎？</h3>
+                </div>
+              </MotionOnScroll>
+              <MotionOnScroll variant="drift-up-right" delay={90}>
+                <button onClick={goContact} className="px-8 py-4 rounded-sm font-bold text-white flex items-center gap-3" style={{ backgroundColor: page.themeColor || config.color }}>
+                  聯繫我們 <ArrowRight size={18} />
+                </button>
+              </MotionOnScroll>
             </div>
           </section>
 
@@ -2450,67 +2498,83 @@
           <>
               <section className="py-16 md:py-20 px-6">
                 <div className="max-w-2xl mx-auto">
-                  <h1 className="text-[2.35rem] md:text-[3.45rem] font-bold leading-[1.18] text-black tracking-tight whitespace-pre-line">
-                    {item.title}
-                  </h1>
-                  <div className="mt-6 border-b border-gray-200 pb-4 text-sm md:text-[15px] text-gray-500">
-                    {articlePublishedLabel ? `刊登時間・${articlePublishedLabel}` : '刊登時間未設定'}
-                  </div>
-                  <div className="mt-10 aspect-[16/9] rounded-sm overflow-hidden border border-gray-200 bg-gray-200">
-                    <img src={item.image || page.heroImage} alt={item.title} className="w-full h-full object-cover" />
-                  </div>
+                  <MotionOnScroll variant="blur-up">
+                    <h1 className="text-[2.35rem] md:text-[3.45rem] font-bold leading-[1.18] text-black tracking-tight whitespace-pre-line">
+                      {item.title}
+                    </h1>
+                    <div className="mt-6 border-b border-gray-200 pb-4 text-sm md:text-[15px] text-gray-500">
+                      {articlePublishedLabel ? `刊登時間・${articlePublishedLabel}` : '刊登時間未設定'}
+                    </div>
+                  </MotionOnScroll>
+                  <MotionOnScroll variant="soft-scale" delay={110}>
+                    <div className="mt-10 aspect-[16/9] rounded-sm overflow-hidden border border-gray-200 bg-gray-200">
+                      <img src={item.image || page.heroImage} alt={item.title} className="w-full h-full object-cover" />
+                    </div>
+                  </MotionOnScroll>
                 </div>
               </section>
 
               <section className="pb-20 md:pb-24 px-6">
                 <div className="max-w-2xl mx-auto">
                   {item.subtitle && (
-                    <p className="mb-8 text-[1.2rem] md:text-[1.35rem] leading-[1.9] text-gray-500 whitespace-pre-line">
-                      {item.subtitle}
-                    </p>
+                    <MotionOnScroll variant="drift-up-left">
+                      <p className="mb-8 text-[1.2rem] md:text-[1.35rem] leading-[1.9] text-gray-500 whitespace-pre-line">
+                        {item.subtitle}
+                      </p>
+                    </MotionOnScroll>
                   )}
                   {item.bodyHtml ? (
-                    <div
-                      ref={renderedBodyRef}
-                      className="max-w-none text-gray-700 leading-relaxed whitespace-normal [&_h2]:text-[1.9rem] md:[&_h2]:text-[2.2rem] [&_h2]:font-bold [&_h2]:leading-[1.35] [&_h2]:text-black [&_h2]:mt-12 [&_h2]:mb-5 [&_h3]:text-[1.35rem] md:[&_h3]:text-[1.55rem] [&_h3]:font-semibold [&_h3]:leading-[1.6] [&_h3]:text-black [&_h3]:mt-10 [&_h3]:mb-4 [&_p]:text-[1.05rem] md:[&_p]:text-[1.12rem] [&_p]:leading-[2.05] [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:my-8 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-10 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200"
-                      dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
-                    />
+                    <MotionOnScroll variant="reveal-up" delay={90}>
+                      <div
+                        ref={renderedBodyRef}
+                        className="max-w-none text-gray-700 leading-relaxed whitespace-normal [&_h2]:text-[1.9rem] md:[&_h2]:text-[2.2rem] [&_h2]:font-bold [&_h2]:leading-[1.35] [&_h2]:text-black [&_h2]:mt-12 [&_h2]:mb-5 [&_h3]:text-[1.35rem] md:[&_h3]:text-[1.55rem] [&_h3]:font-semibold [&_h3]:leading-[1.6] [&_h3]:text-black [&_h3]:mt-10 [&_h3]:mb-4 [&_p]:text-[1.05rem] md:[&_p]:text-[1.12rem] [&_p]:leading-[2.05] [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:my-8 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-10 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200"
+                        dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
+                      />
+                    </MotionOnScroll>
                   ) : (
-                    <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-line">
-                      {item.body}
-                    </div>
+                    <MotionOnScroll variant="reveal-up" delay={90}>
+                      <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-line">
+                        {item.body}
+                      </div>
+                    </MotionOnScroll>
                   )}
-                  <div className="mt-16 grid md:grid-cols-2 gap-4">
-                    <button
-                      onClick={() => previousItem && (window.location.hash = buildContentItemRoute(page.key, previousItem.id))}
-                      disabled={!previousItem}
-                      className={`text-left rounded-sm border px-6 py-5 transition-colors ${previousItem ? 'border-gray-200 hover:border-gray-400 bg-white' : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'}`}
-                    >
-                      <div className="text-[10px] uppercase tracking-widest font-bold mb-2">上一則</div>
-                      <div className="font-bold">{previousItem ? previousItem.title : '已經是第一則內容'}</div>
-                    </button>
-                    <button
-                      onClick={() => nextItem && (window.location.hash = buildContentItemRoute(page.key, nextItem.id))}
-                      disabled={!nextItem}
-                      className={`text-left rounded-sm border px-6 py-5 transition-colors ${nextItem ? 'border-gray-200 hover:border-gray-400 bg-white' : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'}`}
-                    >
-                      <div className="text-[10px] uppercase tracking-widest font-bold mb-2">下一則</div>
-                      <div className="font-bold">{nextItem ? nextItem.title : '已經是最後一則內容'}</div>
-                    </button>
-                  </div>
+                  <MotionOnScroll variant="soft-scale" delay={160}>
+                    <div className="mt-16 grid md:grid-cols-2 gap-4">
+                      <button
+                        onClick={() => previousItem && (window.location.hash = buildContentItemRoute(page.key, previousItem.id))}
+                        disabled={!previousItem}
+                        className={`text-left rounded-sm border px-6 py-5 transition-colors ${previousItem ? 'border-gray-200 hover:border-gray-400 bg-white' : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'}`}
+                      >
+                        <div className="text-[10px] uppercase tracking-widest font-bold mb-2">上一則</div>
+                        <div className="font-bold">{previousItem ? previousItem.title : '已經是第一則內容'}</div>
+                      </button>
+                      <button
+                        onClick={() => nextItem && (window.location.hash = buildContentItemRoute(page.key, nextItem.id))}
+                        disabled={!nextItem}
+                        className={`text-left rounded-sm border px-6 py-5 transition-colors ${nextItem ? 'border-gray-200 hover:border-gray-400 bg-white' : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'}`}
+                      >
+                        <div className="text-[10px] uppercase tracking-widest font-bold mb-2">下一則</div>
+                        <div className="font-bold">{nextItem ? nextItem.title : '已經是最後一則內容'}</div>
+                      </button>
+                    </div>
+                  </MotionOnScroll>
                 </div>
               </section>
           </>
 
           <section className="py-20 bg-[#2a2a2a] text-white">
             <div className="max-w-5xl mx-auto px-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
-              <div>
-                <div className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">{page.label}</div>
-                <h3 className="text-3xl md:text-4xl font-bold">需要把這類內容延伸成品牌專案？</h3>
-              </div>
-              <button onClick={goContact} className="px-8 py-4 rounded-sm font-bold text-white flex items-center gap-3" style={{ backgroundColor: page.themeColor || config.color }}>
-                聯繫我們 <ArrowRight size={18} />
-              </button>
+              <MotionOnScroll variant="drift-up-left" className="flex-1">
+                <div>
+                  <div className="text-[10px] uppercase tracking-widest text-gray-400 mb-3">{page.label}</div>
+                  <h3 className="text-3xl md:text-4xl font-bold">需要把這類內容延伸成品牌專案？</h3>
+                </div>
+              </MotionOnScroll>
+              <MotionOnScroll variant="drift-up-right" delay={90}>
+                <button onClick={goContact} className="px-8 py-4 rounded-sm font-bold text-white flex items-center gap-3" style={{ backgroundColor: page.themeColor || config.color }}>
+                  聯繫我們 <ArrowRight size={18} />
+                </button>
+              </MotionOnScroll>
             </div>
           </section>
 
@@ -2768,7 +2832,7 @@
           {/* 專業服務 Services */}
           <section id="services" className="py-24 md:py-32 px-6 bg-white border-t border-gray-200">
             <div className="max-w-7xl mx-auto">
-              <MotionOnScroll variant="fade-up">
+              <MotionOnScroll variant="soft-scale">
                 <SectionLabel text={servicesContent.sectionLabel} color={colors.teal} />
                 <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#3a3a3a] leading-tight">{servicesContent.title}</h2>
                 <p className="text-lg text-gray-500 font-light leading-relaxed max-w-3xl mb-14 whitespace-pre-line">
@@ -2790,7 +2854,7 @@
                 <div className="absolute inset-0 bg-white/6 backdrop-blur-[1px]"></div>
 
                 <div className="relative max-w-7xl mx-auto px-6 py-8 md:px-10 md:py-12 lg:px-14 lg:py-16">
-                  <MotionOnScroll variant="slide-left" delay={80}>
+                  <MotionOnScroll variant="blur-up" delay={80}>
                     <div className="mb-10 md:mb-12 max-w-3xl">
                       <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/15 shadow-sm mb-5">
                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.teal }}></div>
@@ -2832,7 +2896,7 @@
           {/* 案例實績 Work */}
           <section id="work" className="py-24 md:py-32 px-6 bg-white">
             <div className="max-w-7xl mx-auto">
-              <MotionOnScroll variant="fade-up">
+              <MotionOnScroll variant="soft-scale">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-20 gap-8">
                   <div>
                     <SectionLabel text={workContent.sectionLabel} color={colors.orange} />
@@ -2911,7 +2975,7 @@
           {/* 觀點文章 Insights */}
           <section id="insights" className="py-24 md:py-32 px-6 bg-[#F9FAFB] border-t border-gray-200">
             <div className="max-w-7xl mx-auto">
-              <MotionOnScroll variant="fade-up">
+              <MotionOnScroll variant="soft-scale">
                 <div className="mb-16">
                   <SectionLabel text={insightsContent.sectionLabel} color={colors.darkGray} />
                   <h2 className="text-4xl md:text-5xl font-bold text-[#3a3a3a]">{insightsContent.title}</h2>
@@ -2948,7 +3012,7 @@
 
                 <div className="lg:col-span-5 flex flex-col gap-6">
                   {sidebarInsightItems.map((article, idx) => (
-                    <MotionOnScroll key={idx} variant="flip-right" delay={(idx + 2) * 90}>
+                    <MotionOnScroll key={idx} variant={idx % 2 === 0 ? 'drift-up-right' : 'flip-right'} delay={(idx + 2) * 90}>
                       <a
                         href={buildContentItemRoute('insights', article.id)}
                         className="group block bg-white p-8 border border-gray-200 rounded-sm hover:border-[#3a3a3a] hover:shadow-md transition-all duration-300 h-full"
@@ -2968,7 +3032,7 @@
             <div className="max-w-7xl mx-auto px-6">
               <div className="grid lg:grid-cols-12 gap-16 lg:gap-24">
                 <div className="lg:col-span-5">
-                  <MotionOnScroll variant="slide-left">
+                  <MotionOnScroll variant="drift-up-left">
                     <SectionLabel text={contactContent.sectionLabel} color="#F9FAFB" />
                     <h2 className="text-5xl md:text-6xl font-bold mb-8 leading-[1.15]">
                       {contactContent.titlePrefix}<br/>
@@ -2988,7 +3052,7 @@
                 </div>
 
                 <div className="lg:col-span-7">
-                  <MotionOnScroll variant="flip-right" delay={180}>
+                  <MotionOnScroll variant="tilt-rise" delay={180}>
                     <div className="bg-white p-10 md:p-14 rounded-sm text-[#3a3a3a] shadow-2xl">
                       <h3 className="text-3xl font-bold mb-10 text-[#3a3a3a]">{contactContent.formTitle}</h3>
                       <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
