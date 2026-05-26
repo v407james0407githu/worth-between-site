@@ -997,12 +997,19 @@
           status: member.status === 'Active' ? 'Active' : 'Inactive',
           lastLogin: member.lastLogin || '尚未登入'
         })) : fallback.members.map((member) => ({ ...member })),
-        activities: Array.isArray(source.activities) ? source.activities.map((activity) => ({
-          ...activity,
-          detail: typeof activity.detail === 'string'
-            ? activity.detail.replace(/狀態：\s*Inactive/g, '狀態：Inactive').replace(/狀態：\s*Active/g, '狀態：Active')
-            : activity.detail
-        })) : fallback.activities.map((activity) => ({ ...activity }))
+        activities: Array.isArray(source.activities)
+          ? source.activities
+              .filter((activity) => {
+                const haystack = `${activity?.action || ''} ${activity?.detail || ''} ${activity?.target || ''}`;
+                return !/invite|invited|邀請|寄送邀請|重寄邀請/i.test(haystack);
+              })
+              .map((activity) => ({
+                ...activity,
+                detail: typeof activity.detail === 'string'
+                  ? activity.detail.replace(/狀態：\s*Inactive/g, '狀態：Inactive').replace(/狀態：\s*Active/g, '狀態：Active')
+                  : activity.detail
+              }))
+          : fallback.activities.map((activity) => ({ ...activity }))
       };
     };
     const normalizeContentPages = (pages) => {
