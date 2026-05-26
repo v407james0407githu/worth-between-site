@@ -3094,6 +3094,11 @@
       const [roleForm, setRoleForm] = useState({ name: '', description: '', permissions: [] });
       const [roleFormError, setRoleFormError] = useState('');
       const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+      useEffect(() => {
+        if (activeTab === 'brands' || activeTab === 'services') {
+          setActiveTab('dashboard');
+        }
+      }, [activeTab]);
       const [editingMemberId, setEditingMemberId] = useState(null);
       const [memberForm, setMemberForm] = useState({ name: '', email: '', role: 'Viewer', status: 'Invited', lastLogin: '尚未登入' });
       const [memberFormError, setMemberFormError] = useState('');
@@ -5016,12 +5021,6 @@
               <button onClick={() => setActiveTab('storage')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'storage' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
                 <HardDrive size={18} /> 本機資料管理
               </button>
-              <button onClick={() => setActiveTab('brands')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'brands' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
-                <Database size={18} /> 品牌資料庫
-              </button>
-              <button onClick={() => setActiveTab('services')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'services' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
-                <FileText size={18} /> 服務追蹤
-              </button>
               <button onClick={() => setActiveTab('team')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'team' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
                 <Users size={18} /> 權限與角色
               </button>
@@ -5043,8 +5042,6 @@
                 {activeTab === 'hero-slider' && '首頁管理 Home Management'}
                 {activeTab === 'content' && '內容管理 Content CMS'}
                 {activeTab === 'storage' && '本機資料管理 Local Storage'}
-                {activeTab === 'brands' && '品牌資料庫 Brand Management'}
-                {activeTab === 'services' && '服務追蹤 Service Tracking'}
                 {activeTab === 'team' && '權限與角色 Team Access'}
               </h2>
               <div className="flex items-center gap-4">
