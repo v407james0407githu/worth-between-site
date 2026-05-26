@@ -3192,6 +3192,7 @@
       const activeContentSection = contentPages.find((page) => page.key === activeContentSectionKey) || contentPages[0];
       const activeContentConfig = activeContentSection ? buildContentPageConfig(activeContentSection) : sitePageConfigs[0];
       const isInsightContentSection = activeContentSection?.key === 'insights';
+      const insightPage = contentPages.find((page) => page.key === 'insights') || null;
       const homepageSectionOptions = [
         { key: 'about', label: '關於我們', description: '首頁 About 區塊的標題、段落與統計資訊' },
         { key: 'services', label: '專業服務', description: '首頁服務區塊的標題、前言與底圖' },
