@@ -3087,7 +3087,7 @@
       const [roleFormError, setRoleFormError] = useState('');
       const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
       useEffect(() => {
-        if (activeTab === 'brands' || activeTab === 'services' || activeTab === 'storage') {
+        if (!['dashboard', 'hero-slider', 'content', 'team'].includes(activeTab)) {
           setActiveTab('dashboard');
         }
       }, [activeTab]);
