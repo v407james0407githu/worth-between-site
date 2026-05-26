@@ -1449,7 +1449,7 @@
               observer.unobserve(entry.target);
             }
           });
-        }, { threshold: 0.12, rootMargin: "0px 0px -60px 0px" });
+        }, { threshold: 0.08, rootMargin: "0px 0px -10% 0px" });
 
         if (domRef.current) observer.observe(domRef.current);
         return () => {
@@ -1460,48 +1460,48 @@
 
       const variantStyles = {
         'fade-up': {
-          hidden: { opacity: 0, transform: 'translate3d(0, 48px, 0) scale(0.985)' },
+          hidden: { opacity: 0, transform: 'translate3d(0, 72px, 0) scale(0.965)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         },
         'soft-scale': {
-          hidden: { opacity: 0, transform: 'translate3d(0, 34px, 0) scale(0.955)' },
+          hidden: { opacity: 0, transform: 'translate3d(0, 58px, 0) scale(0.93)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         },
         'blur-up': {
-          hidden: { opacity: 0, transform: 'translate3d(0, 42px, 0) scale(0.99)', filter: 'blur(12px)' },
-          visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)', filter: 'blur(0px)' }
+          hidden: { opacity: 0, transform: 'translate3d(0, 84px, 0) scale(0.94)' },
+          visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         },
         'slide-left': {
-          hidden: { opacity: 0, transform: 'translate3d(-56px, 18px, 0)' },
+          hidden: { opacity: 0, transform: 'translate3d(-88px, 26px, 0)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0)' }
         },
         'slide-right': {
-          hidden: { opacity: 0, transform: 'translate3d(56px, 18px, 0)' },
+          hidden: { opacity: 0, transform: 'translate3d(88px, 26px, 0)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0)' }
         },
         'drift-up-left': {
-          hidden: { opacity: 0, transform: 'translate3d(-42px, 44px, 0) scale(0.985)' },
+          hidden: { opacity: 0, transform: 'translate3d(-68px, 72px, 0) scale(0.96)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         },
         'drift-up-right': {
-          hidden: { opacity: 0, transform: 'translate3d(42px, 44px, 0) scale(0.985)' },
+          hidden: { opacity: 0, transform: 'translate3d(68px, 72px, 0) scale(0.96)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         },
         'flip-right': {
-          hidden: { opacity: 0, transform: 'perspective(1400px) rotateY(-12deg) translate3d(46px, 18px, 0) scale(0.985)' },
+          hidden: { opacity: 0, transform: 'perspective(1200px) rotateY(-8deg) translate3d(60px, 22px, 0) scale(0.97)' },
           visible: { opacity: 1, transform: 'perspective(1400px) rotateY(0deg) translate3d(0, 0, 0) scale(1)' }
         },
         'flip-left': {
-          hidden: { opacity: 0, transform: 'perspective(1400px) rotateY(12deg) translate3d(-46px, 18px, 0) scale(0.985)' },
+          hidden: { opacity: 0, transform: 'perspective(1200px) rotateY(8deg) translate3d(-60px, 22px, 0) scale(0.97)' },
           visible: { opacity: 1, transform: 'perspective(1400px) rotateY(0deg) translate3d(0, 0, 0) scale(1)' }
         },
         'tilt-rise': {
-          hidden: { opacity: 0, transform: 'perspective(1400px) rotateX(10deg) translate3d(0, 54px, 0) scale(0.982)' },
+          hidden: { opacity: 0, transform: 'perspective(1200px) rotateX(7deg) translate3d(0, 72px, 0) scale(0.965)' },
           visible: { opacity: 1, transform: 'perspective(1400px) rotateX(0deg) translate3d(0, 0, 0) scale(1)' }
         },
         'reveal-up': {
-          hidden: { opacity: 0, transform: 'translate3d(0, 56px, 0)', clipPath: 'inset(12% 0 0 0)' },
-          visible: { opacity: 1, transform: 'translate3d(0, 0, 0)', clipPath: 'inset(0 0 0 0)' }
+          hidden: { opacity: 0, transform: 'translate3d(0, 78px, 0) scale(0.975)' },
+          visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         }
       };
 
@@ -1513,8 +1513,8 @@
           className={className}
           style={{
             transformStyle: 'preserve-3d',
-            willChange: 'opacity, transform, filter, clip-path',
-            transition: 'opacity 1100ms cubic-bezier(0.16, 1, 0.3, 1), transform 1100ms cubic-bezier(0.16, 1, 0.3, 1), filter 1100ms cubic-bezier(0.16, 1, 0.3, 1), clip-path 1100ms cubic-bezier(0.16, 1, 0.3, 1)',
+            willChange: 'opacity, transform',
+            transition: 'opacity 760ms cubic-bezier(0.22, 1, 0.36, 1), transform 760ms cubic-bezier(0.22, 1, 0.36, 1)',
             transitionDelay: `${delay}ms`,
             ...(isVisible ? selected.visible : selected.hidden)
           }}
@@ -1666,13 +1666,22 @@
 
       useEffect(() => {
         window.scrollTo(0, 0);
-        const handleScroll = () => {
+        let ticking = false;
+        const updateScrollState = () => {
           const scrollY = window.scrollY;
-          setIsScrolled(scrollY > 40);
-          setBannerOffset(Math.min(scrollY * 0.18, 36));
+          const nextScrolled = scrollY > 40;
+          const nextOffset = Math.min(scrollY * 0.12, 24);
+          setIsScrolled((prev) => (prev === nextScrolled ? prev : nextScrolled));
+          setBannerOffset((prev) => (Math.abs(prev - nextOffset) < 0.5 ? prev : nextOffset));
+          ticking = false;
         };
-        handleScroll();
-        window.addEventListener('scroll', handleScroll);
+        const handleScroll = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(updateScrollState);
+        };
+        updateScrollState();
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
       }, []);
       useEffect(() => {
@@ -2203,13 +2212,22 @@
 
       useEffect(() => {
         window.scrollTo(0, 0);
-        const handleScroll = () => {
+        let ticking = false;
+        const updateScrollState = () => {
           const scrollY = window.scrollY;
-          setIsScrolled(scrollY > 40);
-          setBannerOffset(Math.min(scrollY * 0.18, 32));
+          const nextScrolled = scrollY > 40;
+          const nextOffset = Math.min(scrollY * 0.12, 22);
+          setIsScrolled((prev) => (prev === nextScrolled ? prev : nextScrolled));
+          setBannerOffset((prev) => (Math.abs(prev - nextOffset) < 0.5 ? prev : nextOffset));
+          ticking = false;
         };
-        handleScroll();
-        window.addEventListener('scroll', handleScroll);
+        const handleScroll = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(updateScrollState);
+        };
+        updateScrollState();
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
       }, []);
       useEffect(() => {
@@ -2667,8 +2685,19 @@
       }, [visibleHeroSlides.length]);
 
       useEffect(() => {
-        const handleScroll = () => setIsScrolled(window.scrollY > 50);
-        window.addEventListener('scroll', handleScroll);
+        let ticking = false;
+        const updateScrollState = () => {
+          const nextScrolled = window.scrollY > 50;
+          setIsScrolled((prev) => (prev === nextScrolled ? prev : nextScrolled));
+          ticking = false;
+        };
+        const handleScroll = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(updateScrollState);
+        };
+        updateScrollState();
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
       }, []);
 
@@ -3175,10 +3204,6 @@
       const [selectedServiceIds, setSelectedServiceIds] = useState([]);
       const [serviceBatchForm, setServiceBatchForm] = useState({ stage: '', priority: '', owner: '' });
       const [draggedServiceId, setDraggedServiceId] = useState(null);
-      const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-      const [editingRoleId, setEditingRoleId] = useState(null);
-      const [roleForm, setRoleForm] = useState({ name: '', description: '', permissions: [] });
-      const [roleFormError, setRoleFormError] = useState('');
       const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
       useEffect(() => {
         if (!['dashboard', 'hero-slider', 'content', 'team'].includes(activeTab)) {
@@ -3186,7 +3211,7 @@
         }
       }, [activeTab]);
       const [editingMemberId, setEditingMemberId] = useState(null);
-      const [memberForm, setMemberForm] = useState({ name: '', email: '', role: 'Viewer', status: 'Active', lastLogin: '尚未登入' });
+      const [memberForm, setMemberForm] = useState({ name: '', email: '', role: 'Viewer', status: 'Active', lastLogin: '尚未登入', password: '' });
       const [memberFormError, setMemberFormError] = useState('');
       const [memberActionModal, setMemberActionModal] = useState({ open: false, member: null });
       const [activityFilterMember, setActivityFilterMember] = useState('全部');
@@ -3391,13 +3416,8 @@
         setEditingServiceId(null);
         setServiceFormErrors({});
       };
-      const closeRoleModal = () => {
-        setIsRoleModalOpen(false);
-        setEditingRoleId(null);
-        setRoleFormError('');
-      };
       const closeMemberActionModal = () => {
-        setMemberActionModal({ open: false, type: '', member: null });
+        setMemberActionModal({ open: false, member: null });
       };
       const closeMemberModal = () => {
         setIsMemberModalOpen(false);
@@ -3452,7 +3472,6 @@
       const hasOpenAdminModal = (
         isHeroModalOpen ||
         isServiceModalOpen ||
-        isRoleModalOpen ||
         memberActionModal.open ||
         isMemberModalOpen ||
         isSectionModalOpen ||
@@ -3529,10 +3548,6 @@
             closeMemberModal();
             return;
           }
-          if (isRoleModalOpen) {
-            closeRoleModal();
-            return;
-          }
           if (isServiceModalOpen) {
             closeServiceModal();
             return;
@@ -3552,7 +3567,6 @@
         hasOpenAdminModal,
         isHeroModalOpen,
         isServiceModalOpen,
-        isRoleModalOpen,
         memberActionModal.open,
         isMemberModalOpen,
         isSectionModalOpen,
@@ -3732,18 +3746,6 @@
           setFlashMessage(`已調整「${sourceRecord.projectName}」到第 ${movedPosition} 位。`);
         }
       };
-      const applyPermissionScopeAll = (scopeKey) => {
-        const keys = permissionMatrix
-          .map((module) => module.permissions.find((permission) => permission.key === `${module.key}:${scopeKey}`)?.key)
-          .filter(Boolean);
-        const allSelected = keys.length > 0 && keys.every((key) => roleForm.permissions.includes(key));
-        setRoleForm((prev) => ({
-          ...prev,
-          permissions: allSelected
-            ? prev.permissions.filter((permission) => !keys.includes(permission))
-            : Array.from(new Set([...prev.permissions.filter((permission) => !keys.includes(permission)), ...keys]))
-        }));
-      };
       const exportActivityCsv = () => {
         const rows = [['時間', '操作者', '目標成員', '動作', '細節']];
         filteredActivities.forEach((activity) => {
@@ -3768,73 +3770,6 @@
         URL.revokeObjectURL(url);
         setFlashMessage(`已匯出 ${filteredActivities.length} 筆活動紀錄 CSV（篩選：${activityFilterMember}）。`);
       };
-      const openRoleModal = (role = null) => {
-        if (role) {
-          setEditingRoleId(role.id);
-          setRoleForm({
-            name: role.name || '',
-            description: role.description || '',
-            permissions: role.permissions || []
-          });
-        } else {
-          setEditingRoleId(null);
-          setRoleForm({ name: '', description: '', permissions: [] });
-        }
-        setRoleFormError('');
-        setIsRoleModalOpen(true);
-      };
-      const saveRoleForm = (e) => {
-        e.preventDefault();
-        const nextName = roleForm.name.trim();
-        if (!nextName) {
-          setRoleFormError('請輸入角色名稱');
-          return;
-        }
-        const duplicate = teamAccess.roles.some((role) => role.name === nextName && role.id !== editingRoleId);
-        if (duplicate) {
-          setRoleFormError('角色名稱已存在');
-          return;
-        }
-        const normalized = {
-          name: nextName,
-          description: roleForm.description.trim(),
-          permissions: roleForm.permissions
-        };
-        setTeamAccess((prev) => {
-          const nextRoles = editingRoleId
-            ? prev.roles.map((role) => role.id === editingRoleId ? { ...role, ...normalized } : role)
-            : [...prev.roles, { id: Date.now(), ...normalized }];
-          const previousRole = prev.roles.find((role) => role.id === editingRoleId);
-          const nextMembers = previousRole && previousRole.name !== normalized.name
-            ? prev.members.map((member) => member.role === previousRole.name ? { ...member, role: normalized.name } : member)
-            : prev.members;
-          return { roles: nextRoles, members: nextMembers };
-        });
-        setIsRoleModalOpen(false);
-        appendTeamActivity({
-          target: nextName,
-          action: editingRoleId ? '更新角色' : '建立角色',
-          detail: `權限數：${normalized.permissions.length}`
-        });
-        setFlashMessage(editingRoleId ? '角色設定已更新。' : '已新增角色。');
-      };
-      const removeRole = (roleId) => {
-        const target = teamAccess.roles.find((role) => role.id === roleId);
-        if (!target) return;
-        const usingCount = teamAccess.members.filter((member) => member.role === target.name).length;
-        if (usingCount > 0) {
-          setFlashMessage(`無法刪除角色「${target.name}」，目前仍有 ${usingCount} 位成員使用。`);
-          return;
-        }
-        if (!window.confirm(`確定要刪除角色「${target.name}」嗎？`)) return;
-        setTeamAccess((prev) => ({ ...prev, roles: prev.roles.filter((role) => role.id !== roleId) }));
-        appendTeamActivity({
-          target: target.name,
-          action: '刪除角色',
-          detail: '角色已移除'
-        });
-        setFlashMessage(`角色「${target.name}」已刪除。`);
-      };
       const openMemberModal = (member = null) => {
         if (member) {
           setEditingMemberId(member.id);
@@ -3843,11 +3778,12 @@
             email: member.email || '',
             role: member.role || (roleOptions[0] || 'Viewer'),
             status: member.status || 'Active',
-            lastLogin: member.lastLogin || '尚未登入'
+            lastLogin: member.lastLogin || '尚未登入',
+            password: ''
           });
         } else {
           setEditingMemberId(null);
-          setMemberForm({ name: '', email: '', role: roleOptions[0] || 'Viewer', status: 'Active', lastLogin: '尚未登入' });
+          setMemberForm({ name: '', email: '', role: roleOptions[0] || 'Viewer', status: 'Active', lastLogin: '尚未登入', password: '' });
         }
         setMemberFormError('');
         setIsMemberModalOpen(true);
@@ -3866,12 +3802,18 @@
           setMemberFormError('請選擇有效角色');
           return;
         }
+        if (!editingMemberId && !memberForm.password.trim()) {
+          setMemberFormError('請設定密碼');
+          return;
+        }
+        const existingMember = editingMemberId ? teamAccess.members.find((member) => member.id === editingMemberId) : null;
         const normalized = {
           name: memberForm.name.trim(),
           email: memberForm.email.trim(),
           role: memberForm.role,
           status: memberForm.status,
-          lastLogin: memberForm.lastLogin.trim() || '尚未登入'
+          lastLogin: memberForm.lastLogin.trim() || '尚未登入',
+          password: memberForm.password.trim() || existingMember?.password || ''
         };
         setTeamAccess((prev) => ({
           ...prev,
@@ -3898,14 +3840,6 @@
           detail: target.email
         });
         setFlashMessage(`成員「${target.name}」已刪除。`);
-      };
-      const toggleRolePermission = (permission) => {
-        setRoleForm((prev) => ({
-          ...prev,
-          permissions: prev.permissions.includes(permission)
-            ? prev.permissions.filter((item) => item !== permission)
-            : [...prev.permissions, permission]
-        }));
       };
       const openMemberActionModal = (member) => {
         setMemberActionModal({ open: true, member });
@@ -5265,14 +5199,9 @@
                       <h3 className="text-xl font-bold">權限與角色</h3>
                       <p className="text-gray-500 text-sm mt-1">管理後台成員、角色與權限分工，讓內容與專案維運更清楚。</p>
                     </div>
-                    <div className="flex gap-3">
-                      <button onClick={() => openRoleModal()} className="px-4 py-2 bg-white text-[#3a3a3a] rounded-lg flex items-center gap-2 text-sm font-bold border border-gray-200 hover:bg-gray-50 transition-colors">
-                        <Plus size={16}/> 新增角色
-                      </button>
-                      <button onClick={() => openMemberModal()} className="px-4 py-2 bg-[#4e7055] text-white rounded-lg flex items-center gap-2 text-sm font-bold hover:bg-[#3a5240] transition-colors">
-                        <Plus size={16}/> 新增成員
-                      </button>
-                    </div>
+                    <button onClick={() => openMemberModal()} className="px-4 py-2 bg-[#4e7055] text-white rounded-lg flex items-center gap-2 text-sm font-bold hover:bg-[#3a5240] transition-colors">
+                      <Plus size={16}/> 新增成員
+                    </button>
                   </div>
 
                   <div className="grid md:grid-cols-4 gap-4">
@@ -5303,15 +5232,9 @@
                       <div className="divide-y divide-gray-100">
                         {teamAccess.roles.map((role) => (
                           <div key={role.id} className="px-6 py-5">
-                            <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <div className="font-bold text-gray-900">{role.name}</div>
-                                <p className="text-sm text-gray-500 mt-2">{role.description}</p>
-                              </div>
-                              <div className="shrink-0 flex gap-2">
-                                <button onClick={() => openRoleModal(role)} className="text-gray-400 hover:text-blue-600"><Edit size={16} /></button>
-                                <button onClick={() => removeRole(role.id)} className="text-gray-400 hover:text-red-600"><Trash2 size={16} /></button>
-                              </div>
+                            <div>
+                              <div className="font-bold text-gray-900">{role.name}</div>
+                              <p className="text-sm text-gray-500 mt-2">{role.description}</p>
                             </div>
                             <div className="flex flex-wrap gap-2 mt-4">
                               {(role.permissions || []).map((permission) => (
@@ -5354,7 +5277,7 @@
                               <td className="px-6 py-4 text-gray-600">{member.lastLogin}</td>
                               <td className="px-6 py-4 text-right">
                                 <button onClick={() => openMemberActionModal(member)} className="text-xs font-bold text-[#cc7333] border border-[#cc7333]/20 px-2 py-1 rounded hover:bg-[#cc7333]/5 mr-2">
-                                  重設密碼
+                                  設定密碼
                                 </button>
                                 <button onClick={() => openMemberModal(member)} className="text-gray-400 hover:text-blue-600 mx-1"><Edit size={16} /></button>
                                 <button onClick={() => removeMember(member.id)} className="text-gray-400 hover:text-red-600 mx-1"><Trash2 size={16} /></button>
@@ -5507,91 +5430,11 @@
             </div>
           )}
 
-          {isRoleModalOpen && (
-            <div className="fixed inset-0 bg-[#3a3a3a]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl p-6 w-full max-w-5xl shadow-xl">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-[#3a3a3a]">{editingRoleId ? '編輯角色' : '新增角色'}</h3>
-                  <button onClick={() => setIsRoleModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
-                </div>
-                <form onSubmit={saveRoleForm} className="space-y-4">
-                  {roleFormError && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{roleFormError}</div>}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">角色名稱</label>
-                    <input value={roleForm.name} onChange={e => setRoleForm({ ...roleForm, name: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">角色說明</label>
-                    <textarea rows="3" value={roleForm.description} onChange={e => setRoleForm({ ...roleForm, description: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-3">模組權限矩陣</label>
-                    <div className="flex flex-wrap gap-3 mb-3">
-                      <button type="button" onClick={() => applyPermissionScopeAll('view')} className="px-4 py-2 text-xs font-bold text-[#3a3a3a] border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        全選檢視
-                      </button>
-                      <button type="button" onClick={() => applyPermissionScopeAll('manage')} className="px-4 py-2 text-xs font-bold text-[#3a3a3a] border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        全選管理
-                      </button>
-                    </div>
-                    <div className="rounded-xl border border-gray-200 overflow-x-auto">
-                      <div className="grid bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-widest" style={{ gridTemplateColumns: `180px repeat(${permissionMatrix.length}, minmax(90px, 1fr))` }}>
-                        <div className="px-4 py-3">權限層級</div>
-                        {permissionMatrix.map((module) => (
-                          <div key={module.key} className="px-4 py-3 border-l border-gray-200">
-                            {module.label}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="divide-y divide-gray-100">
-                        {[
-                          { key: 'view', label: '檢視 View', hint: '可進入模組並查看資料' },
-                          { key: 'manage', label: '管理 Manage', hint: '可新增、編輯、刪除與調整設定' }
-                        ].map((scope) => (
-                          <div key={scope.key} className="grid items-center" style={{ gridTemplateColumns: `180px repeat(${permissionMatrix.length}, minmax(90px, 1fr))` }}>
-                            <div className="px-4 py-4">
-                              <div className="text-sm font-bold text-gray-800">{scope.label}</div>
-                              <div className="text-xs text-gray-400 mt-1">{scope.hint}</div>
-                            </div>
-                            {permissionMatrix.map((module) => {
-                              const permissionKey = `${module.key}:${scope.key}`;
-                              const exists = module.permissions.some((permission) => permission.key === permissionKey);
-                              return (
-                                <div key={permissionKey} className="px-4 py-4 border-l border-gray-100">
-                                  {exists ? (
-                                    <label className="inline-flex items-center justify-center w-full gap-2 cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={roleForm.permissions.includes(permissionKey)}
-                                        onChange={() => toggleRolePermission(permissionKey)}
-                                        className="w-4 h-4"
-                                      />
-                                    </label>
-                                  ) : (
-                                    <span className="block text-center text-sm text-gray-300">-</span>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                    <button type="button" onClick={() => setIsRoleModalOpen(false)} className="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition-colors">取消</button>
-                    <button type="submit" className="px-5 py-2.5 bg-[#4e7055] text-white font-bold rounded-lg hover:bg-[#3a5240] transition-colors">儲存角色</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
           {memberActionModal.open && memberActionModal.member && (
             <div className="fixed inset-0 bg-[#3a3a3a]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
               <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-[#3a3a3a]">重設密碼</h3>
+                  <h3 className="text-xl font-bold text-[#3a3a3a]">設定密碼</h3>
                   <button onClick={() => setMemberActionModal({ open: false, member: null })} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
                 </div>
                 <div className="space-y-4 text-sm text-gray-600">
@@ -5599,7 +5442,7 @@
                   <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-2">
                     <div><span className="font-bold text-gray-800">收件人：</span>{memberActionModal.member.name}</div>
                     <div><span className="font-bold text-gray-800">Email：</span>{memberActionModal.member.email}</div>
-                    <div><span className="font-bold text-gray-800">動作：</span>寄送密碼重設連結</div>
+                    <div><span className="font-bold text-gray-800">動作：</span>建立新的登入密碼</div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
@@ -5631,13 +5474,25 @@
                       <input type="email" value={memberForm.email} onChange={e => setMemberForm({ ...memberForm, email: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
                     </div>
                   </div>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1">角色</label>
                       <select value={memberForm.role} onChange={e => setMemberForm({ ...memberForm, role: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
                         {roleOptions.map((role) => <option key={role} value={role}>{role}</option>)}
                       </select>
                     </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">{editingMemberId ? '設定新密碼' : '設定密碼'}</label>
+                      <input
+                        type="password"
+                        value={memberForm.password}
+                        onChange={e => setMemberForm({ ...memberForm, password: e.target.value })}
+                        className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]"
+                        placeholder={editingMemberId ? '留空則維持原密碼' : '請輸入登入密碼'}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1">狀態</label>
                       <select value={memberForm.status} onChange={e => setMemberForm({ ...memberForm, status: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
@@ -5648,6 +5503,11 @@
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1">最後登入</label>
                       <input value={memberForm.lastLogin} onChange={e => setMemberForm({ ...memberForm, lastLogin: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
+                    </div>
+                    <div className="md:col-span-1 flex items-end">
+                      <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-xs text-gray-500">
+                        {editingMemberId ? '可在這裡更新密碼與角色。' : '新增成員時需先設定角色與密碼。'}
+                      </div>
                     </div>
                   </div>
                   <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
