@@ -898,6 +898,7 @@
       }
       faviconLink.href = nextHref;
     };
+    const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj || {}, key);
     const normalizeHeroSlides = (slides) => sortSlides(slides).map((slide, index) => ({
       ...slide,
       tag: slide.tag || '',
@@ -918,18 +919,26 @@
         about: {
           ...defaultHomepageContent.about,
           ...sourceAbout,
-          paragraphs: [
-            sourceAbout.paragraphs?.[0] ?? defaultHomepageContent.about.paragraphs[0],
-            sourceAbout.paragraphs?.[1] ?? defaultHomepageContent.about.paragraphs[1]
-          ],
-          stats: defaultHomepageContent.about.stats.map((stat, index) => ({
-            ...stat,
-            ...(aboutStats[index] || {}),
-            value: aboutStats[index]?.value ?? stat.value,
-            label: aboutStats[index]?.label ?? stat.label,
-            description: aboutStats[index]?.description ?? stat.description,
-            accent: aboutStats[index]?.accent ?? stat.accent
-          }))
+          paragraphs: hasOwn(sourceAbout, 'paragraphs') && Array.isArray(sourceAbout.paragraphs)
+            ? [sourceAbout.paragraphs[0] ?? '', sourceAbout.paragraphs[1] ?? '']
+            : [...defaultHomepageContent.about.paragraphs],
+          stats: hasOwn(sourceAbout, 'stats') && Array.isArray(sourceAbout.stats)
+            ? defaultHomepageContent.about.stats.map((stat, index) => ({
+                ...stat,
+                ...(aboutStats[index] || {}),
+                value: aboutStats[index]?.value ?? '',
+                label: aboutStats[index]?.label ?? '',
+                description: aboutStats[index]?.description ?? '',
+                accent: aboutStats[index]?.accent ?? stat.accent
+              }))
+            : defaultHomepageContent.about.stats.map((stat, index) => ({
+                ...stat,
+                ...(aboutStats[index] || {}),
+                value: aboutStats[index]?.value ?? stat.value,
+                label: aboutStats[index]?.label ?? stat.label,
+                description: aboutStats[index]?.description ?? stat.description,
+                accent: aboutStats[index]?.accent ?? stat.accent
+              }))
         },
         services: {
           ...defaultHomepageContent.services,
@@ -962,15 +971,15 @@
           ...defaultHomepageContent.insights,
           ...sourceInsights,
           featuredItemId: sourceInsights.featuredItemId ?? defaultHomepageContent.insights.featuredItemId,
-          secondaryItemIds: Array.isArray(sourceInsights.secondaryItemIds)
+          secondaryItemIds: hasOwn(sourceInsights, 'secondaryItemIds') && Array.isArray(sourceInsights.secondaryItemIds)
             ? sourceInsights.secondaryItemIds.filter((id) => id !== null && id !== undefined)
             : defaultHomepageContent.insights.secondaryItemIds
         },
         contact: {
           ...defaultHomepageContent.contact,
           ...sourceContact,
-          serviceOptions: Array.isArray(sourceContact.serviceOptions) && sourceContact.serviceOptions.length > 0
-            ? sourceContact.serviceOptions.filter(Boolean)
+          serviceOptions: hasOwn(sourceContact, 'serviceOptions') && Array.isArray(sourceContact.serviceOptions)
+            ? sourceContact.serviceOptions.map((option) => String(option ?? '').trim())
             : defaultHomepageContent.contact.serviceOptions
         },
         footer: {
@@ -1575,7 +1584,7 @@
       const config = buildContentPageConfig(page);
       const isInsightsPage = page.key === 'insights';
       const isAdvisorsPage = page.key === 'advisors';
-      const aboutContent = homepageContent?.about || defaultHomepageContent.about;
+      const aboutContent = homepageContent?.about ?? defaultHomepageContent.about;
       const hideCategoryTabs = page.key === 'about' || page.key === 'services' || page.key === 'work' || page.key === 'insights';
       const categories = ['全部', ...(page.categories || [])];
       const visiblePageItems = isInsightsPage
@@ -1662,7 +1671,7 @@
                     <ChevronRight size={13} />
                     <span className="text-white">{page.label}</span>
                   </div>
-                  <div className="text-[10px] uppercase tracking-widest font-bold mb-3 text-white/75">{page.heroTag || config.enLabel}</div>
+                  <div className="text-[10px] uppercase tracking-widest font-bold mb-3 text-white/75">{page.heroTag ?? config.enLabel}</div>
                   <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-3 whitespace-pre-line">{page.heroTitle}</h1>
                 </div>
               </div>
@@ -1702,7 +1711,7 @@
                           {advisor.title.includes('Doris') ? 'Doris Wang' : advisor.title.includes('Ellie') ? 'Ellie Wang' : advisor.subtitle}
                         </div>
                         <div className="text-sm uppercase tracking-[0.16em] font-bold text-gray-400">
-                          {advisor.role || '共同創辦人｜Co-Founder'}
+                          {advisor.role ?? '共同創辦人｜Co-Founder'}
                         </div>
                       </article>
                     </a>
@@ -1876,11 +1885,11 @@
                         <div className="flex items-center gap-6 mb-10">
                           <div className="w-12 h-[1px]" style={{ backgroundColor: colors.green }}></div>
                           <div className="text-sm font-bold tracking-[0.22em] uppercase" style={{ color: colors.green }}>
-                            {aboutContent.sectionLabel || page.heroTag || config.enLabel}
+                            {aboutContent.sectionLabel ?? page.heroTag ?? config.enLabel}
                           </div>
                         </div>
                         <h2 className="text-[3rem] md:text-[4.5rem] font-bold text-[#2f3238] leading-[1.08] tracking-tight mb-14">
-                          {aboutContent.title || page.heroTitle}
+                          {aboutContent.title ?? page.heroTitle}
                         </h2>
                         <div className="space-y-14 text-[18px] md:text-[20px] leading-[1.95] text-gray-500">
                           {(aboutContent.paragraphs || []).slice(0, 2).map((paragraph, index) => (
@@ -2133,7 +2142,7 @@
         return () => window.removeEventListener('scroll', handleScroll);
       }, []);
       useEffect(() => {
-        applySeoMeta(`${item.title}｜${page.label}｜沃蒔之間 Worth Between`, item.subtitle || page.seoDescription);
+        applySeoMeta(`${item.title}｜${page.label}｜沃蒔之間 Worth Between`, item.subtitle ?? page.seoDescription);
       }, [item.title, item.subtitle, page.label, page.seoDescription]);
       useEffect(() => {
         if (!isAdvisorsPage) return;
@@ -2267,16 +2276,16 @@
                         {item.title.includes('Doris') ? 'Doris Wang' : 'Ellie Wang'}
                       </div>
                       <div className="text-lg md:text-xl font-semibold text-black/35 mb-12 advisor-text-enter" style={{ animationDelay: advisorFromCardTransition ? '580ms' : '300ms' }}>
-                        {item.role || '共同創辦人｜Co-Founder'}
+                        {item.role ?? '共同創辦人｜Co-Founder'}
                       </div>
 
                       <div className="max-w-[640px] space-y-10">
                         <div className="advisor-text-enter" style={{ animationDelay: advisorFromCardTransition ? '700ms' : '360ms' }}>
                           <div className="text-xl md:text-2xl font-bold text-black mb-5">
-                            {item.overview || item.subtitle}
+                            {item.overview ?? item.subtitle}
                           </div>
                           <p className="text-base md:text-[1.05rem] leading-8 text-black/78 whitespace-pre-line">
-                            {item.summaryText || item.body}
+                            {item.summaryText ?? item.body}
                           </p>
                         </div>
 
@@ -2290,7 +2299,7 @@
 
                         {Array.isArray(item.capabilities) && item.capabilities.length > 0 && (
                           <div className="advisor-text-enter" style={{ animationDelay: advisorFromCardTransition ? '940ms' : '480ms' }}>
-                            <div className="text-sm uppercase tracking-[0.24em] font-bold text-black/30 mb-5">{item.capabilitiesLabel || 'Core Capabilities'}</div>
+                            <div className="text-sm uppercase tracking-[0.24em] font-bold text-black/30 mb-5">{item.capabilitiesLabel ?? 'Core Capabilities'}</div>
                             <ul className="space-y-4">
                               {item.capabilities.map((entry) => (
                                 <li key={entry} className="flex gap-3 text-base md:text-[1.02rem] font-semibold text-black/80">
@@ -2315,7 +2324,7 @@
 
                         {Array.isArray(item.coreDomains) && item.coreDomains.length > 0 && (
                           <div className="advisor-text-enter" style={{ animationDelay: advisorFromCardTransition ? '1100ms' : '600ms' }}>
-                            <div className="text-sm uppercase tracking-[0.24em] font-bold text-black/30 mb-5">{item.domainsLabel || 'Core Domains'}</div>
+                            <div className="text-sm uppercase tracking-[0.24em] font-bold text-black/30 mb-5">{item.domainsLabel ?? 'Core Domains'}</div>
                             <div className="space-y-6">
                               {item.coreDomains.map((domain) => (
                                 <div key={domain.title}>
@@ -2329,7 +2338,7 @@
 
                         {Array.isArray(item.impactCases) && item.impactCases.length > 0 && (
                           <div className="advisor-text-enter" style={{ animationDelay: advisorFromCardTransition ? '1180ms' : '660ms' }}>
-                            <div className="text-sm uppercase tracking-[0.24em] font-bold text-black/30 mb-5">{item.impactLabel || 'Impact Cases'}</div>
+                            <div className="text-sm uppercase tracking-[0.24em] font-bold text-black/30 mb-5">{item.impactLabel ?? 'Impact Cases'}</div>
                             <div className="space-y-8">
                               {item.impactCases.map((caseItem) => (
                                 <div key={caseItem.title}>
@@ -2365,7 +2374,7 @@
 
                         {Array.isArray(item.credentials) && item.credentials.length > 0 && (
                           <div className="advisor-text-enter" style={{ animationDelay: advisorFromCardTransition ? '1260ms' : '720ms' }}>
-                            <div className="text-sm uppercase tracking-[0.24em] font-bold text-black/30 mb-5">{item.credentialsLabel || 'Credentials'}</div>
+                            <div className="text-sm uppercase tracking-[0.24em] font-bold text-black/30 mb-5">{item.credentialsLabel ?? 'Credentials'}</div>
                             <ul className="space-y-3">
                               {item.credentials.map((credential) => (
                                 <li key={credential} className="flex gap-3 text-base leading-8 text-black/72">
@@ -2933,7 +2942,7 @@
                           {featuredInsight.title}
                         </h3>
                         <p className="text-[15px] text-gray-600 font-light leading-relaxed line-clamp-3 whitespace-pre-line">
-                          {buildExcerpt(featuredInsight.body || featuredInsight.subtitle, 180)}
+                          {buildExcerpt(featuredInsight.body ?? featuredInsight.subtitle, 180)}
                         </p>
                         <div className="inline-flex items-center gap-2 text-sm font-bold text-[#3a3a3a] group-hover:text-[#cc7333] transition-colors">
                           <span>點擊看完整內容</span>
@@ -4110,15 +4119,15 @@
                 stats: [
                   {
                     ...prev.about.stats[0],
-                    value: homepageSectionForm.stat1Value.trim() || prev.about.stats[0].value,
-                    label: homepageSectionForm.stat1Label.trim() || prev.about.stats[0].label,
-                    description: homepageSectionForm.stat1Description.trim() || prev.about.stats[0].description
+                    value: homepageSectionForm.stat1Value.trim(),
+                    label: homepageSectionForm.stat1Label.trim(),
+                    description: homepageSectionForm.stat1Description.trim()
                   },
                   {
                     ...prev.about.stats[1],
-                    value: homepageSectionForm.stat2Value.trim() || prev.about.stats[1].value,
-                    label: homepageSectionForm.stat2Label.trim() || prev.about.stats[1].label,
-                    description: homepageSectionForm.stat2Description.trim() || prev.about.stats[1].description
+                    value: homepageSectionForm.stat2Value.trim(),
+                    label: homepageSectionForm.stat2Label.trim(),
+                    description: homepageSectionForm.stat2Description.trim()
                   }
                 ]
               }
@@ -4139,7 +4148,7 @@
                 cards: prev.services.cards.map((card, index) => ({
                   ...card,
                   title: homepageSectionForm[`card${index + 1}Title`].trim(),
-                  enTitle: homepageSectionForm[`card${index + 1}EnTitle`].trim() || card.enTitle,
+                  enTitle: homepageSectionForm[`card${index + 1}EnTitle`].trim(),
                   desc: homepageSectionForm[`card${index + 1}Desc`].trim(),
                   target: homepageSectionForm[`card${index + 1}Target`].trim()
                 }))
@@ -4195,10 +4204,10 @@
               ...prev.footer,
               copyrightText: homepageSectionForm.copyrightText.trim(),
               faviconUrl: homepageSectionForm.faviconUrl.trim(),
-              facebookUrl: homepageSectionForm.facebookUrl.trim() || '#',
-              instagramUrl: homepageSectionForm.instagramUrl.trim() || '#',
-              threadsUrl: homepageSectionForm.threadsUrl.trim() || '#',
-              linkedinUrl: homepageSectionForm.linkedinUrl.trim() || '#'
+              facebookUrl: homepageSectionForm.facebookUrl.trim(),
+              instagramUrl: homepageSectionForm.instagramUrl.trim(),
+              threadsUrl: homepageSectionForm.threadsUrl.trim(),
+              linkedinUrl: homepageSectionForm.linkedinUrl.trim()
             }
           });
         });
