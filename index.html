@@ -290,20 +290,20 @@
         {
           id: 1,
           name: 'Admin',
-          description: '可管理所有內容、Banner、服務追蹤與權限設定。',
-          permissions: ['dashboard:view', 'hero:view', 'hero:manage', 'content:view', 'content:manage', 'brands:view', 'brands:manage', 'services:view', 'services:manage', 'team:view', 'team:manage', 'storage:view', 'storage:manage']
+          description: '可管理所有內容、Banner 與權限設定。',
+          permissions: ['dashboard:view', 'hero:view', 'hero:manage', 'content:view', 'content:manage', 'team:view', 'team:manage', 'storage:view', 'storage:manage']
         },
         {
           id: 2,
           name: 'Editor',
-          description: '負責內容、Banner 與品牌資料維護。',
-          permissions: ['dashboard:view', 'hero:view', 'hero:manage', 'content:view', 'content:manage', 'brands:view', 'brands:manage', 'services:view']
+          description: '負責內容與 Banner 維護。',
+          permissions: ['dashboard:view', 'hero:view', 'hero:manage', 'content:view', 'content:manage']
         },
         {
           id: 3,
           name: 'Viewer',
-          description: '僅可檢視儀表板與追蹤資料，不可修改。',
-          permissions: ['dashboard:view', 'services:view']
+          description: '僅可檢視儀表板，不可修改。',
+          permissions: ['dashboard:view']
         }
       ],
       members: [
@@ -363,8 +363,6 @@
       '儀表板檢視',
       '首頁管理',
       '內容管理',
-      '品牌資料庫',
-      '服務追蹤',
       '權限角色管理',
       '本機資料管理',
       '資料新增編輯刪除'
@@ -373,8 +371,6 @@
       { key: 'dashboard', label: '儀表板', permissions: [{ key: 'dashboard:view', label: '檢視' }] },
       { key: 'hero', label: '首頁管理', permissions: [{ key: 'hero:view', label: '檢視' }, { key: 'hero:manage', label: '管理' }] },
       { key: 'content', label: '內容管理', permissions: [{ key: 'content:view', label: '檢視' }, { key: 'content:manage', label: '管理' }] },
-      { key: 'brands', label: '品牌資料庫', permissions: [{ key: 'brands:view', label: '檢視' }, { key: 'brands:manage', label: '管理' }] },
-      { key: 'services', label: '服務追蹤', permissions: [{ key: 'services:view', label: '檢視' }, { key: 'services:manage', label: '管理' }] },
       { key: 'team', label: '權限角色', permissions: [{ key: 'team:view', label: '檢視' }, { key: 'team:manage', label: '管理' }] },
       { key: 'storage', label: '本機資料', permissions: [{ key: 'storage:view', label: '檢視' }, { key: 'storage:manage', label: '管理' }] }
     ];
@@ -3165,18 +3161,6 @@
           size: window.localStorage.getItem(HOMEPAGE_CONTENT_STORAGE_KEY)?.length || 0
         },
         {
-          key: BRANDS_STORAGE_KEY,
-          label: '品牌資料',
-          description: '品牌資料庫中的名稱、服務類型與狀態',
-          size: window.localStorage.getItem(BRANDS_STORAGE_KEY)?.length || 0
-        },
-        {
-          key: SERVICE_TRACKER_STORAGE_KEY,
-          label: '服務追蹤資料',
-          description: '專案追蹤、階段、優先級與截止日',
-          size: window.localStorage.getItem(SERVICE_TRACKER_STORAGE_KEY)?.length || 0
-        },
-        {
           key: TEAM_ACCESS_STORAGE_KEY,
           label: '權限角色資料',
           description: '角色、權限與後台成員資料',
@@ -3612,7 +3596,7 @@
         ));
         setSelectedServiceIds([]);
         setIsServiceModalOpen(false);
-        setFlashMessage(editingServiceId ? '服務追蹤資料已更新。' : '已新增服務追蹤資料。');
+        setFlashMessage(editingServiceId ? '資料已更新。' : '已新增資料。');
       };
       const removeServiceRecord = (recordId) => {
         const target = serviceRecords.find((record) => record.id === recordId);
@@ -3620,7 +3604,7 @@
         if (!window.confirm(`確定要刪除專案「${target.projectName}」嗎？`)) return;
         setServiceRecords((prev) => prev.filter((record) => record.id !== recordId));
         setSelectedServiceIds((prev) => prev.filter((id) => id !== recordId));
-        setFlashMessage(`已刪除服務追蹤專案「${target.projectName}」。`);
+        setFlashMessage(`已刪除資料「${target.projectName}」。`);
       };
       const toggleServiceSelection = (recordId) => {
         setSelectedServiceIds((prev) => prev.includes(recordId) ? prev.filter((id) => id !== recordId) : [...prev, recordId]);
@@ -3632,7 +3616,7 @@
       };
       const applyBatchServiceUpdate = () => {
         if (selectedServiceIds.length === 0) {
-          setFlashMessage('請先勾選要批次更新的服務追蹤項目。');
+          setFlashMessage('請先勾選要批次更新的項目。');
           return;
         }
         if (!serviceBatchForm.stage && !serviceBatchForm.priority && !serviceBatchForm.owner.trim()) {
@@ -3651,7 +3635,7 @@
               }
             : record
         )));
-        setFlashMessage(`已批次更新 ${selectedServiceIds.length} 筆服務追蹤資料。`);
+        setFlashMessage(`已批次更新 ${selectedServiceIds.length} 筆資料。`);
         setSelectedServiceIds([]);
         setServiceBatchForm({ stage: '', priority: '', owner: '' });
       };
@@ -4543,10 +4527,10 @@
               ? { ...brand, ...newBrand, updated: date }
               : brand
           )));
-          setFlashMessage(`已更新品牌資料「${newBrand.name}」。`);
+          setFlashMessage(`已更新資料「${newBrand.name}」。`);
         } else {
           setBrands([{ id: Date.now(), ...newBrand, updated: date }, ...brands]);
-          setFlashMessage(`已新增品牌資料「${newBrand.name}」。`);
+          setFlashMessage(`已新增資料「${newBrand.name}」。`);
         }
         setIsAddModalOpen(false);
         setEditingBrandId(null);
@@ -4572,7 +4556,7 @@
         const target = brands.find((brand) => brand.id === deleteConfirmId);
         setBrands(brands.filter(b => b.id !== deleteConfirmId));
         setDeleteConfirmId(null);
-        if (target) setFlashMessage(`已刪除品牌資料「${target.name}」。`);
+        if (target) setFlashMessage(`已刪除資料「${target.name}」。`);
       };
 
       const openAddHero = () => {
@@ -4881,11 +4865,11 @@
         } else if (key === BRANDS_STORAGE_KEY) {
           setBrands(defaultBrands);
           window.localStorage.removeItem(key);
-          setFlashMessage('品牌資料已恢復為預設內容。');
+          setFlashMessage('這組隱藏資料已恢復為預設內容。');
         } else if (key === SERVICE_TRACKER_STORAGE_KEY) {
           setServiceRecords(defaultServiceRecords);
           window.localStorage.removeItem(key);
-          setFlashMessage('服務追蹤資料已恢復為預設內容。');
+          setFlashMessage('這組隱藏資料已恢復為預設內容。');
         } else if (key === TEAM_ACCESS_STORAGE_KEY) {
           setTeamAccess(defaultTeamAccess);
           window.localStorage.removeItem(key);
@@ -4943,7 +4927,7 @@
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-        setFlashMessage(`已匯出 ${sortedFilteredBrands.length} 筆品牌資料 CSV。`);
+        setFlashMessage(`已匯出 ${sortedFilteredBrands.length} 筆資料 CSV。`);
       };
 
       if (!isAuthenticated) {
@@ -5468,315 +5452,6 @@
                 </div>
               )}
 
-              {activeTab === 'brands' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="text-xl font-bold">品牌資料庫</h3>
-                      <p className="text-gray-500 text-sm mt-1">管理所有合作品牌的狀態與服務內容</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button onClick={exportBrandsCsv} className="px-4 py-2 bg-white text-[#3a3a3a] rounded-lg flex items-center gap-2 text-sm font-bold border border-gray-200 hover:bg-gray-50 transition-colors">
-                        <Download size={16}/> 匯出 CSV
-                      </button>
-                      <button onClick={() => openBrandModal()} className="px-4 py-2 bg-[#4e7055] text-white rounded-lg flex items-center gap-2 text-sm font-bold hover:bg-[#3a5240] transition-colors">
-                        <Plus size={16}/> 新增品牌資料
-                      </button>
-                    </div>
-                  </div>
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-gray-500 text-sm font-bold mb-1">品牌總數</p>
-                      <p className="text-3xl font-bold">{brands.length}</p>
-                    </div>
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-gray-500 text-sm font-bold mb-1">篩選結果</p>
-                      <p className="text-3xl font-bold">{sortedFilteredBrands.length}</p>
-                    </div>
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-gray-500 text-sm font-bold mb-1">進行中 / 活躍</p>
-                      <p className="text-3xl font-bold">{brands.filter((brand) => brand.status === 'In Progress' || brand.status === 'Active').length}</p>
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-                    <div className="grid md:grid-cols-4 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">搜尋</label>
-                        <input value={brandSearchTerm} onChange={e => setBrandSearchTerm(e.target.value)} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" placeholder="搜尋品牌、服務類型、狀態" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">狀態</label>
-                        <select value={brandStatusFilter} onChange={e => setBrandStatusFilter(e.target.value)} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
-                          <option value="全部">全部</option>
-                          <option value="Active">Active</option>
-                          <option value="In Progress">In Progress</option>
-                          <option value="Completed">Completed</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">排序</label>
-                        <select value={brandSortBy} onChange={e => setBrandSortBy(e.target.value)} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
-                          <option value="updated-desc">最後更新優先</option>
-                          <option value="updated-asc">最後更新由舊到新</option>
-                          <option value="name">品牌名稱排序</option>
-                          <option value="service">服務類型排序</option>
-                          <option value="status">狀態排序</option>
-                        </select>
-                      </div>
-                      <div className="flex items-end">
-                        <button onClick={() => { setBrandSearchTerm(''); setBrandStatusFilter('全部'); setBrandSortBy('updated-desc'); }} className="w-full px-4 py-3 text-sm font-bold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                          清除篩選
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-gray-50 text-gray-500">
-                        <tr>
-                          <th className="px-6 py-4 font-medium">品牌名稱</th>
-                          <th className="px-6 py-4 font-medium">服務類型</th>
-                          <th className="px-6 py-4 font-medium">狀態</th>
-                          <th className="px-6 py-4 font-medium">最後更新</th>
-                          <th className="px-6 py-4 font-medium text-right">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {sortedFilteredBrands.map((brand) => (
-                          <tr key={brand.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 font-bold text-gray-900">{brand.name}</td>
-                            <td className="px-6 py-4 text-gray-500">{brand.service}</td>
-                            <td className="px-6 py-4">
-                              <span className={`px-2 py-1 rounded-full text-xs font-bold ${brand.status === 'Active' ? 'bg-green-100 text-green-700' : brand.status === 'Completed' ? 'bg-gray-100 text-gray-600' : 'bg-orange-100 text-orange-700'}`}>
-                                {brand.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-gray-500">{brand.updated}</td>
-                            <td className="px-6 py-4 text-right">
-                              <button onClick={() => openBrandModal(brand)} className="text-gray-400 hover:text-blue-600 mx-1"><Edit size={16} /></button>
-                              <button onClick={() => setDeleteConfirmId(brand.id)} className="text-gray-400 hover:text-red-600 mx-1 transition-colors"><Trash2 size={16} /></button>
-                            </td>
-                          </tr>
-                        ))}
-                        {sortedFilteredBrands.length === 0 && (
-                          <tr>
-                            <td colSpan="5" className="px-6 py-10 text-center text-gray-400">沒有符合篩選條件的品牌資料。</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'services' && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="text-xl font-bold">服務追蹤</h3>
-                      <p className="text-gray-500 text-sm mt-1">追蹤進行中的顧問專案、負責人、優先級與交付時間。</p>
-                    </div>
-                    <button onClick={() => openServiceModal()} className="px-4 py-2 bg-[#4e7055] text-white rounded-lg flex items-center gap-2 text-sm font-bold hover:bg-[#3a5240] transition-colors">
-                      <Plus size={16}/> 新增追蹤項目
-                    </button>
-                  </div>
-
-                  <div className="grid md:grid-cols-4 gap-4">
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-gray-500 text-sm font-bold mb-1">總專案數</p>
-                      <p className="text-3xl font-bold">{serviceRecords.length}</p>
-                    </div>
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-gray-500 text-sm font-bold mb-1">進行中</p>
-                      <p className="text-3xl font-bold">{activeServiceCount}</p>
-                    </div>
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-gray-500 text-sm font-bold mb-1">高優先級</p>
-                      <p className="text-3xl font-bold">{serviceRecords.filter((record) => record.priority === '高').length}</p>
-                    </div>
-                    <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-gray-500 text-sm font-bold mb-1">已逾期</p>
-                      <p className="text-3xl font-bold">{overdueServiceCount}</p>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-                    <div className="grid md:grid-cols-4 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">搜尋</label>
-                        <input value={serviceSearchTerm} onChange={e => setServiceSearchTerm(e.target.value)} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" placeholder="搜尋專案、客戶、服務、負責人" />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">階段</label>
-                        <select value={serviceStageFilter} onChange={e => setServiceStageFilter(e.target.value)} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
-                          <option value="全部">全部</option>
-                          <option value="待啟動">待啟動</option>
-                          <option value="進行中">進行中</option>
-                          <option value="已完成">已完成</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">優先級</label>
-                        <select value={servicePriorityFilter} onChange={e => setServicePriorityFilter(e.target.value)} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
-                          <option value="全部">全部</option>
-                          <option value="高">高</option>
-                          <option value="中">中</option>
-                          <option value="低">低</option>
-                        </select>
-                      </div>
-                      <div className="flex items-end">
-                        <button onClick={() => { setServiceSearchTerm(''); setServiceStageFilter('全部'); setServicePriorityFilter('全部'); }} className="w-full px-4 py-3 text-sm font-bold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                          清除篩選
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-                    <div className="flex items-end gap-4 mb-4">
-                      <div className="w-full max-w-xs">
-                        <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">排序方式</label>
-                        <select value={serviceSortBy} onChange={e => setServiceSortBy(e.target.value)} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
-                          <option value="manual">手動排序</option>
-                          <option value="updated-desc">最後更新優先</option>
-                          <option value="due-asc">截止日優先（近到遠）</option>
-                          <option value="due-desc">截止日優先（遠到近）</option>
-                          <option value="priority">優先級排序</option>
-                          <option value="project">專案名稱排序</option>
-                        </select>
-                      </div>
-                    </div>
-                    {serviceSortBy !== 'manual' && (
-                      <div className="grid md:grid-cols-4 gap-4">
-                        <div>
-                          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">批次階段</label>
-                          <select value={serviceBatchForm.stage} onChange={e => setServiceBatchForm({ ...serviceBatchForm, stage: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
-                            <option value="">不變更</option>
-                            <option value="待啟動">待啟動</option>
-                            <option value="進行中">進行中</option>
-                            <option value="已完成">已完成</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">批次優先級</label>
-                          <select value={serviceBatchForm.priority} onChange={e => setServiceBatchForm({ ...serviceBatchForm, priority: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
-                            <option value="">不變更</option>
-                            <option value="高">高</option>
-                            <option value="中">中</option>
-                            <option value="低">低</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">批次負責人</label>
-                          <input value={serviceBatchForm.owner} onChange={e => setServiceBatchForm({ ...serviceBatchForm, owner: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" placeholder="輸入新負責人" />
-                        </div>
-                        <div className="flex items-end">
-                          <button onClick={applyBatchServiceUpdate} className="w-full px-4 py-3 text-sm font-bold text-white rounded-lg bg-[#4e7055] hover:bg-[#3a5240] transition-colors">
-                            批次更新 {selectedServiceIds.length > 0 ? `(${selectedServiceIds.length})` : ''}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    {serviceSortBy === 'manual' && (
-                      <div className="mt-4 rounded-lg border border-[#4e7055]/15 bg-[#4e7055]/5 px-4 py-3 text-sm text-[#3a5240]">
-                        手動排序已啟用：可直接拖曳列上的手把，或使用上下箭頭調整順序。排序完成後會顯示專案名稱與最新位置。
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-gray-50 text-gray-500">
-                        <tr>
-                          <th className="px-4 py-4 font-medium w-14">排序</th>
-                          <th className="px-6 py-4 font-medium w-14">
-                            <input
-                              type="checkbox"
-                              checked={sortedFilteredServiceRecords.length > 0 && sortedFilteredServiceRecords.every((record) => selectedServiceIds.includes(record.id))}
-                              onChange={toggleSelectAllServices}
-                            />
-                          </th>
-                          <th className="px-6 py-4 font-medium">專案 / 客戶</th>
-                          <th className="px-6 py-4 font-medium">服務類型</th>
-                          <th className="px-6 py-4 font-medium">負責人</th>
-                          <th className="px-6 py-4 font-medium">階段</th>
-                          <th className="px-6 py-4 font-medium">優先級</th>
-                          <th className="px-6 py-4 font-medium">截止日</th>
-                          <th className="px-6 py-4 font-medium text-right">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {sortedFilteredServiceRecords.map((record) => (
-                          <tr
-                            key={record.id}
-                            draggable={serviceSortBy === 'manual'}
-                            onDragStart={() => setDraggedServiceId(record.id)}
-                            onDragOver={(e) => serviceSortBy === 'manual' && e.preventDefault()}
-                            onDrop={() => {
-                              if (serviceSortBy === 'manual') {
-                                reorderServiceRecords(draggedServiceId, record.id);
-                                setDraggedServiceId(null);
-                              }
-                            }}
-                            onDragEnd={() => setDraggedServiceId(null)}
-                            className={`hover:bg-gray-50 align-top ${draggedServiceId === record.id ? 'opacity-50' : ''}`}
-                          >
-                            <td className="px-4 py-4">
-                              <div className="flex flex-col items-center gap-2">
-                                <button
-                                  type="button"
-                                  className={`text-gray-400 ${serviceSortBy === 'manual' ? 'cursor-grab' : 'cursor-not-allowed opacity-40'}`}
-                                  title={serviceSortBy === 'manual' ? '拖曳排序' : '切換到手動排序後可拖曳'}
-                                >
-                                  <GripVertical size={16} />
-                                </button>
-                                <div className="flex flex-col gap-1">
-                                  <button type="button" onClick={() => moveServiceRecord(record.id, -1)} className="text-gray-400 hover:text-gray-700"><ChevronUp size={14} /></button>
-                                  <button type="button" onClick={() => moveServiceRecord(record.id, 1)} className="text-gray-400 hover:text-gray-700"><ChevronDown size={14} /></button>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <input type="checkbox" checked={selectedServiceIds.includes(record.id)} onChange={() => toggleServiceSelection(record.id)} />
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="font-bold text-gray-900">{record.projectName}</div>
-                              <div className="text-xs text-gray-500 mt-1">{record.client}</div>
-                              {record.notes && <div className="text-xs text-gray-400 mt-2 max-w-xs">{record.notes}</div>}
-                            </td>
-                            <td className="px-6 py-4 text-gray-600">{record.serviceType}</td>
-                            <td className="px-6 py-4 text-gray-600">{record.owner}</td>
-                            <td className="px-6 py-4">
-                              <span className={`px-2 py-1 rounded-full text-xs font-bold ${record.stage === '已完成' ? 'bg-gray-100 text-gray-600' : record.stage === '進行中' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                                {record.stage}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className={`px-2 py-1 rounded-full text-xs font-bold ${record.priority === '高' ? 'bg-red-100 text-red-700' : record.priority === '中' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
-                                {record.priority}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-gray-600">
-                              <div>{record.dueDate}</div>
-                              <div className="text-xs text-gray-400 mt-1">更新 {record.updated}</div>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <button onClick={() => openServiceModal(record)} className="text-gray-400 hover:text-blue-600 mx-1"><Edit size={16} /></button>
-                              <button onClick={() => removeServiceRecord(record.id)} className="text-gray-400 hover:text-red-600 mx-1"><Trash2 size={16} /></button>
-                            </td>
-                          </tr>
-                        ))}
-                        {filteredServiceRecords.length === 0 && (
-                          <tr>
-                            <td colSpan="9" className="px-6 py-10 text-center text-gray-400">沒有符合篩選條件的追蹤項目。</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
               {activeTab === 'team' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
@@ -6023,74 +5698,6 @@
                   <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-gray-100">
                     <button type="button" onClick={() => setIsHeroModalOpen(false)} className="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition-colors">取消</button>
                     <button type="submit" className="px-5 py-2.5 bg-[#4e7055] text-white font-bold rounded-lg hover:bg-[#3a5240] transition-colors">儲存設定</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {isServiceModalOpen && (
-            <div className="fixed inset-0 bg-[#3a3a3a]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-xl">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-[#3a3a3a]">{editingServiceId ? '編輯服務追蹤' : '新增服務追蹤'}</h3>
-                  <button onClick={() => setIsServiceModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
-                </div>
-                <form onSubmit={saveServiceForm} className="space-y-4">
-                  {Object.keys(serviceFormErrors).length > 0 && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                      {Object.values(serviceFormErrors)[0]}
-                    </div>
-                  )}
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">專案名稱</label>
-                      <input value={serviceForm.projectName} onChange={e => setServiceForm({ ...serviceForm, projectName: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">客戶名稱</label>
-                      <input value={serviceForm.client} onChange={e => setServiceForm({ ...serviceForm, client: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
-                    </div>
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">服務類型</label>
-                      <input value={serviceForm.serviceType} onChange={e => setServiceForm({ ...serviceForm, serviceType: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" placeholder="例如：品牌策略與定位" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">負責人</label>
-                      <input value={serviceForm.owner} onChange={e => setServiceForm({ ...serviceForm, owner: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
-                    </div>
-                  </div>
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">階段</label>
-                      <select value={serviceForm.stage} onChange={e => setServiceForm({ ...serviceForm, stage: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
-                        <option value="待啟動">待啟動</option>
-                        <option value="進行中">進行中</option>
-                        <option value="已完成">已完成</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">優先級</label>
-                      <select value={serviceForm.priority} onChange={e => setServiceForm({ ...serviceForm, priority: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
-                        <option value="高">高</option>
-                        <option value="中">中</option>
-                        <option value="低">低</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">截止日</label>
-                      <input type="date" value={serviceForm.dueDate} onChange={e => setServiceForm({ ...serviceForm, dueDate: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">備註</label>
-                    <textarea rows="4" value={serviceForm.notes} onChange={e => setServiceForm({ ...serviceForm, notes: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none" />
-                  </div>
-                  <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                    <button type="button" onClick={() => setIsServiceModalOpen(false)} className="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition-colors">取消</button>
-                    <button type="submit" className="px-5 py-2.5 bg-[#4e7055] text-white font-bold rounded-lg hover:bg-[#3a5240] transition-colors">儲存專案</button>
                   </div>
                 </form>
               </div>
@@ -6778,60 +6385,6 @@
                   <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                     <button type="button" onClick={() => setIsHomepageSectionModalOpen(false)} className="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition-colors">取消</button>
                     <button type="submit" className="px-5 py-2.5 bg-[#4e7055] text-white font-bold rounded-lg hover:bg-[#3a5240] transition-colors">儲存</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {isAddModalOpen && (
-            <div className="fixed inset-0 bg-[#3a3a3a]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl animate-in fade-in zoom-in duration-200">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-[#3a3a3a]">{editingBrandId ? '編輯品牌資料' : '新增品牌資料'}</h3>
-                  <button
-                    onClick={() => {
-                      setIsAddModalOpen(false);
-                      setEditingBrandId(null);
-                      setNewBrand({ name: '', service: '', status: 'Active' });
-                    }}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X size={20}/>
-                  </button>
-                </div>
-                <form onSubmit={handleAddBrand} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">品牌名稱</label>
-                    <input required value={newBrand.name} onChange={e => setNewBrand({ ...newBrand, name: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" placeholder="例如：綠色生活科技" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">服務類型</label>
-                    <input required value={newBrand.service} onChange={e => setNewBrand({ ...newBrand, service: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" placeholder="例如：ESG議題溝通" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">狀態</label>
-                    <select value={newBrand.status} onChange={e => setNewBrand({ ...newBrand, status: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
-                      <option value="Active">Active (活躍)</option>
-                      <option value="In Progress">In Progress (進行中)</option>
-                      <option value="Completed">Completed (已完成)</option>
-                    </select>
-                  </div>
-                  <div className="flex justify-end gap-3 mt-8">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAddModalOpen(false);
-                        setEditingBrandId(null);
-                        setNewBrand({ name: '', service: '', status: 'Active' });
-                      }}
-                      className="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                      取消
-                    </button>
-                    <button type="submit" className="px-5 py-2.5 bg-[#4e7055] text-white font-bold rounded-lg hover:bg-[#3a5240] transition-colors">
-                      {editingBrandId ? '儲存修改' : '確認新增'}
-                    </button>
                   </div>
                 </form>
               </div>
