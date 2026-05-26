@@ -327,7 +327,7 @@
           name: 'Marketing Preview',
           email: 'marketing@worthbetween.com.tw',
           role: 'Viewer',
-          status: 'Invited',
+          status: 'Inactive',
           lastLogin: '尚未登入'
         }
       ],
@@ -353,7 +353,7 @@
           actor: 'System',
           target: 'Marketing Preview',
           action: '建立預覽帳號',
-          detail: '狀態：Invited',
+          detail: '狀態：Inactive',
           timestamp: '2026-04-01 09:10'
         }
       ]
@@ -982,6 +982,29 @@
         }
       };
     };
+    const normalizeTeamAccess = (teamAccess) => {
+      const fallback = defaultTeamAccess;
+      const source = teamAccess && typeof teamAccess === 'object' ? teamAccess : fallback;
+      return {
+        ...fallback,
+        ...source,
+        roles: Array.isArray(source.roles) ? source.roles.map((role, index) => ({
+          ...fallback.roles[index],
+          ...role
+        })) : fallback.roles.map((role) => ({ ...role })),
+        members: Array.isArray(source.members) ? source.members.map((member) => ({
+          ...member,
+          status: member.status === 'Active' ? 'Active' : 'Inactive',
+          lastLogin: member.lastLogin || '尚未登入'
+        })) : fallback.members.map((member) => ({ ...member })),
+        activities: Array.isArray(source.activities) ? source.activities.map((activity) => ({
+          ...activity,
+          detail: typeof activity.detail === 'string'
+            ? activity.detail.replace(/狀態：\s*Inactive/g, '狀態：Inactive').replace(/狀態：\s*Active/g, '狀態：Active')
+            : activity.detail
+        })) : fallback.activities.map((activity) => ({ ...activity }))
+      };
+    };
     const normalizeContentPages = (pages) => {
       const pageMap = new Map((Array.isArray(pages) ? pages : []).map((page) => [page.key, page]));
       return defaultContentPages.map((defaultPage) => {
@@ -1209,7 +1232,7 @@
         homepageContent: normalizeHomepageContent(readJsonFromLocalStorage(HOMEPAGE_CONTENT_STORAGE_KEY, defaults.homepageContent)),
         brands: readJsonFromLocalStorage(BRANDS_STORAGE_KEY, defaults.brands),
         serviceRecords: normalizeServiceRecords(readJsonFromLocalStorage(SERVICE_TRACKER_STORAGE_KEY, defaults.serviceRecords)),
-        teamAccess: readJsonFromLocalStorage(TEAM_ACCESS_STORAGE_KEY, defaults.teamAccess)
+        teamAccess: normalizeTeamAccess(readJsonFromLocalStorage(TEAM_ACCESS_STORAGE_KEY, defaults.teamAccess))
       };
     };
     const normalizeRemoteSiteState = (payload) => {
@@ -1221,7 +1244,7 @@
         homepageContent: normalizeHomepageContent(source.homepageContent || defaults.homepageContent),
         brands: Array.isArray(source.brands) ? source.brands : defaults.brands,
         serviceRecords: normalizeServiceRecords(source.serviceRecords || defaults.serviceRecords),
-        teamAccess: source.teamAccess?.roles && source.teamAccess?.members ? source.teamAccess : defaults.teamAccess
+        teamAccess: source.teamAccess?.roles && source.teamAccess?.members ? normalizeTeamAccess(source.teamAccess) : defaults.teamAccess
       };
     };
     const persistLocalSiteState = ({ heroSlides, contentPages, homepageContent, brands, serviceRecords, teamAccess }) => {
@@ -1230,7 +1253,7 @@
       window.localStorage.setItem(HOMEPAGE_CONTENT_STORAGE_KEY, JSON.stringify(normalizeHomepageContent(homepageContent)));
       window.localStorage.setItem(BRANDS_STORAGE_KEY, JSON.stringify(brands));
       window.localStorage.setItem(SERVICE_TRACKER_STORAGE_KEY, JSON.stringify(normalizeServiceRecords(serviceRecords)));
-      window.localStorage.setItem(TEAM_ACCESS_STORAGE_KEY, JSON.stringify(teamAccess));
+      window.localStorage.setItem(TEAM_ACCESS_STORAGE_KEY, JSON.stringify(normalizeTeamAccess(teamAccess)));
     };
     const getContentPageByRoute = (contentPages, route) => {
       const page = contentPages.find((item) => item.route === route);
@@ -3156,9 +3179,9 @@
         }
       }, [activeTab]);
       const [editingMemberId, setEditingMemberId] = useState(null);
-      const [memberForm, setMemberForm] = useState({ name: '', email: '', role: 'Viewer', status: 'Invited', lastLogin: '尚未登入' });
+      const [memberForm, setMemberForm] = useState({ name: '', email: '', role: 'Viewer', status: 'Active', lastLogin: '尚未登入' });
       const [memberFormError, setMemberFormError] = useState('');
-      const [memberActionModal, setMemberActionModal] = useState({ open: false, type: '', member: null });
+      const [memberActionModal, setMemberActionModal] = useState({ open: false, member: null });
       const [activityFilterMember, setActivityFilterMember] = useState('全部');
 
       const initialHeroForm = { tag: '', title: '', subtitle: '', bgImage: '', accent: colors.orange, isActive: true };
@@ -3812,12 +3835,12 @@
             name: member.name || '',
             email: member.email || '',
             role: member.role || (roleOptions[0] || 'Viewer'),
-            status: member.status || 'Invited',
+            status: member.status || 'Active',
             lastLogin: member.lastLogin || '尚未登入'
           });
         } else {
           setEditingMemberId(null);
-          setMemberForm({ name: '', email: '', role: roleOptions[0] || 'Viewer', status: 'Invited', lastLogin: '尚未登入' });
+          setMemberForm({ name: '', email: '', role: roleOptions[0] || 'Viewer', status: 'Active', lastLogin: '尚未登入' });
         }
         setMemberFormError('');
         setIsMemberModalOpen(true);
@@ -3877,32 +3900,19 @@
             : [...prev.permissions, permission]
         }));
       };
-      const openMemberActionModal = (type, member) => {
-        setMemberActionModal({ open: true, type, member });
+      const openMemberActionModal = (member) => {
+        setMemberActionModal({ open: true, member });
       };
       const confirmMemberAction = () => {
         if (!memberActionModal.member) return;
-        const { type, member } = memberActionModal;
-        if (type === 'invite') {
-          setTeamAccess((prev) => ({
-            ...prev,
-            members: prev.members.map((entry) => entry.id === member.id ? { ...entry, status: 'Invited' } : entry)
-          }));
-          appendTeamActivity({
-            target: member.name,
-            action: '寄送邀請',
-            detail: member.email
-          });
-          setFlashMessage(`已模擬寄送邀請信給 ${member.email}。`);
-        } else if (type === 'reset') {
-          appendTeamActivity({
-            target: member.name,
-            action: '重設密碼',
-            detail: member.email
-          });
-          setFlashMessage(`已模擬寄送密碼重設信給 ${member.email}。`);
-        }
-        setMemberActionModal({ open: false, type: '', member: null });
+        const member = memberActionModal.member;
+        appendTeamActivity({
+          target: member.name,
+          action: '重設密碼',
+          detail: member.email
+        });
+        setFlashMessage(`已模擬寄送密碼重設信給 ${member.email}。`);
+        setMemberActionModal({ open: false, member: null });
       };
       const roleOptions = teamAccess.roles.map((role) => role.name);
       const activeServiceCount = serviceRecords.filter((record) => record.stage !== '已完成').length;
@@ -5272,8 +5282,8 @@
                       <p className="text-3xl font-bold">{activeMemberCount}</p>
                     </div>
                     <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                      <p className="text-gray-500 text-sm font-bold mb-1">邀請中</p>
-                      <p className="text-3xl font-bold">{teamAccess.members.filter((member) => member.status === 'Invited').length}</p>
+                      <p className="text-gray-500 text-sm font-bold mb-1">停用中</p>
+                      <p className="text-3xl font-bold">{teamAccess.members.filter((member) => member.status === 'Inactive').length}</p>
                     </div>
                   </div>
 
@@ -5336,10 +5346,7 @@
                               </td>
                               <td className="px-6 py-4 text-gray-600">{member.lastLogin}</td>
                               <td className="px-6 py-4 text-right">
-                                <button onClick={() => openMemberActionModal('invite', member)} className="text-xs font-bold text-[#4e7055] border border-[#4e7055]/20 px-2 py-1 rounded hover:bg-[#4e7055]/5 mr-2">
-                                  {member.status === 'Invited' ? '重寄邀請' : '寄送邀請'}
-                                </button>
-                                <button onClick={() => openMemberActionModal('reset', member)} className="text-xs font-bold text-[#cc7333] border border-[#cc7333]/20 px-2 py-1 rounded hover:bg-[#cc7333]/5 mr-2">
+                                <button onClick={() => openMemberActionModal(member)} className="text-xs font-bold text-[#cc7333] border border-[#cc7333]/20 px-2 py-1 rounded hover:bg-[#cc7333]/5 mr-2">
                                   重設密碼
                                 </button>
                                 <button onClick={() => openMemberModal(member)} className="text-gray-400 hover:text-blue-600 mx-1"><Edit size={16} /></button>
@@ -5577,21 +5584,19 @@
             <div className="fixed inset-0 bg-[#3a3a3a]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
               <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-[#3a3a3a]">
-                    {memberActionModal.type === 'invite' ? '寄送邀請信' : '重設密碼'}
-                  </h3>
-                  <button onClick={() => setMemberActionModal({ open: false, type: '', member: null })} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
+                  <h3 className="text-xl font-bold text-[#3a3a3a]">重設密碼</h3>
+                  <button onClick={() => setMemberActionModal({ open: false, member: null })} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
                 </div>
                 <div className="space-y-4 text-sm text-gray-600">
                   <p>這是前端假資料流程，會模擬寄送系統通知，不會真的寄出 Email。</p>
                   <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-2">
                     <div><span className="font-bold text-gray-800">收件人：</span>{memberActionModal.member.name}</div>
                     <div><span className="font-bold text-gray-800">Email：</span>{memberActionModal.member.email}</div>
-                    <div><span className="font-bold text-gray-800">動作：</span>{memberActionModal.type === 'invite' ? '寄送後台邀請連結' : '寄送密碼重設連結'}</div>
+                    <div><span className="font-bold text-gray-800">動作：</span>寄送密碼重設連結</div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
-                  <button type="button" onClick={() => setMemberActionModal({ open: false, type: '', member: null })} className="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition-colors">取消</button>
+                  <button type="button" onClick={() => setMemberActionModal({ open: false, member: null })} className="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition-colors">取消</button>
                   <button type="button" onClick={confirmMemberAction} className="px-5 py-2.5 bg-[#4e7055] text-white font-bold rounded-lg hover:bg-[#3a5240] transition-colors">
                     確認送出
                   </button>
@@ -5630,7 +5635,6 @@
                       <label className="block text-xs font-bold text-gray-700 mb-1">狀態</label>
                       <select value={memberForm.status} onChange={e => setMemberForm({ ...memberForm, status: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]">
                         <option value="Active">Active</option>
-                        <option value="Invited">Invited</option>
                         <option value="Inactive">Inactive</option>
                       </select>
                     </div>
