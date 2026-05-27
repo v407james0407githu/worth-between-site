@@ -361,14 +361,14 @@
     const permissionOptions = [
       '儀表板檢視',
       'Banner管理',
-      '內容管理',
+      '分頁管理',
       '權限角色管理',
       '資料新增編輯刪除'
     ];
     const permissionMatrix = [
       { key: 'dashboard', label: '儀表板', permissions: [{ key: 'dashboard:view', label: '檢視' }] },
       { key: 'hero', label: 'Banner管理', permissions: [{ key: 'hero:view', label: '檢視' }, { key: 'hero:manage', label: '管理' }] },
-      { key: 'content', label: '內容管理', permissions: [{ key: 'content:view', label: '檢視' }, { key: 'content:manage', label: '管理' }] },
+      { key: 'content', label: '分頁管理', permissions: [{ key: 'content:view', label: '檢視' }, { key: 'content:manage', label: '管理' }] },
       { key: 'team', label: '權限角色', permissions: [{ key: 'team:view', label: '檢視' }, { key: 'team:manage', label: '管理' }] }
     ];
     const sitePageConfigs = [
@@ -4897,7 +4897,7 @@
                 <ImageIcon size={18} /> Banner管理
               </button>
               <button onClick={() => setActiveTab('content')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'content' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
-                <FileText size={18} /> 內容管理
+                <FileText size={18} /> 分頁管理
               </button>
               <button onClick={() => setActiveTab('team')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'team' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
                 <Users size={18} /> 權限與角色
@@ -4918,7 +4918,7 @@
               <h2 className="text-lg font-bold">
                 {activeTab === 'dashboard' && '總覽儀表板 Overview'}
                 {activeTab === 'hero-slider' && 'Banner管理 Banner Management'}
-                {activeTab === 'content' && '內容管理 Content CMS'}
+                {activeTab === 'content' && '分頁管理 Page Management'}
                 {activeTab === 'team' && '權限與角色 Team Access'}
               </h2>
               <div className="flex items-center gap-4">
@@ -5091,19 +5091,8 @@
                 <div className="space-y-6">
                   <div className="flex justify-between items-center">
                     <div>
-                      <h3 className="text-xl font-bold">內容管理</h3>
-                      <p className="text-gray-500 text-sm mt-1">管理首頁主要段落與右上角獨立子頁的頁首內容、子分類與圖文模組。</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => openSectionModal()} className="px-4 py-2 bg-white text-[#3a3a3a] rounded-lg flex items-center gap-2 text-sm font-bold border border-gray-200 hover:bg-gray-50 transition-colors">
-                        <Edit size={16}/> 編輯目前分頁 Banner
-                      </button>
-                      <button onClick={() => openCategoryModal()} className="px-4 py-2 bg-white text-[#3a3a3a] rounded-lg flex items-center gap-2 text-sm font-bold border border-gray-200 hover:bg-gray-50 transition-colors">
-                        <Plus size={16}/> 新增子分類
-                      </button>
-                      <button onClick={() => openContentItemModal()} className="px-4 py-2 bg-[#4e7055] text-white rounded-lg flex items-center gap-2 text-sm font-bold hover:bg-[#3a5240] transition-colors">
-                        <Plus size={16}/> 新增內容
-                      </button>
+                      <h3 className="text-xl font-bold">分頁管理</h3>
+                      <p className="text-gray-500 text-sm mt-1">管理各分頁的頁首內容、子分類與圖文模組。</p>
                     </div>
                   </div>
 
@@ -5171,7 +5160,12 @@
                       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
                         <div className="flex items-center justify-between mb-4">
                           <h4 className="font-bold">子分類</h4>
-                          <span className="text-xs text-gray-400">可拖曳排序，也可用上下移調整</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-gray-400">可拖曳排序，也可用上下移調整</span>
+                            <button onClick={() => openCategoryModal()} className="px-4 py-2 bg-white text-[#3a3a3a] rounded-lg flex items-center gap-2 text-sm font-bold border border-gray-200 hover:bg-gray-50 transition-colors">
+                              <Plus size={16}/> 新增子分類
+                            </button>
+                          </div>
                         </div>
                         <div className="flex flex-wrap gap-3">
                           {activeContentSection.categories.map((category, index) => (
