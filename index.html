@@ -360,14 +360,14 @@
     };
     const permissionOptions = [
       '儀表板檢視',
-      '首頁管理',
+      'Banner管理',
       '內容管理',
       '權限角色管理',
       '資料新增編輯刪除'
     ];
     const permissionMatrix = [
       { key: 'dashboard', label: '儀表板', permissions: [{ key: 'dashboard:view', label: '檢視' }] },
-      { key: 'hero', label: '首頁管理', permissions: [{ key: 'hero:view', label: '檢視' }, { key: 'hero:manage', label: '管理' }] },
+      { key: 'hero', label: 'Banner管理', permissions: [{ key: 'hero:view', label: '檢視' }, { key: 'hero:manage', label: '管理' }] },
       { key: 'content', label: '內容管理', permissions: [{ key: 'content:view', label: '檢視' }, { key: 'content:manage', label: '管理' }] },
       { key: 'team', label: '權限角色', permissions: [{ key: 'team:view', label: '檢視' }, { key: 'team:manage', label: '管理' }] }
     ];
@@ -4894,7 +4894,7 @@
                 <BarChart3 size={18} /> 總覽儀表板
               </button>
               <button onClick={() => setActiveTab('hero-slider')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'hero-slider' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
-                <ImageIcon size={18} /> 首頁管理
+                <ImageIcon size={18} /> Banner管理
               </button>
               <button onClick={() => setActiveTab('content')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'content' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
                 <FileText size={18} /> 內容管理
@@ -4917,7 +4917,7 @@
             <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-8 shadow-sm">
               <h2 className="text-lg font-bold">
                 {activeTab === 'dashboard' && '總覽儀表板 Overview'}
-                {activeTab === 'hero-slider' && '首頁管理 Home Management'}
+                {activeTab === 'hero-slider' && 'Banner管理 Banner Management'}
                 {activeTab === 'content' && '內容管理 Content CMS'}
                 {activeTab === 'team' && '權限與角色 Team Access'}
               </h2>
