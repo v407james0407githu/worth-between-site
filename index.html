@@ -2915,10 +2915,10 @@
           {/* 專業服務 Services */}
           <section id="services" className="py-24 md:py-32 px-6 bg-white border-t border-gray-200">
             <div className="max-w-7xl mx-auto">
-              <MotionOnScroll variant="soft-scale">
+              <MotionOnScroll variant="drift-up-left">
                 <SectionLabel text={servicesContent.sectionLabel} color={colors.teal} />
               </MotionOnScroll>
-              <MotionOnScroll variant="blur-up" delay={70}>
+              <MotionOnScroll variant="tilt-rise" delay={70}>
                 <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#3a3a3a] leading-tight">{servicesContent.title}</h2>
               </MotionOnScroll>
               <div className="max-w-3xl mb-14 whitespace-pre-line space-y-3">
@@ -2926,7 +2926,7 @@
                   .split('\n')
                   .filter(Boolean)
                   .map((line, index) => (
-                    <MotionOnScroll key={index} variant={index % 2 === 0 ? 'fade-up' : 'slide-right'} delay={150 + index * 80}>
+                    <MotionOnScroll key={index} variant={index % 2 === 0 ? 'slide-right' : 'flip-left'} delay={150 + index * 80}>
                       <p className="text-lg text-gray-500 font-light leading-relaxed">
                         {line}
                       </p>
@@ -2990,14 +2990,14 @@
           {/* 案例實績 Work */}
           <section id="work" className="py-24 md:py-32 px-6 bg-white">
             <div className="max-w-7xl mx-auto">
-              <MotionOnScroll variant="soft-scale">
+              <MotionOnScroll variant="slide-right">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-20 gap-8">
                   <div>
                     <SectionLabel text={workContent.sectionLabel} color={colors.orange} />
                   </div>
                 </div>
               </MotionOnScroll>
-              <MotionOnScroll variant="slide-left" delay={80}>
+              <MotionOnScroll variant="reveal-up" delay={80}>
                 <div className="-mt-20 mb-20 pt-20">
                   <h2 className="text-4xl md:text-5xl font-bold text-[#3a3a3a] leading-tight">{workContent.title}</h2>
                 </div>
@@ -3087,12 +3087,12 @@
           {/* 觀點文章 Insights */}
           <section id="insights" className="py-24 md:py-32 px-6 bg-[#F9FAFB] border-t border-gray-200">
             <div className="max-w-7xl mx-auto">
-              <MotionOnScroll variant="soft-scale">
+              <MotionOnScroll variant="drift-up-right">
                 <div className="mb-16">
                   <SectionLabel text={insightsContent.sectionLabel} color={colors.darkGray} />
                 </div>
               </MotionOnScroll>
-              <MotionOnScroll variant="blur-up" delay={80}>
+              <MotionOnScroll variant="flip-left" delay={80}>
                 <div className="-mt-16 mb-16 pt-16">
                   <h2 className="text-4xl md:text-5xl font-bold text-[#3a3a3a]">{insightsContent.title}</h2>
                 </div>
