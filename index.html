@@ -1402,19 +1402,29 @@
     const RevealOnScroll = ({ children, className = "", delay = 0 }) => {
       const [isVisible, setIsVisible] = useState(false);
       const domRef = useRef();
+      const hasTriggeredRef = useRef(false);
 
       useEffect(() => {
+        const reveal = (wait = 0) => {
+          if (hasTriggeredRef.current) return;
+          hasTriggeredRef.current = true;
+          window.setTimeout(() => {
+            window.requestAnimationFrame(() => {
+              window.requestAnimationFrame(() => setIsVisible(true));
+            });
+          }, wait);
+        };
         const fallbackTimer = window.setTimeout(() => {
-          setIsVisible(true);
-        }, 1200 + delay);
+          reveal(0);
+        }, 900 + delay);
         const observer = new IntersectionObserver(entries => {
           entries.forEach(entry => {
             if (entry.isIntersecting) {
-              setIsVisible(true);
+              reveal(70);
               observer.unobserve(entry.target);
             }
           });
-        }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+        }, { threshold: 0.06, rootMargin: "0px 0px -8% 0px" });
         
         if (domRef.current) observer.observe(domRef.current);
         return () => {
@@ -1437,19 +1447,29 @@
     const MotionOnScroll = ({ children, className = "", delay = 0, variant = "fade-up" }) => {
       const [isVisible, setIsVisible] = useState(false);
       const domRef = useRef();
+      const hasTriggeredRef = useRef(false);
 
       useEffect(() => {
+        const reveal = (wait = 0) => {
+          if (hasTriggeredRef.current) return;
+          hasTriggeredRef.current = true;
+          window.setTimeout(() => {
+            window.requestAnimationFrame(() => {
+              window.requestAnimationFrame(() => setIsVisible(true));
+            });
+          }, wait);
+        };
         const fallbackTimer = window.setTimeout(() => {
-          setIsVisible(true);
-        }, 1200 + delay);
+          reveal(0);
+        }, 900 + delay);
         const observer = new IntersectionObserver(entries => {
           entries.forEach(entry => {
             if (entry.isIntersecting) {
-              setIsVisible(true);
+              reveal(70);
               observer.unobserve(entry.target);
             }
           });
-        }, { threshold: 0.08, rootMargin: "0px 0px -10% 0px" });
+        }, { threshold: 0.06, rootMargin: "0px 0px -8% 0px" });
 
         if (domRef.current) observer.observe(domRef.current);
         return () => {
@@ -2843,19 +2863,23 @@
               
               <div className="grid lg:grid-cols-12 gap-16 mb-24">
                 <div className="lg:col-span-7">
-                  <MotionOnScroll variant="slide-left" delay={100}>
+                  <MotionOnScroll variant="slide-left" delay={90}>
                     <h2 className="text-4xl md:text-5xl font-bold mb-8 text-[#3a3a3a] leading-tight">
                       {aboutContent.title}
                     </h2>
-                    <div className="text-gray-600 space-y-6 leading-relaxed font-light text-lg">
-                      {aboutContent.paragraphs.map((paragraph, index) => (
-                        <p key={index}>{paragraph}</p>
-                      ))}
+                  </MotionOnScroll>
+                  <div className="text-gray-600 space-y-6 leading-relaxed font-light text-lg">
+                    {aboutContent.paragraphs.map((paragraph, index) => (
+                      <MotionOnScroll key={index} variant={index % 2 === 0 ? 'fade-up' : 'drift-up-left'} delay={190 + index * 90}>
+                        <p>{paragraph}</p>
+                      </MotionOnScroll>
+                    ))}
+                    <MotionOnScroll variant="slide-right" delay={190 + aboutContent.paragraphs.length * 90}>
                       <p className="font-medium text-[#3a3a3a] border-l-2 border-[#cc7333] pl-5 mt-8 py-1">
                         {aboutContent.highlight}
                       </p>
-                    </div>
-                  </MotionOnScroll>
+                    </MotionOnScroll>
+                  </div>
                 </div>
 
                 <div className="lg:col-span-5 flex flex-col justify-center">
@@ -2893,11 +2917,22 @@
             <div className="max-w-7xl mx-auto">
               <MotionOnScroll variant="soft-scale">
                 <SectionLabel text={servicesContent.sectionLabel} color={colors.teal} />
-                <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#3a3a3a] leading-tight">{servicesContent.title}</h2>
-                <p className="text-lg text-gray-500 font-light leading-relaxed max-w-3xl mb-14 whitespace-pre-line">
-                  {servicesContent.intro}
-                </p>
               </MotionOnScroll>
+              <MotionOnScroll variant="blur-up" delay={70}>
+                <h2 className="text-4xl md:text-5xl font-bold mb-6 text-[#3a3a3a] leading-tight">{servicesContent.title}</h2>
+              </MotionOnScroll>
+              <div className="max-w-3xl mb-14 whitespace-pre-line space-y-3">
+                {String(servicesContent.intro || '')
+                  .split('\n')
+                  .filter(Boolean)
+                  .map((line, index) => (
+                    <MotionOnScroll key={index} variant={index % 2 === 0 ? 'fade-up' : 'slide-right'} delay={150 + index * 80}>
+                      <p className="text-lg text-gray-500 font-light leading-relaxed">
+                        {line}
+                      </p>
+                    </MotionOnScroll>
+                  ))}
+              </div>
 
               <div className="relative left-1/2 -translate-x-1/2 w-screen overflow-hidden shadow-[0_30px_80px_rgba(36,42,48,0.12)]">
                 <div
@@ -2959,8 +2994,12 @@
                 <div className="flex flex-col md:flex-row md:justify-between md:items-end mb-20 gap-8">
                   <div>
                     <SectionLabel text={workContent.sectionLabel} color={colors.orange} />
-                    <h2 className="text-4xl md:text-5xl font-bold text-[#3a3a3a] leading-tight">{workContent.title}</h2>
                   </div>
+                </div>
+              </MotionOnScroll>
+              <MotionOnScroll variant="slide-left" delay={80}>
+                <div className="-mt-20 mb-20 pt-20">
+                  <h2 className="text-4xl md:text-5xl font-bold text-[#3a3a3a] leading-tight">{workContent.title}</h2>
                 </div>
               </MotionOnScroll>
 
@@ -2968,11 +3007,17 @@
                 {homepageWorkItems[0] && <MotionOnScroll variant="slide-left" delay={100}>
                   <div className="grid lg:grid-cols-12 gap-8 lg:gap-16 items-start">
                     <div className="lg:col-span-5 sticky top-32">
-                      <div className="flex gap-2 mb-6">
-                        <span className="text-[10px] font-bold px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-600 uppercase tracking-widest">{homepageWorkItems[0].category}</span>
-                      </div>
-                      <h3 className="text-3xl font-bold text-[#3a3a3a] mb-6 leading-tight whitespace-pre-line">{homepageWorkItems[0].title}</h3>
-                      <p className="text-lg text-gray-500 font-light leading-relaxed mb-8 whitespace-pre-line">{homepageWorkItems[0].subtitle}</p>
+                      <MotionOnScroll variant="soft-scale" delay={40}>
+                        <div className="flex gap-2 mb-6">
+                          <span className="text-[10px] font-bold px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-600 uppercase tracking-widest">{homepageWorkItems[0].category}</span>
+                        </div>
+                      </MotionOnScroll>
+                      <MotionOnScroll variant="slide-left" delay={110}>
+                        <h3 className="text-3xl font-bold text-[#3a3a3a] mb-6 leading-tight whitespace-pre-line">{homepageWorkItems[0].title}</h3>
+                      </MotionOnScroll>
+                      <MotionOnScroll variant="fade-up" delay={190}>
+                        <p className="text-lg text-gray-500 font-light leading-relaxed mb-8 whitespace-pre-line">{homepageWorkItems[0].subtitle}</p>
+                      </MotionOnScroll>
                     </div>
                     
                     <div className="lg:col-span-7 bg-[#F9FAFB] p-8 md:p-12 rounded-sm border border-gray-100">
@@ -2999,14 +3044,22 @@
                 {homepageWorkItems[1] && <MotionOnScroll variant="flip-right" delay={120}>
                   <div className="grid lg:grid-cols-12 gap-8 lg:gap-16 items-start">
                     <div className="lg:col-span-5 sticky top-32">
-                      <div className="flex gap-2 mb-6">
-                        <span className="text-[10px] font-bold px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-600 uppercase tracking-widest">{homepageWorkItems[1].category}</span>
-                      </div>
-                      <h3 className="text-3xl font-bold text-[#3a3a3a] mb-6 leading-tight whitespace-pre-line">{homepageWorkItems[1].title}</h3>
-                      <p className="text-lg text-gray-500 font-light leading-relaxed mb-8 whitespace-pre-line">{homepageWorkItems[1].subtitle}</p>
-                      <button onClick={() => scrollTo('contact')} className="text-sm font-bold flex items-center gap-2 hover:text-[#356569] transition-colors group">
-                        需要突破客群老化瓶頸？ <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
-                      </button>
+                      <MotionOnScroll variant="soft-scale" delay={40}>
+                        <div className="flex gap-2 mb-6">
+                          <span className="text-[10px] font-bold px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-600 uppercase tracking-widest">{homepageWorkItems[1].category}</span>
+                        </div>
+                      </MotionOnScroll>
+                      <MotionOnScroll variant="slide-left" delay={110}>
+                        <h3 className="text-3xl font-bold text-[#3a3a3a] mb-6 leading-tight whitespace-pre-line">{homepageWorkItems[1].title}</h3>
+                      </MotionOnScroll>
+                      <MotionOnScroll variant="fade-up" delay={190}>
+                        <p className="text-lg text-gray-500 font-light leading-relaxed mb-8 whitespace-pre-line">{homepageWorkItems[1].subtitle}</p>
+                      </MotionOnScroll>
+                      <MotionOnScroll variant="slide-right" delay={260}>
+                        <button onClick={() => scrollTo('contact')} className="text-sm font-bold flex items-center gap-2 hover:text-[#356569] transition-colors group">
+                          需要突破客群老化瓶頸？ <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
+                        </button>
+                      </MotionOnScroll>
                     </div>
                     
                     <div className="lg:col-span-7 bg-[#F9FAFB] p-8 md:p-12 rounded-sm border border-gray-100">
@@ -3037,6 +3090,10 @@
               <MotionOnScroll variant="soft-scale">
                 <div className="mb-16">
                   <SectionLabel text={insightsContent.sectionLabel} color={colors.darkGray} />
+                </div>
+              </MotionOnScroll>
+              <MotionOnScroll variant="blur-up" delay={80}>
+                <div className="-mt-16 mb-16 pt-16">
                   <h2 className="text-4xl md:text-5xl font-bold text-[#3a3a3a]">{insightsContent.title}</h2>
                 </div>
               </MotionOnScroll>
@@ -3054,16 +3111,22 @@
                         <div className="absolute top-6 left-6 bg-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#4e7055] z-20">{featuredInsight.category}</div>
                       </div>
                       <div className="space-y-5">
-                        <h3 className="text-3xl font-bold text-[#3a3a3a] group-hover:text-[#cc7333] transition-colors leading-tight line-clamp-3 whitespace-pre-line">
-                          {featuredInsight.title}
-                        </h3>
-                        <p className="text-[15px] text-gray-600 font-light leading-relaxed line-clamp-3 whitespace-pre-line">
-                          {buildExcerpt(featuredInsight.body ?? featuredInsight.subtitle, 180)}
-                        </p>
-                        <div className="inline-flex items-center gap-2 text-sm font-bold text-[#3a3a3a] group-hover:text-[#cc7333] transition-colors">
-                          <span>點擊看完整內容</span>
-                          <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
-                        </div>
+                        <MotionOnScroll variant="slide-left" delay={60}>
+                          <h3 className="text-3xl font-bold text-[#3a3a3a] group-hover:text-[#cc7333] transition-colors leading-tight line-clamp-3 whitespace-pre-line">
+                            {featuredInsight.title}
+                          </h3>
+                        </MotionOnScroll>
+                        <MotionOnScroll variant="fade-up" delay={130}>
+                          <p className="text-[15px] text-gray-600 font-light leading-relaxed line-clamp-3 whitespace-pre-line">
+                            {buildExcerpt(featuredInsight.body ?? featuredInsight.subtitle, 180)}
+                          </p>
+                        </MotionOnScroll>
+                        <MotionOnScroll variant="slide-right" delay={200}>
+                          <div className="inline-flex items-center gap-2 text-sm font-bold text-[#3a3a3a] group-hover:text-[#cc7333] transition-colors">
+                            <span>點擊看完整內容</span>
+                            <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+                          </div>
+                        </MotionOnScroll>
                       </div>
                     </a>
                   </MotionOnScroll>
@@ -3093,21 +3156,36 @@
                 <div className="lg:col-span-5">
                   <MotionOnScroll variant="drift-up-left">
                     <SectionLabel text={contactContent.sectionLabel} color="#F9FAFB" />
+                  </MotionOnScroll>
+                  <MotionOnScroll variant="slide-left" delay={80}>
                     <h2 className="text-5xl md:text-6xl font-bold mb-8 leading-[1.15]">
                       {contactContent.titlePrefix}<br/>
                       <span className="text-[#cc7333]">{contactContent.titleHighlight}</span>{contactContent.titleSuffix}
                     </h2>
-                    <p className="text-gray-400 mb-16 text-lg font-light leading-relaxed whitespace-pre-line">
-                      {contactContent.description}
-                    </p>
-                    
-                    <div className="space-y-10 border-t border-gray-700 pt-10">
-                      <div>
-                        <h5 className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-widest">Email Us</h5>
-                        <p className="text-xl tracking-wide">{contactContent.email}</p>
-                      </div>
-                    </div>
                   </MotionOnScroll>
+                  <div className="space-y-10">
+                    <div className="space-y-4 mb-16">
+                      {String(contactContent.description || '')
+                        .split('\n')
+                        .filter(Boolean)
+                        .map((line, index) => (
+                          <MotionOnScroll key={index} variant={index % 2 === 0 ? 'fade-up' : 'drift-up-left'} delay={170 + index * 80}>
+                            <p className="text-gray-400 text-lg font-light leading-relaxed whitespace-pre-line">
+                              {line}
+                            </p>
+                          </MotionOnScroll>
+                        ))}
+                    </div>
+
+                    <MotionOnScroll variant="slide-right" delay={260}>
+                      <div className="space-y-10 border-t border-gray-700 pt-10">
+                        <div>
+                          <h5 className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-widest">Email Us</h5>
+                          <p className="text-xl tracking-wide">{contactContent.email}</p>
+                        </div>
+                      </div>
+                    </MotionOnScroll>
+                  </div>
                 </div>
 
                 <div className="lg:col-span-7">
