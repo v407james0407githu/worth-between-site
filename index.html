@@ -383,14 +383,14 @@
     };
     const permissionOptions = [
       '數據分析檢視',
-      'Banner管理',
+      '首頁管理',
       '分頁管理',
       '權限角色管理',
       '資料新增編輯刪除'
     ];
     const permissionMatrix = [
       { key: 'dashboard', label: '數據分析儀表板', permissions: [{ key: 'dashboard:view', label: '檢視' }] },
-      { key: 'hero', label: 'Banner管理', permissions: [{ key: 'hero:view', label: '檢視' }, { key: 'hero:manage', label: '管理' }] },
+      { key: 'hero', label: '首頁管理', permissions: [{ key: 'hero:view', label: '檢視' }, { key: 'hero:manage', label: '管理' }] },
       { key: 'content', label: '分頁管理', permissions: [{ key: 'content:view', label: '檢視' }, { key: 'content:manage', label: '管理' }] },
       { key: 'team', label: '權限角色', permissions: [{ key: 'team:view', label: '檢視' }, { key: 'team:manage', label: '管理' }] }
     ];
@@ -3283,7 +3283,7 @@
       storageState
     }) => {
       const [isAuthenticated, setIsAuthenticated] = useState(() => window.localStorage.getItem(ADMIN_AUTH_STORAGE_KEY) === 'true');
-      const [activeTab, setActiveTab] = useState('dashboard');
+      const [activeTab, setActiveTab] = useState('hero-slider');
       const [flashMessage, setFlashMessage] = useState(() => window.localStorage.getItem(ADMIN_FLASH_STORAGE_KEY) || '');
       const [loginForm, setLoginForm] = useState({ email: '', password: '' });
       const [loginError, setLoginError] = useState('');
@@ -3310,7 +3310,7 @@
       const [dashboardMetrics, setDashboardMetrics] = useState({ isLoading: false, error: '', data: null });
       useEffect(() => {
         if (!['dashboard', 'hero-slider', 'content', 'team'].includes(activeTab)) {
-          setActiveTab('dashboard');
+          setActiveTab('hero-slider');
         }
       }, [activeTab]);
       const [editingMemberId, setEditingMemberId] = useState(null);
@@ -4913,17 +4913,17 @@
               </div>
             </div>
             <nav className="flex-1 p-4 space-y-2">
-              <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'dashboard' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
-                <BarChart3 size={18} /> 數據分析儀表板
-              </button>
               <button onClick={() => setActiveTab('hero-slider')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'hero-slider' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
-                <ImageIcon size={18} /> Banner管理
+                <ImageIcon size={18} /> 首頁管理
               </button>
               <button onClick={() => setActiveTab('content')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'content' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
                 <FileText size={18} /> 分頁管理
               </button>
               <button onClick={() => setActiveTab('team')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'team' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
                 <Users size={18} /> 權限與角色
+              </button>
+              <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'dashboard' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
+                <BarChart3 size={18} /> 數據分析儀表板
               </button>
             </nav>
             <div className="p-4 border-t border-gray-700">
@@ -4940,7 +4940,7 @@
             <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-8 shadow-sm">
               <h2 className="text-lg font-bold">
                 {activeTab === 'dashboard' && '數據分析儀表板 Data Analytics'}
-                {activeTab === 'hero-slider' && 'Banner管理 Banner Management'}
+                {activeTab === 'hero-slider' && '首頁管理 Home Management'}
                 {activeTab === 'content' && '分頁管理 Page Management'}
                 {activeTab === 'team' && '權限與角色 Team Access'}
               </h2>
