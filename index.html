@@ -3302,7 +3302,6 @@
       const [isCompressingHeroImage, setIsCompressingHeroImage] = useState(false);
       const [deleteHeroConfirmId, setDeleteHeroConfirmId] = useState(null);
       const [draggedHeroId, setDraggedHeroId] = useState(null);
-      const heroImportInputRef = useRef(null);
       const sortedHeroSlides = sortSlides(heroSlides);
       const activeHeroSlides = sortedHeroSlides.filter((slide) => slide.isActive !== false);
       const [activeContentSectionKey, setActiveContentSectionKey] = useState('about');
@@ -4731,60 +4730,6 @@
         });
       };
 
-      const exportHeroSlides = () => {
-        const payload = {
-          exportedAt: new Date().toISOString(),
-          slides: normalizeHeroSlides(heroSlides)
-        };
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `worth-between-hero-slides-${new Date().toISOString().slice(0, 10)}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
-      };
-
-      const importHeroSlides = async (event) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-        const shouldImport = window.confirm('匯入 JSON 會覆蓋目前所有 Banner，確定要繼續嗎？');
-        if (!shouldImport) {
-          event.target.value = '';
-          return;
-        }
-        try {
-          const text = await file.text();
-          const parsed = JSON.parse(text);
-          const incomingSlides = Array.isArray(parsed) ? parsed : parsed.slides;
-          if (!Array.isArray(incomingSlides) || incomingSlides.length === 0) {
-            throw new Error('invalid');
-          }
-          const normalizedSlides = normalizeHeroSlides(
-            incomingSlides.map((slide, index) => ({
-              id: slide.id ?? Date.now() + index,
-              tag: slide.tag || '',
-              title: slide.title || '',
-              subtitle: slide.subtitle || '',
-              bgImage: slide.bgImage || '',
-              accent: slide.accent || colors.orange,
-              isActive: slide.isActive !== false,
-              sortOrder: slide.sortOrder ?? index + 1
-            }))
-          );
-
-          const hasInvalidSlide = normalizedSlides.some((slide) => !slide.title.trim() || !slide.subtitle.trim() || !slide.bgImage.trim());
-          if (hasInvalidSlide) throw new Error('invalid');
-
-          setHeroSlides(normalizedSlides);
-          alert('Banner JSON 匯入完成');
-        } catch {
-          alert('匯入失敗：請確認 JSON 格式正確，且每筆 slide 都有 title、subtitle、bgImage');
-        } finally {
-          event.target.value = '';
-        }
-      };
-
       const reorderHeroSlides = (fromId, toId) => {
         if (!fromId || !toId || fromId === toId) return;
         const slides = sortSlides(heroSlides);
@@ -4796,13 +4741,6 @@
         const [moved] = reordered.splice(fromIndex, 1);
         reordered.splice(toIndex, 0, moved);
         setHeroSlides(reordered.map((slide, index) => ({ ...slide, sortOrder: index + 1 })));
-      };
-
-      const resetHeroSlides = () => {
-        const shouldReset = window.confirm('確定要重設首頁 Banner 嗎？這會覆蓋目前的排序、圖片與文字。');
-        if (!shouldReset) return;
-        setHeroSlides(defaultHeroSlides.map((slide) => ({ ...slide })));
-        setFlashMessage('首頁 Banner 已重設為預設內容。');
       };
 
       const exportBrandsCsv = () => {
@@ -4941,22 +4879,6 @@
                       <p className="text-gray-500 text-sm mt-1">管理首頁最上方的動態輪播圖、排序、顯示狀態，以及首頁各主要段落的圖文內容。</p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <input
-                        ref={heroImportInputRef}
-                        type="file"
-                        accept="application/json"
-                        onChange={importHeroSlides}
-                        className="hidden"
-                      />
-                      <button onClick={() => heroImportInputRef.current?.click()} className="px-4 py-2 bg-white text-[#3a3a3a] rounded-lg flex items-center gap-2 text-sm font-bold border border-gray-200 hover:bg-gray-50 transition-colors">
-                        <Upload size={16}/> 匯入 JSON
-                      </button>
-                      <button onClick={exportHeroSlides} className="px-4 py-2 bg-white text-[#3a3a3a] rounded-lg flex items-center gap-2 text-sm font-bold border border-gray-200 hover:bg-gray-50 transition-colors">
-                        <Download size={16}/> 匯出 JSON
-                      </button>
-                      <button onClick={resetHeroSlides} className="px-4 py-2 bg-white text-[#3a3a3a] rounded-lg flex items-center gap-2 text-sm font-bold border border-gray-200 hover:bg-gray-50 transition-colors">
-                        重設預設 Banner
-                      </button>
                       <button onClick={openAddHero} className="px-4 py-2 bg-[#4e7055] text-white rounded-lg flex items-center gap-2 text-sm font-bold hover:bg-[#3a5240] transition-colors">
                         <Plus size={16}/> 新增Banner
                       </button>
