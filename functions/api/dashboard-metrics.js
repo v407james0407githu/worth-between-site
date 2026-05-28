@@ -37,6 +37,23 @@ const normalizeRows = (groups, dimensionKey, fallbackLabel = '未分類') => {
     .slice(0, 10);
 };
 
+const graphqlRequest = async (env, query, variables) => {
+  const response = await fetch('https://api.cloudflare.com/client/v4/graphql', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${env.CF_API_TOKEN}`,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({ query, variables })
+  });
+  const payload = await response.json();
+  if (!response.ok || payload.errors?.length) {
+    const message = payload.errors?.[0]?.message || `Cloudflare API HTTP ${response.status}`;
+    throw new Error(message);
+  }
+  return payload.data;
+};
+
 const getDateRange = () => {
   const untilDate = new Date();
   const sinceDate = new Date();
@@ -49,7 +66,7 @@ const getDateRange = () => {
   };
 };
 
-const fetchCloudflareMetrics = async (env) => {
+const fetchCloudflareZoneMetrics = async (env) => {
   const { sinceDate, untilDate, sinceDateTime, untilDateTime } = getDateRange();
   const query = `
     query WorthBetweenDashboard($zoneTag: string, $sinceDate: Date, $untilDate: Date, $sinceDateTime: Time, $untilDateTime: Time) {
@@ -93,30 +110,14 @@ const fetchCloudflareMetrics = async (env) => {
       }
     }
   `;
-  const response = await fetch('https://api.cloudflare.com/client/v4/graphql', {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${env.CF_API_TOKEN}`,
-      'content-type': 'application/json'
-    },
-    body: JSON.stringify({
-      query,
-      variables: {
-        zoneTag: env.CF_ZONE_ID,
-        sinceDate,
-        untilDate,
-        sinceDateTime,
-        untilDateTime
-      }
-    })
+  const data = await graphqlRequest(env, query, {
+    zoneTag: env.CF_ZONE_ID,
+    sinceDate,
+    untilDate,
+    sinceDateTime,
+    untilDateTime
   });
-  const payload = await response.json();
-  if (!response.ok || payload.errors?.length) {
-    const message = payload.errors?.[0]?.message || `Cloudflare API HTTP ${response.status}`;
-    throw new Error(message);
-  }
-
-  const zone = payload.data?.viewer?.zones?.[0];
+  const zone = data?.viewer?.zones?.[0];
   if (!zone) {
     throw new Error('Cloudflare 找不到指定 Zone');
   }
@@ -140,6 +141,83 @@ const fetchCloudflareMetrics = async (env) => {
   });
 
   return traffic;
+};
+
+const fetchCloudflareWebAnalyticsMetrics = async (env) => {
+  const { sinceDateTime, untilDateTime } = getDateRange();
+  const query = `
+    query WorthBetweenWebAnalytics($accountTag: string, $siteTag: string, $sinceDateTime: Time, $untilDateTime: Time) {
+      viewer {
+        accounts(filter: { accountTag: $accountTag }) {
+          totals: rumPageloadEventsAdaptiveGroups(limit: 1, filter: { siteTag: $siteTag, datetime_geq: $sinceDateTime, datetime_leq: $untilDateTime }) {
+            count
+            sum {
+              visits
+            }
+          }
+          sources: rumPageloadEventsAdaptiveGroups(limit: 50, filter: { siteTag: $siteTag, datetime_geq: $sinceDateTime, datetime_leq: $untilDateTime }) {
+            count
+            dimensions {
+              refererHost
+            }
+          }
+          pages: rumPageloadEventsAdaptiveGroups(limit: 50, filter: { siteTag: $siteTag, datetime_geq: $sinceDateTime, datetime_leq: $untilDateTime }) {
+            count
+            dimensions {
+              requestPath
+            }
+          }
+          countries: rumPageloadEventsAdaptiveGroups(limit: 50, filter: { siteTag: $siteTag, datetime_geq: $sinceDateTime, datetime_leq: $untilDateTime }) {
+            count
+            dimensions {
+              countryName
+            }
+          }
+          devices: rumPageloadEventsAdaptiveGroups(limit: 20, filter: { siteTag: $siteTag, datetime_geq: $sinceDateTime, datetime_leq: $untilDateTime }) {
+            count
+            dimensions {
+              deviceType
+            }
+          }
+        }
+      }
+    }
+  `;
+  const data = await graphqlRequest(env, query, {
+    accountTag: env.CF_ACCOUNT_ID,
+    siteTag: env.CF_WEB_ANALYTICS_TOKEN,
+    sinceDateTime,
+    untilDateTime
+  });
+  const account = data?.viewer?.accounts?.[0];
+  if (!account) {
+    throw new Error('Cloudflare 找不到指定帳號');
+  }
+
+  const traffic = {
+    visitors: null,
+    pageviews: null,
+    requests: null,
+    bandwidthBytes: null,
+    sources: normalizeRows(account.sources || [], 'refererHost', '直接流量'),
+    topPages: normalizeRows(account.pages || [], 'requestPath', '/'),
+    countries: normalizeRows(account.countries || [], 'countryName', '未知國家'),
+    devices: makePercentRows(normalizeRows(account.devices || [], 'deviceType', '未知裝置'))
+  };
+
+  (account.totals || []).forEach((group) => {
+    traffic.visitors = addValue(traffic.visitors, group?.sum?.visits);
+    traffic.pageviews = addValue(traffic.pageviews, group?.count);
+  });
+
+  return traffic;
+};
+
+const fetchCloudflareMetrics = async (env) => {
+  if (env.CF_ACCOUNT_ID && env.CF_WEB_ANALYTICS_TOKEN) {
+    return fetchCloudflareWebAnalyticsMetrics(env);
+  }
+  return fetchCloudflareZoneMetrics(env);
 };
 
 const fetchSupabaseMetrics = async (env) => {
@@ -200,7 +278,8 @@ export async function onRequestGet({ env }) {
       supabaseStorageQuotaBytes: null
     },
     status: {
-      cloudflareConfigured: Boolean(env.CF_API_TOKEN && env.CF_ZONE_ID),
+      cloudflareConfigured: Boolean(env.CF_API_TOKEN && ((env.CF_ACCOUNT_ID && env.CF_WEB_ANALYTICS_TOKEN) || env.CF_ZONE_ID)),
+      cloudflareMode: env.CF_ACCOUNT_ID && env.CF_WEB_ANALYTICS_TOKEN ? 'web-analytics' : 'zone-analytics',
       supabaseConfigured: Boolean(env.SUPABASE_URL && (env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY)),
       errors: []
     }
