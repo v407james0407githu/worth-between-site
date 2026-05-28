@@ -119,6 +119,143 @@
       if (!Number.isFinite(numeric)) return '尚無資料';
       return `${numeric.toFixed(numeric >= 10 ? 0 : 1)}%`;
     };
+    const getRecentDateKeys = (days = 14) => {
+      const today = new Date();
+      return Array.from({ length: days }, (_, index) => {
+        const date = new Date(today);
+        date.setDate(today.getDate() - (days - 1 - index));
+        return date.toISOString().slice(0, 10);
+      });
+    };
+    const formatShortDate = (dateKey) => {
+      if (!dateKey) return '';
+      const [, month, day] = String(dateKey).split('-');
+      return month && day ? `${month}/${day}` : dateKey;
+    };
+    const buildDateSeries = (rows, valueKey, days = 14) => {
+      const rowMap = new Map((Array.isArray(rows) ? rows : []).map((row) => [row.date, Number(row[valueKey]) || 0]));
+      return getRecentDateKeys(days).map((date) => ({
+        date,
+        label: formatShortDate(date),
+        value: rowMap.get(date) || 0
+      }));
+    };
+    const makeSvgPoints = (data, width, height, padding) => {
+      const values = data.map((item) => Number(item.value) || 0);
+      const maxValue = Math.max(1, ...values);
+      return data.map((item, index) => {
+        const x = padding + (data.length <= 1 ? 0 : (index / (data.length - 1)) * (width - padding * 2));
+        const y = height - padding - ((Number(item.value) || 0) / maxValue) * (height - padding * 2);
+        return { ...item, x, y };
+      });
+    };
+    const DashboardMetricCard = ({ icon, value, label, accent = colors.orange }) => (
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-500">{icon}</div>
+        <div className="text-3xl font-black text-[#1f2329]">{value}</div>
+        <div className="mt-1 text-sm text-gray-500">{label}</div>
+        <div className="mx-auto mt-4 h-1 w-10 rounded-full" style={{ backgroundColor: accent }}></div>
+      </div>
+    );
+    const DashboardLineChart = ({ title, data, color = colors.orange, valueLabel = '數值' }) => {
+      const width = 720;
+      const height = 260;
+      const padding = 34;
+      const points = makeSvgPoints(data, width, height, padding);
+      const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+      const maxValue = Math.max(1, ...data.map((item) => Number(item.value) || 0));
+      return (
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h4 className="mb-5 flex items-center gap-2 text-lg font-bold text-[#1f2329]">{title}</h4>
+          <svg viewBox={`0 0 ${width} ${height}`} className="h-72 w-full overflow-visible">
+            {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+              const y = height - padding - ratio * (height - padding * 2);
+              return <line key={ratio} x1={padding} x2={width - padding} y1={y} y2={y} stroke="#e5e7eb" strokeDasharray="4 4" />;
+            })}
+            {points.map((point) => <line key={point.date} x1={point.x} x2={point.x} y1={padding} y2={height - padding} stroke="#eef2f7" strokeDasharray="4 4" />)}
+            <line x1={padding} x2={padding} y1={padding} y2={height - padding} stroke="#6b7280" />
+            <line x1={padding} x2={width - padding} y1={height - padding} y2={height - padding} stroke="#6b7280" />
+            <path d={path} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            {points.map((point) => <circle key={`${point.date}-dot`} cx={point.x} cy={point.y} r="4" fill={color} />)}
+            {[0, 0.5, 1].map((ratio) => {
+              const y = height - padding - ratio * (height - padding * 2);
+              return <text key={ratio} x={padding - 10} y={y + 4} textAnchor="end" fontSize="12" fill="#6b7280">{Math.round(maxValue * ratio)}</text>;
+            })}
+            {points.map((point, index) => index % 2 === 0 || index === points.length - 1 ? (
+              <text key={`${point.date}-label`} x={point.x} y={height - 8} textAnchor="middle" fontSize="12" fill="#6b7280">{point.label}</text>
+            ) : null)}
+          </svg>
+          <div className="mt-2 text-sm text-gray-500">{valueLabel}：{formatNumber(data.reduce((sum, item) => sum + (Number(item.value) || 0), 0))}</div>
+        </div>
+      );
+    };
+    const DashboardBarChart = ({ title, data, color = colors.orange, valueLabel = '數值' }) => {
+      const maxValue = Math.max(1, ...data.map((item) => Number(item.value) || 0));
+      return (
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h4 className="mb-5 text-lg font-bold text-[#1f2329]">{title}</h4>
+          <div className="flex h-72 items-end gap-2 border-b border-l border-gray-300 px-3">
+            {data.map((item) => (
+              <div key={item.date} className="flex flex-1 flex-col items-center justify-end gap-2">
+                <div className="w-full rounded-t-md" style={{ height: `${Math.max(3, ((Number(item.value) || 0) / maxValue) * 220)}px`, backgroundColor: color, opacity: Number(item.value) ? 0.85 : 0.18 }}></div>
+                <div className="text-[10px] text-gray-500">{item.label}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 text-sm text-gray-500">{valueLabel}：{formatNumber(data.reduce((sum, item) => sum + (Number(item.value) || 0), 0))}</div>
+        </div>
+      );
+    };
+    const DashboardDonutChart = ({ title, rows, colors: chartColors = [colors.orange, colors.darkGray, colors.teal, colors.green], valueFormatter = formatNumber }) => {
+      const total = rows.reduce((sum, row) => sum + (Number(row.value) || 0), 0);
+      let cursor = 0;
+      const gradient = total > 0
+        ? rows.map((row, index) => {
+            const value = Number(row.value) || 0;
+            const start = cursor;
+            const end = cursor + (value / total) * 100;
+            cursor = end;
+            return `${chartColors[index % chartColors.length]} ${start}% ${end}%`;
+          }).join(', ')
+        : '#e5e7eb 0% 100%';
+      return (
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h4 className="mb-5 text-lg font-bold text-[#1f2329]">{title}</h4>
+          <div className="flex flex-col items-center justify-center gap-5">
+            <div className="relative h-48 w-48 rounded-full" style={{ background: `conic-gradient(${gradient})` }}>
+              <div className="absolute inset-12 rounded-full bg-white flex items-center justify-center text-center">
+                <div>
+                  <div className="text-2xl font-black">{valueFormatter(total)}</div>
+                  <div className="text-xs text-gray-400">總計</div>
+                </div>
+              </div>
+            </div>
+            <div className="grid w-full gap-2 text-sm">
+              {(rows.length ? rows : [{ label: '尚無資料', value: 0 }]).map((row, index) => (
+                <div key={row.label} className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-gray-600"><i className="h-3 w-3 rounded-full" style={{ backgroundColor: chartColors[index % chartColors.length] }}></i>{row.label}</span>
+                  <span className="font-bold">{valueFormatter(row.value)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    };
+    const DashboardRankList = ({ title, rows, emptyLabel = '尚無資料' }) => (
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h4 className="mb-5 text-lg font-bold text-[#1f2329]">{title}</h4>
+        <div className="divide-y divide-gray-100">
+          {(rows.length ? rows : [{ label: emptyLabel, value: 0 }]).map((row, index) => (
+            <div key={`${row.label}-${index}`} className="flex items-center gap-4 py-3">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-xs font-black text-gray-600">{index + 1}</span>
+              <span className="min-w-0 flex-1 truncate font-medium text-gray-700">{row.label}</span>
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-bold text-gray-700">{formatNumber(row.value)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
     const defaultHeroSlides = [
       {
         id: 1,
@@ -3277,6 +3414,7 @@
       const [draggedServiceId, setDraggedServiceId] = useState(null);
       const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
       const [dashboardMetrics, setDashboardMetrics] = useState({ isLoading: false, error: '', data: null });
+      const [dashboardView, setDashboardView] = useState('traffic');
       useEffect(() => {
         if (!['dashboard', 'hero-slider', 'content', 'team'].includes(activeTab)) {
           setActiveTab('hero-slider');
@@ -4770,7 +4908,7 @@
       ].filter(Boolean);
       const trafficSummaryCards = [
         { label: '訪客數', value: formatNumber(trafficMetrics.visitors), note: 'Cloudflare Web Analytics' },
-        { label: '瀏覽數', value: formatNumber(trafficMetrics.pageviews), note: '近 7 日頁面瀏覽' },
+        { label: '瀏覽數', value: formatNumber(trafficMetrics.pageviews), note: '近 14 日頁面瀏覽' },
         { label: '總請求數', value: formatNumber(trafficMetrics.requests), note: 'Cloudflare HTTP requests' },
         { label: '總流量', value: formatBytes(trafficMetrics.bandwidthBytes), note: 'Cloudflare bandwidth' }
       ];
@@ -4784,6 +4922,30 @@
       const popularPages = Array.isArray(trafficMetrics.topPages) ? trafficMetrics.topPages : [];
       const visitorCountries = Array.isArray(trafficMetrics.countries) ? trafficMetrics.countries : [];
       const deviceDistribution = Array.isArray(trafficMetrics.devices) ? trafficMetrics.devices : [];
+      const trafficDailyPageviews = buildDateSeries(trafficMetrics.daily, 'pageviews');
+      const trafficDailyVisitors = buildDateSeries(trafficMetrics.daily, 'visitors');
+      const trafficDailyBandwidth = buildDateSeries(trafficMetrics.daily, 'bandwidthBytes').map((row) => ({ ...row, value: Math.round(row.value / 1024 / 1024 * 10) / 10 }));
+      const allContentItems = contentPages.flatMap((page) => page.items || []);
+      const contentDailyArticles = getRecentDateKeys(14).map((date) => ({
+        date,
+        label: formatShortDate(date),
+        value: allContentItems.filter((item) => String(item.publishedAt || '').slice(0, 10) === date).length
+      }));
+      const contentDailyUpdates = getRecentDateKeys(14).map((date) => ({
+        date,
+        label: formatShortDate(date),
+        value: [...heroSlides, ...contentPages, ...allContentItems].filter((item) => String(item.updated || item.publishedAt || '').slice(0, 10) === date).length
+      }));
+      const contentSummaryCards = [
+        { label: '分頁數', value: formatNumber(contentPages.length), note: '目前管理分頁' },
+        { label: '內容數', value: formatNumber(allContentItems.length), note: '所有分頁內容' },
+        { label: '公開文章', value: formatNumber(publishedInsightCount), note: '觀點文章' },
+        { label: '管理者', value: formatNumber(teamAccess.members.length), note: '後台帳號' }
+      ];
+      const resourceCompositionRows = [
+        { label: '站台資料', value: resourceMetrics.siteStateBytes ?? estimatedSiteStateBytes },
+        { label: 'Supabase 儲存', value: Math.max(0, (resourceMetrics.supabaseStorageUsedBytes ?? estimatedSiteStateBytes) - (resourceMetrics.siteStateBytes ?? estimatedSiteStateBytes)) }
+      ];
 
       if (!isAuthenticated) {
         return (
@@ -5271,12 +5433,33 @@
                 <div className="space-y-6">
                   <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
                     <div>
-                      <h3 className="text-2xl font-bold text-[#1f2329]">數據分析儀表板</h3>
-                      <p className="text-gray-500 text-sm mt-2">整合 Cloudflare 流量分析與 Supabase 資源用量。資料來源由 Cloudflare Pages Function 安全讀取。</p>
+                      <h3 className="text-2xl font-bold text-[#1f2329]">詳細分析</h3>
+                      <p className="text-gray-500 text-sm mt-2">近 14 天流量、內容與資源監控圖表。資料來源由 Cloudflare Web Analytics 與 Supabase 安全讀取。</p>
                     </div>
                     <div className="text-xs text-gray-400">
                       {dashboardMetrics.isLoading ? '資料讀取中...' : analyticsUpdatedAt ? `最後更新：${analyticsUpdatedAt}` : '等待 API 回傳資料'}
                     </div>
+                  </div>
+
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="inline-flex w-fit rounded-xl bg-gray-100 p-1">
+                      {[
+                        { key: 'traffic', label: '流量分析', icon: <Eye size={15} /> },
+                        { key: 'content', label: '內容分析', icon: <ImageIcon size={15} /> },
+                        { key: 'resources', label: '資源監控', icon: <Database size={15} /> }
+                      ].map((item) => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => setDashboardView(item.key)}
+                          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition-all ${dashboardView === item.key ? 'bg-white text-[#1f2329] shadow-sm ring-2 ring-[#cc7333]' : 'text-gray-500 hover:text-gray-900'}`}
+                        >
+                          {item.icon}
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-600">近 14 天</div>
                   </div>
 
                   {dashboardErrors.length > 0 && (
@@ -5285,102 +5468,83 @@
                     </div>
                   )}
 
-                  <section className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-                      <div>
-                        <h4 className="font-bold text-lg">流量分析</h4>
-                        <p className="text-sm text-gray-500 mt-1">訪客、瀏覽、來源、熱門頁面、國家與裝置分布。</p>
-                      </div>
-                      <Globe size={22} className="text-gray-300" />
-                    </div>
-                    <div className="p-6 space-y-6">
-                      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-                        {trafficSummaryCards.map((card, index) => (
-                          <div key={card.label} className="rounded-xl border border-gray-100 bg-gray-50/60 p-5 border-l-4" style={{ borderLeftColor: [colors.green, colors.orange, colors.teal, colors.darkGray][index] }}>
-                            <div className="text-xs font-bold text-gray-500 mb-2">{card.label}</div>
-                            <div className="text-3xl font-bold text-[#1f2329]">{card.value}</div>
-                            <div className="text-xs text-gray-400 mt-2">{card.note}</div>
-                          </div>
+                  {dashboardView === 'traffic' && (
+                    <div className="space-y-6">
+                      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5">
+                        {[
+                          { label: '近 14 天瀏覽', value: formatNumber(trafficMetrics.pageviews), icon: <Eye size={22} />, accent: colors.orange },
+                          { label: '近 14 天訪客', value: formatNumber(trafficMetrics.visitors), icon: <Users size={22} />, accent: colors.green },
+                          { label: '熱門頁面', value: formatNumber(popularPages.length), icon: <FileText size={22} />, accent: colors.teal },
+                          { label: '訪客國家', value: formatNumber(visitorCountries.length), icon: <Globe size={22} />, accent: colors.darkGray }
+                        ].map((card) => (
+                          <DashboardMetricCard key={card.label} {...card} />
                         ))}
                       </div>
                       <div className="grid xl:grid-cols-2 gap-6">
-                        {[
-                          ['流量來源', trafficSources, '尚無來源資料'],
-                          ['熱門頁面', popularPages, '尚無頁面資料'],
-                          ['訪客國家', visitorCountries, '尚無國家資料']
-                        ].map(([title, rows, emptyLabel]) => (
-                          <div key={title} className="rounded-xl border border-gray-100 p-5">
-                            <h5 className="font-bold mb-4">{title}</h5>
-                            <div className="space-y-3">
-                              {((rows.length ? rows : [{ label: emptyLabel, value: 0 }])).map((row) => (
-                                <div key={row.label} className="flex items-center justify-between gap-4 text-sm">
-                                  <span className="text-gray-600 truncate">{row.label}</span>
-                                  <span className="font-bold shrink-0">{formatNumber(row.value)}</span>
-                                </div>
-                              ))}
+                        <DashboardLineChart title={<><Eye size={18} />瀏覽量趨勢（近 14 天）</>} data={trafficDailyPageviews} color={colors.orange} valueLabel="PV" />
+                        <DashboardLineChart title={<><Users size={18} />獨立訪客趨勢（近 14 天）</>} data={trafficDailyVisitors} color={colors.green} valueLabel="訪客" />
+                      </div>
+                      <div className="grid xl:grid-cols-4 gap-6">
+                        <DashboardRankList title="熱門頁面" rows={popularPages} emptyLabel="尚無頁面資料" />
+                        <DashboardRankList title="流量來源" rows={trafficSources} emptyLabel="尚無來源資料" />
+                        <DashboardRankList title="訪客國家/地區" rows={visitorCountries} emptyLabel="尚無國家資料" />
+                        <DashboardDonutChart title="裝置分布" rows={deviceDistribution} />
+                      </div>
+                    </div>
+                  )}
+
+                  {dashboardView === 'content' && (
+                    <div className="space-y-6">
+                      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5">
+                        {contentSummaryCards.map((card, index) => (
+                          <DashboardMetricCard key={card.label} label={card.label} value={card.value} icon={[<FileText size={22} />, <ImageIcon size={22} />, <Eye size={22} />, <Users size={22} />][index]} accent={[colors.green, colors.orange, colors.teal, colors.darkGray][index]} />
+                        ))}
+                      </div>
+                      <div className="grid xl:grid-cols-2 gap-6">
+                        <DashboardLineChart title={<><FileText size={18} />每日新增內容（近 14 天）</>} data={contentDailyArticles} color={colors.teal} valueLabel="新增內容" />
+                        <DashboardBarChart title="每日內容更新（近 14 天）" data={contentDailyUpdates} color={colors.orange} valueLabel="更新量" />
+                      </div>
+                      <div className="grid xl:grid-cols-2 gap-6">
+                        <DashboardRankList
+                          title="分頁內容數"
+                          rows={contentPages.map((page) => ({ label: page.label, value: page.items.length })).sort((a, b) => b.value - a.value)}
+                          emptyLabel="尚無內容資料"
+                        />
+                        <DashboardRankList
+                          title="觀點文章分類"
+                          rows={(contentPages.find((page) => page.key === 'insights')?.categories || []).map((category) => ({
+                            label: category,
+                            value: (contentPages.find((page) => page.key === 'insights')?.items || []).filter((item) => item.category === category).length
+                          })).sort((a, b) => b.value - a.value)}
+                          emptyLabel="尚無分類資料"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {dashboardView === 'resources' && (
+                    <div className="space-y-6">
+                      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5">
+                        {resourceSummaryCards.map((card, index) => (
+                          <DashboardMetricCard key={card.label} label={card.label} value={card.value} icon={[<Database size={22} />, <Download size={22} />, <FileText size={22} />, <Eye size={22} />][index]} accent={[colors.orange, colors.green, colors.teal, colors.darkGray][index]} />
+                        ))}
+                      </div>
+                      <div className="grid xl:grid-cols-2 gap-6">
+                        <DashboardBarChart title="每日頻寬估算（近 14 天）" data={trafficDailyBandwidth} color={colors.orange} valueLabel="MB" />
+                        <div className="space-y-6">
+                          <DashboardDonutChart title="資源組成分析" rows={resourceCompositionRows} valueFormatter={formatBytes} />
+                          <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm shadow-sm">
+                            <h4 className="mb-4 font-bold text-[#1f2329]">連線狀態</h4>
+                            <div className="grid gap-3">
+                              <div className="flex items-center justify-between"><span>Cloudflare</span><span className={dashboardStatus.cloudflareConfigured ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>{dashboardStatus.cloudflareConfigured ? '已連線' : '待設定'}</span></div>
+                              <div className="flex items-center justify-between"><span>Supabase</span><span className={dashboardStatus.supabaseConfigured || storageState?.mode === 'supabase' ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>{dashboardStatus.supabaseConfigured || storageState?.mode === 'supabase' ? '已連線' : '待設定'}</span></div>
+                              <div className="flex items-center justify-between"><span>站台同步</span><span className="font-bold text-gray-600">{storageState?.isSyncing ? '同步中' : storageState?.lastSyncedAt || '尚無同步時間'}</span></div>
                             </div>
                           </div>
-                        ))}
-                        <div className="rounded-xl border border-gray-100 p-5">
-                          <h5 className="font-bold mb-4">裝置分布</h5>
-                          <div className="space-y-3">
-                            {(deviceDistribution.length ? deviceDistribution : [{ label: '尚無裝置資料', value: 0, percent: null }]).map((device) => (
-                              <div key={device.label} className="text-sm">
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-gray-600">{device.label}</span>
-                                  <span className="font-bold">{device.percent == null ? formatNumber(device.value) : formatPercent(device.percent)}</span>
-                                </div>
-                                <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                                  <div className="h-full bg-[#4e7055]" style={{ width: `${Math.min(100, Math.max(0, Number(device.percent) || 0))}%` }}></div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
                         </div>
                       </div>
                     </div>
-                  </section>
-
-                  <section className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-                      <div>
-                        <h4 className="font-bold text-lg">資源監控</h4>
-                        <p className="text-sm text-gray-500 mt-1">Cloudflare 流量與 Supabase 儲存、站台資料用量。</p>
-                      </div>
-                      <Database size={22} className="text-gray-300" />
-                    </div>
-                    <div className="p-6">
-                      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-                        {resourceSummaryCards.map((card) => (
-                          <div key={card.label} className="rounded-xl border border-gray-100 bg-gray-50/60 p-5">
-                            <div className="text-xs font-bold text-gray-500 mb-2">{card.label}</div>
-                            <div className="text-3xl font-bold text-[#1f2329]">{card.value}</div>
-                            <div className="text-xs text-gray-400 mt-2">{card.note}</div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-6 grid lg:grid-cols-3 gap-4 text-sm">
-                        <div className="rounded-xl border border-gray-100 p-5">
-                          <div className="font-bold mb-2">Cloudflare 連線</div>
-                          <div className={dashboardStatus.cloudflareConfigured ? 'text-emerald-700' : 'text-amber-700'}>
-                            {dashboardStatus.cloudflareConfigured ? '已連線並讀取分析資料' : '等待 Cloudflare API 環境變數'}
-                          </div>
-                        </div>
-                        <div className="rounded-xl border border-gray-100 p-5">
-                          <div className="font-bold mb-2">Supabase 連線</div>
-                          <div className={dashboardStatus.supabaseConfigured || storageState?.mode === 'supabase' ? 'text-emerald-700' : 'text-amber-700'}>
-                            {dashboardStatus.supabaseConfigured || storageState?.mode === 'supabase' ? '已連線' : '等待 Supabase API 環境變數'}
-                          </div>
-                        </div>
-                        <div className="rounded-xl border border-gray-100 p-5">
-                          <div className="font-bold mb-2">站台同步狀態</div>
-                          <div className="text-gray-600">
-                            {storageState?.isSyncing ? '同步中' : storageState?.lastSyncedAt ? `上次同步：${storageState.lastSyncedAt}` : '尚無同步時間'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
+                  )}
                 </div>
               )}
             </div>

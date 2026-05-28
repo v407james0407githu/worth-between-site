@@ -25,6 +25,17 @@ const makePercentRows = (rows) => {
   }));
 };
 
+const normalizeDailyRows = (groups, dateKey = 'date') => groups
+  .map((group) => ({
+    date: group?.dimensions?.[dateKey] || '',
+    pageviews: toNumber(group?.count) || toNumber(group?.sum?.pageViews) || 0,
+    visitors: toNumber(group?.sum?.visits) || toNumber(group?.uniq?.uniques) || 0,
+    requests: toNumber(group?.sum?.requests) || 0,
+    bandwidthBytes: toNumber(group?.sum?.bytes) || 0
+  }))
+  .filter((row) => row.date)
+  .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
 const normalizeRows = (groups, dimensionKey, fallbackLabel = '未分類') => {
   const merged = new Map();
   groups.forEach((group) => {
@@ -57,7 +68,7 @@ const graphqlRequest = async (env, query, variables) => {
 const getDateRange = () => {
   const untilDate = new Date();
   const sinceDate = new Date();
-  sinceDate.setDate(untilDate.getDate() - 6);
+  sinceDate.setDate(untilDate.getDate() - 13);
   return {
     sinceDate: sinceDate.toISOString().slice(0, 10),
     untilDate: untilDate.toISOString().slice(0, 10),
@@ -73,6 +84,19 @@ const fetchCloudflareZoneMetrics = async (env) => {
       viewer {
         zones(filter: { zoneTag: $zoneTag }) {
           totals: httpRequests1dGroups(limit: 7, filter: { date_geq: $sinceDate, date_leq: $untilDate }) {
+            sum {
+              requests
+              bytes
+              pageViews
+            }
+            uniq {
+              uniques
+            }
+          }
+          daily: httpRequests1dGroups(limit: 14, filter: { date_geq: $sinceDate, date_leq: $untilDate }, orderBy: [date_ASC]) {
+            dimensions {
+              date
+            }
             sum {
               requests
               bytes
@@ -130,7 +154,8 @@ const fetchCloudflareZoneMetrics = async (env) => {
     sources: normalizeRows(zone.sources || [], 'refererHost', '直接流量'),
     topPages: normalizeRows(zone.pages || [], 'clientRequestPath', '/'),
     countries: normalizeRows(zone.countries || [], 'clientCountryName', '未知國家'),
-    devices: makePercentRows(normalizeRows(zone.devices || [], 'clientDeviceType', '未知裝置'))
+    devices: makePercentRows(normalizeRows(zone.devices || [], 'clientDeviceType', '未知裝置')),
+    daily: normalizeDailyRows(zone.daily || [])
   };
 
   (zone.totals || []).forEach((group) => {
@@ -153,6 +178,15 @@ const fetchCloudflareWebAnalyticsMetrics = async (env) => {
             count
             sum {
               visits
+            }
+          }
+          daily: rumPageloadEventsAdaptiveGroups(limit: 14, filter: { siteTag: $siteTag, datetime_geq: $sinceDateTime, datetime_leq: $untilDateTime }, orderBy: [date_ASC]) {
+            count
+            sum {
+              visits
+            }
+            dimensions {
+              date
             }
           }
           sources: rumPageloadEventsAdaptiveGroups(limit: 50, filter: { siteTag: $siteTag, datetime_geq: $sinceDateTime, datetime_leq: $untilDateTime }) {
@@ -202,7 +236,8 @@ const fetchCloudflareWebAnalyticsMetrics = async (env) => {
     sources: normalizeRows(account.sources || [], 'refererHost', '直接流量'),
     topPages: normalizeRows(account.pages || [], 'requestPath', '/'),
     countries: normalizeRows(account.countries || [], 'countryName', '未知國家'),
-    devices: makePercentRows(normalizeRows(account.devices || [], 'deviceType', '未知裝置'))
+    devices: makePercentRows(normalizeRows(account.devices || [], 'deviceType', '未知裝置')),
+    daily: normalizeDailyRows(account.daily || [])
   };
 
   (account.totals || []).forEach((group) => {
@@ -268,7 +303,8 @@ export async function onRequestGet({ env }) {
       sources: [],
       topPages: [],
       countries: [],
-      devices: []
+      devices: [],
+      daily: []
     },
     resources: {
       siteStateBytes: null,
