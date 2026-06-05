@@ -20,6 +20,97 @@
       }
     }
   </script>
+  <style>
+    .public-site {
+      --wb-display-size: clamp(2.25rem, 4.8vw, 4rem);
+      --wb-section-title-size: clamp(2rem, 3.4vw, 3.25rem);
+      --wb-subtitle-size: clamp(1.45rem, 2.2vw, 2.05rem);
+      --wb-card-title-size: clamp(1.25rem, 1.7vw, 1.65rem);
+      --wb-body-size: clamp(1.05rem, 1.22vw, 1.22rem);
+      --wb-small-body-size: clamp(0.98rem, 1.05vw, 1.08rem);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      text-rendering: optimizeLegibility;
+    }
+    .public-site h1 {
+      font-size: var(--wb-display-size) !important;
+      line-height: 1.12 !important;
+      letter-spacing: -0.03em;
+      font-weight: 800 !important;
+    }
+    .public-site h2 {
+      font-size: var(--wb-section-title-size) !important;
+      line-height: 1.16 !important;
+      letter-spacing: -0.025em;
+      font-weight: 800 !important;
+    }
+    .public-site h3 {
+      font-size: var(--wb-subtitle-size) !important;
+      line-height: 1.32 !important;
+      letter-spacing: -0.018em;
+      font-weight: 800 !important;
+    }
+    .public-site h4 {
+      font-size: var(--wb-card-title-size) !important;
+      line-height: 1.35 !important;
+      font-weight: 800 !important;
+    }
+    .public-site h4[class*="uppercase"],
+    .public-site h4[class*="tracking"] {
+      font-size: 0.82rem !important;
+      line-height: 1.5 !important;
+      letter-spacing: 0.16em !important;
+    }
+    .public-site p,
+    .public-site li {
+      font-size: var(--wb-body-size) !important;
+      line-height: 1.82 !important;
+      letter-spacing: 0.005em;
+    }
+    .public-site .section-eyebrow,
+    .public-site [class*="tracking-widest"],
+    .public-site [class*="tracking-["] {
+      letter-spacing: 0.16em !important;
+    }
+    .public-site article p,
+    .public-site .article-rich-content p,
+    .public-site .article-rich-content li {
+      font-size: var(--wb-small-body-size) !important;
+      line-height: 1.9 !important;
+    }
+    .public-site .article-rich-content h2 {
+      font-size: var(--wb-section-title-size) !important;
+      line-height: 1.2 !important;
+      color: #111 !important;
+      font-weight: 800 !important;
+      margin-top: 3rem !important;
+      margin-bottom: 1.25rem !important;
+    }
+    .public-site .article-rich-content h3 {
+      font-size: var(--wb-subtitle-size) !important;
+      line-height: 1.35 !important;
+      color: #111 !important;
+      font-weight: 800 !important;
+      margin-top: 2.5rem !important;
+      margin-bottom: 1rem !important;
+    }
+    .public-site .article-rich-content blockquote {
+      font-size: var(--wb-subtitle-size) !important;
+      line-height: 1.55 !important;
+    }
+    .public-site .article-rich-content code,
+    .public-site .article-rich-content pre {
+      font-size: 0.95rem !important;
+    }
+    @media (max-width: 640px) {
+      .public-site {
+        --wb-display-size: clamp(2rem, 9vw, 2.7rem);
+        --wb-section-title-size: clamp(1.75rem, 7vw, 2.35rem);
+        --wb-subtitle-size: clamp(1.25rem, 5.4vw, 1.65rem);
+        --wb-body-size: 1rem;
+        --wb-small-body-size: 0.98rem;
+      }
+    }
+  </style>
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"95ac1fbe4ba24448a2d04ec340bbbe0e"}'></script>
 </head>
 <body class="bg-gray-50 m-0 p-0 font-sans">
@@ -1897,7 +1988,7 @@
       };
 
       return (
-        <div className="min-h-screen bg-white text-[#3a3a3a]">
+        <div className="public-site min-h-screen bg-white text-[#3a3a3a]">
           <SiteNavbar
             isScrolled={isScrolled}
             mobileMenuOpen={mobileMenuOpen}
@@ -2469,7 +2560,7 @@
 
       if (isAdvisorsPage) {
         return (
-          <div className="min-h-screen bg-[#f3f1eb] text-[#3a3a3a] overflow-hidden">
+          <div className="public-site min-h-screen bg-[#f3f1eb] text-[#3a3a3a] overflow-hidden">
             <style dangerouslySetInnerHTML={{ __html: `
               @keyframes advisorBackdropFade {
                 from { opacity: 0; }
@@ -2707,7 +2798,7 @@
       }
 
       return (
-        <div className="min-h-screen bg-white text-[#3a3a3a]">
+        <div className="public-site min-h-screen bg-white text-[#3a3a3a]">
           <SiteNavbar
             isScrolled={isScrolled}
             mobileMenuOpen={mobileMenuOpen}
@@ -2778,7 +2869,7 @@
                     <MotionOnScroll variant="reveal-up" delay={90}>
                       <div
                         ref={renderedBodyRef}
-                        className="max-w-none text-gray-700 leading-relaxed whitespace-normal [&_h2]:text-[1.9rem] md:[&_h2]:text-[2.2rem] [&_h2]:font-bold [&_h2]:leading-[1.35] [&_h2]:text-black [&_h2]:mt-12 [&_h2]:mb-5 [&_h3]:text-[1.35rem] md:[&_h3]:text-[1.55rem] [&_h3]:font-semibold [&_h3]:leading-[1.6] [&_h3]:text-black [&_h3]:mt-10 [&_h3]:mb-4 [&_p]:text-[1.05rem] md:[&_p]:text-[1.12rem] [&_p]:leading-[2.05] [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:my-8 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-10 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200"
+                        className="article-rich-content max-w-none text-gray-700 leading-relaxed whitespace-normal [&_h2]:font-bold [&_h2]:text-black [&_h2]:mt-12 [&_h2]:mb-5 [&_h3]:font-semibold [&_h3]:text-black [&_h3]:mt-10 [&_h3]:mb-4 [&_p]:my-0 [&_p+*]:mt-6 [&_blockquote]:my-8 [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 [&_blockquote]:pl-5 [&_blockquote]:italic [&_blockquote]:text-[#4b5563] [&_ul]:my-6 [&_ul]:pl-6 [&_ul]:list-disc [&_li]:my-2 [&_a]:text-[#356569] [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-2 [&_code]:py-1 [&_hr]:my-10 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-gray-200"
                         dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
                       />
                     </MotionOnScroll>
@@ -2940,7 +3031,7 @@
       };
 
       return (
-        <div className="min-h-screen font-sans text-[#3a3a3a] bg-white selection:bg-[#cc7333] selection:text-white overflow-x-hidden">
+        <div className="public-site min-h-screen font-sans text-[#3a3a3a] bg-white selection:bg-[#cc7333] selection:text-white overflow-x-hidden">
           
           <style dangerouslySetInnerHTML={{__html: `
             @keyframes fadeUpIn {
