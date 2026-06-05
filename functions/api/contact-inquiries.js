@@ -79,27 +79,80 @@ const formatInquiryEmail = (inquiry) => {
   return { text, html };
 };
 
-const sendInquiryEmail = async (env, inquiry, requestedRecipient) => {
-  const token = env.CF_EMAIL_API_TOKEN || env.CF_API_TOKEN;
-  const accountId = env.CF_ACCOUNT_ID;
+const getEmailConfig = (env, requestedRecipient) => {
   const to = cleanText(env.CONTACT_INQUIRY_TO_EMAIL || requestedRecipient || '', 160);
   const fromAddress = cleanText(env.CONTACT_INQUIRY_FROM_EMAIL || 'no-reply@worthbetween.com', 160);
   const fromName = cleanText(env.CONTACT_INQUIRY_FROM_NAME || '沃蒔之間網站', 80);
+  return { to, fromAddress, fromName };
+};
 
-  if (!accountId || !token) {
-    return { sent: false, reason: '尚未設定 Cloudflare Email Sending 環境變數' };
-  }
+const validateEmailConfig = ({ to, fromAddress }) => {
   if (!isEmailAddress(to)) {
-    return { sent: false, reason: '收件 Email 格式不正確' };
+    return '收件 Email 格式不正確';
   }
   if (!isEmailAddress(fromAddress)) {
-    return { sent: false, reason: '寄件 Email 格式不正確' };
+    return '寄件 Email 格式不正確';
+  }
+  return '';
+};
+
+const sendInquiryEmailWithResend = async (env, inquiry, requestedRecipient) => {
+  const token = env.RESEND_API_KEY;
+  if (!token) {
+    return { sent: false, reason: '尚未設定 RESEND_API_KEY' };
+  }
+
+  const emailConfig = getEmailConfig(env, requestedRecipient);
+  const configError = validateEmailConfig(emailConfig);
+  if (configError) {
+    return { sent: false, reason: configError };
   }
 
   const { text, html } = formatInquiryEmail(inquiry);
   const payload = {
-    to,
-    from: { address: fromAddress, name: fromName },
+    to: [emailConfig.to],
+    from: `${emailConfig.fromName} <${emailConfig.fromAddress}>`,
+    subject: `網站諮詢：${inquiry.company}｜${inquiry.name}`,
+    text,
+    html
+  };
+  if (isEmailAddress(inquiry.contact)) {
+    payload.reply_to = inquiry.contact;
+  }
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${token}`,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = result.message || result.error || `Resend HTTP ${response.status}`;
+    return { sent: false, reason: message };
+  }
+  return { sent: true, provider: 'resend', id: result.id };
+};
+
+const sendInquiryEmailWithCloudflare = async (env, inquiry, requestedRecipient) => {
+  const token = env.CF_EMAIL_API_TOKEN || env.CF_API_TOKEN;
+  const accountId = env.CF_ACCOUNT_ID;
+  if (!accountId || !token) {
+    return { sent: false, reason: '尚未設定 Cloudflare Email Sending 環境變數' };
+  }
+
+  const emailConfig = getEmailConfig(env, requestedRecipient);
+  const configError = validateEmailConfig(emailConfig);
+  if (configError) {
+    return { sent: false, reason: configError };
+  }
+
+  const { text, html } = formatInquiryEmail(inquiry);
+  const payload = {
+    to: emailConfig.to,
+    from: { address: emailConfig.fromAddress, name: emailConfig.fromName },
     subject: `網站諮詢：${inquiry.company}｜${inquiry.name}`,
     text,
     html
@@ -121,7 +174,21 @@ const sendInquiryEmail = async (env, inquiry, requestedRecipient) => {
     const message = result.errors?.[0]?.message || `Cloudflare Email HTTP ${response.status}`;
     return { sent: false, reason: message };
   }
-  return { sent: true };
+  return { sent: true, provider: 'cloudflare' };
+};
+
+const sendInquiryEmail = async (env, inquiry, requestedRecipient) => {
+  if (env.RESEND_API_KEY) {
+    const resendResult = await sendInquiryEmailWithResend(env, inquiry, requestedRecipient);
+    if (resendResult.sent || !env.CF_EMAIL_API_TOKEN) return resendResult;
+    const cloudflareResult = await sendInquiryEmailWithCloudflare(env, inquiry, requestedRecipient);
+    if (cloudflareResult.sent) return cloudflareResult;
+    return {
+      sent: false,
+      reason: `Resend：${resendResult.reason}；Cloudflare：${cloudflareResult.reason}`
+    };
+  }
+  return sendInquiryEmailWithCloudflare(env, inquiry, requestedRecipient);
 };
 
 export async function onRequestPost({ request, env }) {
@@ -187,5 +254,10 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
-  return jsonResponse({ ok: true, emailSent: true, message: '諮詢已送出，通知信已寄出' });
+  return jsonResponse({
+    ok: true,
+    emailSent: true,
+    emailProvider: emailResult.provider || 'unknown',
+    message: `諮詢已送出，通知信已透過 ${emailResult.provider === 'resend' ? 'Resend' : 'Cloudflare'} 寄出`
+  });
 }
