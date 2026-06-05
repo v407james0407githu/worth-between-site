@@ -533,6 +533,7 @@
         email: 'hello@worthbetween.com.tw',
         formTitle: '專案諮詢',
         submitLabel: '送出諮詢 Send Request',
+        thankYouMessage: '感謝您的諮詢，我們已收到您的需求，將盡快與您聯繫。',
         serviceOptions: [
           '品牌策略與定位',
           'ESG 議題溝通與培育',
@@ -1243,6 +1244,9 @@
         contact: {
           ...defaultHomepageContent.contact,
           ...sourceContact,
+          thankYouMessage: hasOwn(sourceContact, 'thankYouMessage')
+            ? String(sourceContact.thankYouMessage ?? '').trim()
+            : defaultHomepageContent.contact.thankYouMessage,
           serviceOptions: hasOwn(sourceContact, 'serviceOptions') && Array.isArray(sourceContact.serviceOptions)
             ? sourceContact.serviceOptions.map((option) => String(option ?? '').trim())
             : defaultHomepageContent.contact.serviceOptions
@@ -3067,7 +3071,10 @@
             throw new Error(result.message || '送出失敗，請稍後再試');
           }
           setContactForm({ name: '', company: '', contact: '', service: '', message: '' });
-          setContactSubmitState({ status: 'success', message: '已送出諮詢，我們會盡快與您聯繫。' });
+          setContactSubmitState({
+            status: 'success',
+            message: contactContent.thankYouMessage || defaultHomepageContent.contact.thankYouMessage
+          });
         } catch (error) {
           setContactSubmitState({ status: 'error', message: error.message || '送出失敗，請稍後再試' });
         }
@@ -3542,20 +3549,20 @@
                           <label className="block text-[11px] font-bold text-gray-500 mb-3 uppercase tracking-widest">簡單說明需求 Message</label>
                           <textarea rows="3" value={contactForm.message} onChange={handleContactFieldChange('message')} className="w-full border-b border-gray-300 pb-3 focus:outline-none focus:border-[#3a3a3a] transition-colors bg-transparent resize-none text-lg" placeholder="簡述您的品牌現況或期望達成的目標..."></textarea>
                         </div>
+                        <button type="submit" disabled={contactSubmitState.status === 'submitting'} className="w-full py-5 mt-4 bg-[#3a3a3a] text-white font-bold tracking-widest uppercase rounded-sm hover:bg-[#cc7333] transition-colors flex justify-center items-center gap-3 disabled:cursor-not-allowed disabled:opacity-60">
+                          {contactSubmitState.status === 'submitting' ? '送出中...' : contactContent.submitLabel} <ArrowRight size={18}/>
+                        </button>
                         {contactSubmitState.message && (
-                          <div className={`rounded-sm px-4 py-3 text-sm font-bold ${
+                          <div className={`mt-5 border-l-4 px-5 py-4 text-base font-bold leading-relaxed shadow-sm ${
                             contactSubmitState.status === 'success'
-                              ? 'bg-green-50 text-green-700'
+                              ? 'border-[#4e7055] bg-[#edf6ef] text-[#2f5b38]'
                               : contactSubmitState.status === 'error'
-                                ? 'bg-red-50 text-red-700'
-                                : 'bg-gray-50 text-gray-500'
+                                ? 'border-red-500 bg-red-50 text-red-700'
+                                : 'border-gray-300 bg-gray-50 text-gray-600'
                           }`}>
                             {contactSubmitState.message}
                           </div>
                         )}
-                        <button type="submit" disabled={contactSubmitState.status === 'submitting'} className="w-full py-5 mt-4 bg-[#3a3a3a] text-white font-bold tracking-widest uppercase rounded-sm hover:bg-[#cc7333] transition-colors flex justify-center items-center gap-3 disabled:cursor-not-allowed disabled:opacity-60">
-                          {contactSubmitState.status === 'submitting' ? '送出中...' : contactContent.submitLabel} <ArrowRight size={18}/>
-                        </button>
                       </form>
                     </div>
                   </MotionOnScroll>
@@ -4404,6 +4411,7 @@
             email: target.email ?? '',
             formTitle: target.formTitle ?? '',
             submitLabel: target.submitLabel ?? '',
+            thankYouMessage: target.thankYouMessage ?? defaultHomepageContent.contact.thankYouMessage,
             serviceOptions: Array.isArray(target.serviceOptions)
               ? [...target.serviceOptions]
               : [...defaultHomepageContent.contact.serviceOptions]
@@ -4458,6 +4466,7 @@
           if (!homepageSectionForm.email?.trim()) nextErrors.email = '請輸入 Email';
           if (!homepageSectionForm.formTitle?.trim()) nextErrors.formTitle = '請輸入表單標題';
           if (!homepageSectionForm.submitLabel?.trim()) nextErrors.submitLabel = '請輸入送出按鈕文字';
+          if (!homepageSectionForm.thankYouMessage?.trim()) nextErrors.thankYouMessage = '請輸入送出後感謝文字';
           const normalizedServiceOptions = (homepageSectionForm.serviceOptions || []).map((option) => option.trim()).filter(Boolean);
           if (normalizedServiceOptions.length === 0) nextErrors.serviceOptions = '請至少保留一個服務選項';
         } else if (activeHomepageSectionKey === 'footer') {
@@ -4562,6 +4571,7 @@
                 email: homepageSectionForm.email.trim(),
                 formTitle: homepageSectionForm.formTitle.trim(),
                 submitLabel: homepageSectionForm.submitLabel.trim(),
+                thankYouMessage: homepageSectionForm.thankYouMessage.trim(),
                 serviceOptions: (homepageSectionForm.serviceOptions || []).map((option) => option.trim()).filter(Boolean)
               }
             });
@@ -6312,6 +6322,13 @@
                         <input value={homepageSectionForm.formTitle || ''} onChange={e => setHomepageSectionForm({ ...homepageSectionForm, formTitle: e.target.value })} placeholder="表單標題" className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
                         <input value={homepageSectionForm.submitLabel || ''} onChange={e => setHomepageSectionForm({ ...homepageSectionForm, submitLabel: e.target.value })} placeholder="按鈕文字" className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
                       </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">送出後感謝文字</label>
+                        <textarea rows="2" value={homepageSectionForm.thankYouMessage || ''} onChange={e => setHomepageSectionForm({ ...homepageSectionForm, thankYouMessage: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none" placeholder="例如：感謝您的諮詢，我們已收到您的需求，將盡快與您聯繫。" />
+                        {homepageSectionErrors.thankYouMessage && (
+                          <div className="mt-1 text-xs text-red-600">{homepageSectionErrors.thankYouMessage}</div>
+                        )}
+                      </div>
                       <div className="space-y-3 rounded-xl border border-gray-200 p-4">
                         <div className="flex items-center justify-between gap-3">
                           <label className="block text-xs font-bold text-gray-700">最想解決的問題 Service Needed</label>
@@ -7120,6 +7137,14 @@
           };
 
           setStorageState((prev) => ({ ...prev, isSyncing: true, error: '', mode: 'supabase' }));
+          const { data: currentSiteState } = await supabase
+            .from(SUPABASE_SITE_STATE_TABLE)
+            .select('payload')
+            .eq('site_id', SUPABASE_SITE_STATE_ID)
+            .maybeSingle();
+          if (Array.isArray(currentSiteState?.payload?.contactInquiries)) {
+            payload.contactInquiries = currentSiteState.payload.contactInquiries;
+          }
           const { error } = await supabase
             .from(SUPABASE_SITE_STATE_TABLE)
             .upsert({
