@@ -3064,7 +3064,10 @@
           const response = await fetch(CONTACT_INQUIRIES_ENDPOINT, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify(contactForm)
+            body: JSON.stringify({
+              ...contactForm,
+              recipientEmail: contactContent.email
+            })
           });
           const result = await response.json().catch(() => ({}));
           if (!response.ok || result.ok === false) {
@@ -3072,8 +3075,10 @@
           }
           setContactForm({ name: '', company: '', contact: '', service: '', message: '' });
           setContactSubmitState({
-            status: 'success',
-            message: contactContent.thankYouMessage || defaultHomepageContent.contact.thankYouMessage
+            status: result.emailSent === false ? 'warning' : 'success',
+            message: result.emailSent === false
+              ? (result.message || '諮詢已送出，但通知信尚未寄出，請確認 Cloudflare Email Sending 設定。')
+              : (contactContent.thankYouMessage || defaultHomepageContent.contact.thankYouMessage)
           });
         } catch (error) {
           setContactSubmitState({ status: 'error', message: error.message || '送出失敗，請稍後再試' });
@@ -3556,6 +3561,8 @@
                           <div className={`mt-5 border-l-4 px-5 py-4 text-base font-bold leading-relaxed shadow-sm ${
                             contactSubmitState.status === 'success'
                               ? 'border-[#4e7055] bg-[#edf6ef] text-[#2f5b38]'
+                              : contactSubmitState.status === 'warning'
+                                ? 'border-amber-500 bg-amber-50 text-amber-800'
                               : contactSubmitState.status === 'error'
                                 ? 'border-red-500 bg-red-50 text-red-700'
                                 : 'border-gray-300 bg-gray-50 text-gray-600'
