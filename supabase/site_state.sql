@@ -12,19 +12,6 @@ for select
 to anon
 using (true);
 
-create policy "Allow public upsert site_state"
-on public.site_state
-for insert
-to anon
-with check (true);
-
-create policy "Allow public update site_state"
-on public.site_state
-for update
-to anon
-using (true)
-with check (true);
-
 insert into public.site_state (site_id, payload)
 values ('primary', '{}'::jsonb)
 on conflict (site_id) do nothing;

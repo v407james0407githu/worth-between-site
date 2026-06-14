@@ -15,7 +15,6 @@
       "imports": {
         "react": "https://esm.sh/react@18.2.0",
         "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
         "lucide-react": "https://esm.sh/lucide-react?external=react,react-dom"
       }
     }
@@ -120,7 +119,6 @@
   <script type="text/babel" data-type="module">
     import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
     import { createRoot } from 'react-dom/client';
-    import { createClient } from '@supabase/supabase-js';
     import { 
       Menu, X, ArrowRight, ChevronRight, CheckCircle2, 
       BarChart3, Users, Settings, FileText, Database, 
@@ -146,7 +144,6 @@
       { label: '深灰 (Dark Gray)', value: colors.darkGray }
     ];
     const HERO_SLIDES_STORAGE_KEY = 'worth-between-hero-slides';
-    const ADMIN_AUTH_STORAGE_KEY = 'worth-between-admin-auth';
     const ADMIN_FLASH_STORAGE_KEY = 'worth-between-admin-flash';
     const CONTENT_PAGES_STORAGE_KEY = 'worth-between-content-pages';
     const HOMEPAGE_CONTENT_STORAGE_KEY = 'worth-between-homepage-content';
@@ -157,10 +154,8 @@
     const PENDING_HOME_TOP_KEY = 'worth-between-pending-home-top';
     const PENDING_ROUTE_TOP_KEY = 'worth-between-pending-route-top';
     const ADVISOR_TRANSITION_STORAGE_KEY = 'worth-between-advisor-transition';
-    const SUPABASE_URL = window.WORTH_BETWEEN_SUPABASE_URL || 'https://zbhicnnchroqyxrgbqfr.supabase.co';
-    const SUPABASE_ANON_KEY = window.WORTH_BETWEEN_SUPABASE_ANON_KEY || 'sb_publishable_WUlK1Vu0YfpNeM89zuxyDg_SLN5jfK-';
-    const SUPABASE_SITE_STATE_TABLE = 'site_state';
-    const SUPABASE_SITE_STATE_ID = 'primary';
+    const ADMIN_SESSION_ENDPOINT = window.WORTH_BETWEEN_ADMIN_SESSION_ENDPOINT || '/api/admin-session';
+    const SITE_STATE_ENDPOINT = window.WORTH_BETWEEN_SITE_STATE_ENDPOINT || '/api/site-state';
     const DASHBOARD_METRICS_ENDPOINT = window.WORTH_BETWEEN_DASHBOARD_METRICS_ENDPOINT || '/api/dashboard-metrics';
     const CONTACT_INQUIRIES_ENDPOINT = window.WORTH_BETWEEN_CONTACT_INQUIRIES_ENDPOINT || '/api/contact-inquiries';
     const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
@@ -171,24 +166,6 @@
     const SUPPORTED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
     const SUPPORTED_IMAGE_ACCEPT = '.jpg,.jpeg,.png,.webp,.gif,.svg';
     const SUPPORTED_IMAGE_LABEL = 'JPG/JPEG、PNG、WebP、GIF、SVG';
-    const ADMIN_LOGIN_EMAIL = 'admin';
-    const ADMIN_LOGIN_PASSWORD = 'wb2026';
-    const isSupabaseConfigured = (
-      typeof SUPABASE_URL === 'string' &&
-      typeof SUPABASE_ANON_KEY === 'string' &&
-      /^https:\/\/.+\.supabase\.co$/i.test(SUPABASE_URL) &&
-      !SUPABASE_URL.includes('YOUR_PROJECT_REF') &&
-      !SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY')
-    );
-    const supabase = isSupabaseConfigured
-      ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-          auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-            detectSessionInUrl: false
-          }
-        })
-      : null;
     const formatNumber = (value) => {
       const numeric = Number(value);
       if (!Number.isFinite(numeric)) return '尚無資料';
@@ -3066,7 +3043,6 @@
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
               ...contactForm,
-              recipientEmail: contactContent.email
             })
           });
           const result = await response.json().catch(() => ({}));
@@ -3601,7 +3577,7 @@
       setTeamAccess,
       storageState
     }) => {
-      const [isAuthenticated, setIsAuthenticated] = useState(() => window.localStorage.getItem(ADMIN_AUTH_STORAGE_KEY) === 'true');
+      const [isAuthenticated, setIsAuthenticated] = useState(null);
       const [activeTab, setActiveTab] = useState('hero-slider');
       const [flashMessage, setFlashMessage] = useState(() => window.localStorage.getItem(ADMIN_FLASH_STORAGE_KEY) || '');
       const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -3629,12 +3605,28 @@
       const [dashboardMetrics, setDashboardMetrics] = useState({ isLoading: false, error: '', data: null });
       const [dashboardView, setDashboardView] = useState('traffic');
       useEffect(() => {
+        let isCancelled = false;
+        const verifySession = async () => {
+          try {
+            const response = await fetch(ADMIN_SESSION_ENDPOINT, { headers: { Accept: 'application/json' } });
+            const data = await response.json();
+            if (!isCancelled) setIsAuthenticated(Boolean(response.ok && data.authenticated));
+          } catch {
+            if (!isCancelled) setIsAuthenticated(false);
+          }
+        };
+        verifySession();
+        return () => {
+          isCancelled = true;
+        };
+      }, []);
+      useEffect(() => {
         if (!['dashboard', 'hero-slider', 'content', 'team'].includes(activeTab)) {
           setActiveTab('hero-slider');
         }
       }, [activeTab]);
       const [editingMemberId, setEditingMemberId] = useState(null);
-      const [memberForm, setMemberForm] = useState({ name: '', email: '', lastLogin: '尚未登入', password: '' });
+      const [memberForm, setMemberForm] = useState({ name: '', email: '', lastLogin: '尚未登入' });
       const [memberFormError, setMemberFormError] = useState('');
       const [memberActionModal, setMemberActionModal] = useState({ open: false, member: null });
       const [activityFilterMember, setActivityFilterMember] = useState('全部');
@@ -4039,19 +4031,27 @@
         };
       }, [activeTab]);
 
-      const handleLogin = (e) => {
+      const handleLogin = async (e) => {
         e.preventDefault();
-        const email = loginForm.email.trim();
-        const password = loginForm.password;
-        if (email !== ADMIN_LOGIN_EMAIL || password !== ADMIN_LOGIN_PASSWORD) {
-          setLoginError('帳號或密碼錯誤');
-          return;
-        }
-        setIsAuthenticated(true);
-        window.localStorage.setItem(ADMIN_AUTH_STORAGE_KEY, 'true');
-        setFlashMessage('');
         setLoginError('');
-        setLoginForm({ email: '', password: '' });
+        try {
+          const response = await fetch(ADMIN_SESSION_ENDPOINT, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({
+              email: loginForm.email.trim(),
+              password: loginForm.password
+            })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || '帳號或密碼錯誤');
+          setIsAuthenticated(true);
+          setFlashMessage('');
+          setLoginForm({ email: '', password: '' });
+          window.location.reload();
+        } catch (error) {
+          setLoginError(error.message || '登入失敗，請稍後再試');
+        }
       };
       const appendTeamActivity = ({ actor = '管理者', target, action, detail = '' }) => {
         const timestamp = new Date().toLocaleString('zh-TW', { hour12: false });
@@ -4199,12 +4199,11 @@
           setMemberForm({
             name: member.name || '',
             email: member.email || '',
-            lastLogin: member.lastLogin || '尚未登入',
-            password: ''
+            lastLogin: member.lastLogin || '尚未登入'
           });
         } else {
           setEditingMemberId(null);
-          setMemberForm({ name: '', email: '', lastLogin: '尚未登入', password: '' });
+          setMemberForm({ name: '', email: '', lastLogin: '尚未登入' });
         }
         setMemberFormError('');
         setIsMemberModalOpen(true);
@@ -4219,17 +4218,11 @@
           setMemberFormError('請輸入 Email');
           return;
         }
-        if (!editingMemberId && !memberForm.password.trim()) {
-          setMemberFormError('請設定密碼');
-          return;
-        }
-        const existingMember = editingMemberId ? teamAccess.members.find((member) => member.id === editingMemberId) : null;
         const normalized = {
           name: memberForm.name.trim(),
           email: memberForm.email.trim(),
           role: '管理者',
-          lastLogin: memberForm.lastLogin.trim() || '尚未登入',
-          password: memberForm.password.trim() || existingMember?.password || ''
+          lastLogin: memberForm.lastLogin.trim() || '尚未登入'
         };
         setTeamAccess((prev) => ({
           ...prev,
@@ -4265,10 +4258,10 @@
         const member = memberActionModal.member;
         appendTeamActivity({
           target: member.name,
-          action: '重設密碼',
-          detail: member.email
+          action: '查看登入設定',
+          detail: 'Cloudflare Pages Secrets'
         });
-        setFlashMessage(`已模擬寄送密碼重設信給 ${member.email}。`);
+        setFlashMessage('登入帳密由 Cloudflare Pages Secrets 管理，不會保存在網站資料中。');
         setMemberActionModal({ open: false, member: null });
       };
       const activeServiceCount = serviceRecords.filter((record) => record.stage !== '已完成').length;
@@ -5163,6 +5156,14 @@
         { label: 'Supabase 儲存', value: Math.max(0, (resourceMetrics.supabaseStorageUsedBytes ?? estimatedSiteStateBytes) - (resourceMetrics.siteStateBytes ?? estimatedSiteStateBytes)) }
       ];
 
+      if (isAuthenticated === null) {
+        return (
+          <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 font-sans">
+            <div className="text-center text-gray-500">正在確認管理者登入狀態...</div>
+          </div>
+        );
+      }
+
       if (!isAuthenticated) {
         return (
           <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6 font-sans">
@@ -5241,9 +5242,9 @@
               </button>
             </nav>
             <div className="p-4 border-t border-gray-700">
-              <button onClick={() => {
+              <button onClick={async () => {
+                await fetch(ADMIN_SESSION_ENDPOINT, { method: 'DELETE' }).catch(() => null);
                 setIsAuthenticated(false);
-                window.localStorage.removeItem(ADMIN_AUTH_STORAGE_KEY);
               }} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors text-gray-300">
                 <LogOut size={18} /> 登出系統
               </button>
@@ -5605,7 +5606,7 @@
                               <td className="px-6 py-4 text-gray-600">{member.lastLogin}</td>
                               <td className="px-6 py-4 text-right">
                                 <button onClick={() => openMemberActionModal(member)} className="text-xs font-bold text-[#cc7333] border border-[#cc7333]/20 px-2 py-1 rounded hover:bg-[#cc7333]/5 mr-2">
-                                  設定密碼
+                                  登入設定
                                 </button>
                                 <button onClick={() => openMemberModal(member)} className="text-gray-400 hover:text-blue-600 mx-1"><Edit size={16} /></button>
                                 <button onClick={() => removeMember(member.id)} className="text-gray-400 hover:text-red-600 mx-1"><Trash2 size={16} /></button>
@@ -5753,7 +5754,7 @@
                             <h4 className="mb-4 font-bold text-[#1f2329]">連線狀態</h4>
                             <div className="grid gap-3">
                               <div className="flex items-center justify-between"><span>Cloudflare</span><span className={dashboardStatus.cloudflareConfigured ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>{dashboardStatus.cloudflareConfigured ? '已連線' : '待設定'}</span></div>
-                              <div className="flex items-center justify-between"><span>Supabase</span><span className={dashboardStatus.supabaseConfigured || storageState?.mode === 'supabase' ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>{dashboardStatus.supabaseConfigured || storageState?.mode === 'supabase' ? '已連線' : '待設定'}</span></div>
+                              <div className="flex items-center justify-between"><span>Supabase</span><span className={dashboardStatus.supabaseConfigured || storageState?.mode === 'api' ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>{dashboardStatus.supabaseConfigured || storageState?.mode === 'api' ? '已連線' : '待設定'}</span></div>
                               <div className="flex items-center justify-between"><span>站台同步</span><span className="font-bold text-gray-600">{storageState?.isSyncing ? '同步中' : storageState?.lastSyncedAt || '尚無同步時間'}</span></div>
                             </div>
                           </div>
@@ -5858,21 +5859,21 @@
             <div className="fixed inset-0 bg-[#3a3a3a]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
               <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-bold text-[#3a3a3a]">設定密碼</h3>
+                  <h3 className="text-xl font-bold text-[#3a3a3a]">登入設定</h3>
                   <button onClick={() => setMemberActionModal({ open: false, member: null })} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
                 </div>
                 <div className="space-y-4 text-sm text-gray-600">
-                  <p>這是前端假資料流程，會模擬寄送系統通知，不會真的寄出 Email。</p>
+                  <p>管理者登入帳密只保存在 Cloudflare Pages Secrets，不會保存在瀏覽器或站台資料中。</p>
                   <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-2">
                     <div><span className="font-bold text-gray-800">收件人：</span>{memberActionModal.member.name}</div>
                     <div><span className="font-bold text-gray-800">Email：</span>{memberActionModal.member.email}</div>
-                    <div><span className="font-bold text-gray-800">動作：</span>建立新的登入密碼</div>
+                    <div><span className="font-bold text-gray-800">設定位置：</span>Cloudflare Pages Secrets</div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-6">
                   <button type="button" onClick={() => setMemberActionModal({ open: false, member: null })} className="px-5 py-2.5 text-gray-500 font-bold hover:bg-gray-100 rounded-lg transition-colors">取消</button>
                   <button type="button" onClick={confirmMemberAction} className="px-5 py-2.5 bg-[#4e7055] text-white font-bold rounded-lg hover:bg-[#3a5240] transition-colors">
-                    確認送出
+                    我知道了
                   </button>
                 </div>
               </div>
@@ -5898,20 +5899,10 @@
                       <input type="email" value={memberForm.email} onChange={e => setMemberForm({ ...memberForm, email: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
                     </div>
                   </div>
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div>
                     <div>
                       <label className="block text-xs font-bold text-gray-700 mb-1">最後登入</label>
                       <input value={memberForm.lastLogin} onChange={e => setMemberForm({ ...memberForm, lastLogin: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">{editingMemberId ? '設定新密碼' : '設定密碼'}</label>
-                      <input
-                        type="password"
-                        value={memberForm.password}
-                        onChange={e => setMemberForm({ ...memberForm, password: e.target.value })}
-                        className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]"
-                        placeholder={editingMemberId ? '留空則維持原密碼' : '請輸入登入密碼'}
-                      />
                     </div>
                   </div>
                   <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
@@ -7040,8 +7031,8 @@
       const [serviceRecords, setServiceRecords] = useState(localSiteState.current.serviceRecords);
       const [teamAccess, setTeamAccess] = useState(localSiteState.current.teamAccess);
       const [storageState, setStorageState] = useState({
-        mode: isSupabaseConfigured ? 'supabase' : 'local',
-        isLoading: isSupabaseConfigured,
+        mode: 'api',
+        isLoading: true,
         isSyncing: false,
         error: '',
         lastSyncedAt: ''
@@ -7056,24 +7047,37 @@
       useEffect(() => {
         let isCancelled = false;
 
-        const hydrateFromSupabase = async () => {
-          if (!supabase) {
+        const hydrateFromApi = async () => {
+          setStorageState((prev) => ({ ...prev, mode: 'api', isLoading: true, error: '' }));
+          try {
+            const response = await fetch(SITE_STATE_ENDPOINT, { headers: { Accept: 'application/json' } });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || `HTTP ${response.status}`);
+            if (isCancelled) return;
+
+            if (data?.payload) {
+              const remoteState = normalizeRemoteSiteState(data.payload);
+              setHeroSlides(remoteState.heroSlides);
+              setContentPages(remoteState.contentPages);
+              setHomepageContent(remoteState.homepageContent);
+              setBrands(remoteState.brands);
+              setServiceRecords(remoteState.serviceRecords);
+              setTeamAccess(remoteState.teamAccess);
+            }
+
             hasCompletedBootstrapRef.current = true;
-            setStorageState((prev) => ({ ...prev, mode: 'local', isLoading: false }));
-            return;
-          }
-
-          setStorageState((prev) => ({ ...prev, mode: 'supabase', isLoading: true, error: '' }));
-          const { data, error } = await supabase
-            .from(SUPABASE_SITE_STATE_TABLE)
-            .select('payload, updated_at')
-            .eq('site_id', SUPABASE_SITE_STATE_ID)
-            .maybeSingle();
-
-          if (isCancelled) return;
-
-          if (error) {
-            console.error('Failed to load site state from Supabase:', error);
+            setStorageState((prev) => ({
+              ...prev,
+              mode: 'api',
+              isLoading: false,
+              error: '',
+              lastSyncedAt: data?.updated_at
+                ? new Date(data.updated_at).toLocaleString('zh-TW', { hour12: false })
+                : prev.lastSyncedAt
+            }));
+          } catch (error) {
+            if (isCancelled) return;
+            console.error('Failed to load site state from API:', error);
             hasCompletedBootstrapRef.current = true;
             setStorageState((prev) => ({
               ...prev,
@@ -7081,32 +7085,10 @@
               isLoading: false,
               error: error.message || '無法讀取雲端資料'
             }));
-            return;
           }
-
-          if (data?.payload) {
-            const remoteState = normalizeRemoteSiteState(data.payload);
-            setHeroSlides(remoteState.heroSlides);
-            setContentPages(remoteState.contentPages);
-            setHomepageContent(remoteState.homepageContent);
-            setBrands(remoteState.brands);
-            setServiceRecords(remoteState.serviceRecords);
-            setTeamAccess(remoteState.teamAccess);
-          }
-
-          hasCompletedBootstrapRef.current = true;
-          setStorageState((prev) => ({
-            ...prev,
-            mode: 'supabase',
-            isLoading: false,
-            error: '',
-            lastSyncedAt: data?.updated_at
-              ? new Date(data.updated_at).toLocaleString('zh-TW', { hour12: false })
-              : prev.lastSyncedAt
-          }));
         };
 
-        hydrateFromSupabase();
+        hydrateFromApi();
         return () => {
           isCancelled = true;
         };
@@ -7130,7 +7112,11 @@
         persistLocalSiteState({ heroSlides, contentPages, homepageContent, brands, serviceRecords, teamAccess });
       }, [heroSlides, contentPages, homepageContent, brands, serviceRecords, teamAccess]);
       useEffect(() => {
-        if (!hasCompletedBootstrapRef.current || !supabase || storageState.mode !== 'supabase') return;
+        if (
+          !hasCompletedBootstrapRef.current ||
+          storageState.mode !== 'api' ||
+          currentRoute !== '#/private-manager'
+        ) return;
         if (syncTimerRef.current) window.clearTimeout(syncTimerRef.current);
 
         syncTimerRef.current = window.setTimeout(async () => {
@@ -7143,39 +7129,31 @@
             teamAccess
           };
 
-          setStorageState((prev) => ({ ...prev, isSyncing: true, error: '', mode: 'supabase' }));
-          const { data: currentSiteState } = await supabase
-            .from(SUPABASE_SITE_STATE_TABLE)
-            .select('payload')
-            .eq('site_id', SUPABASE_SITE_STATE_ID)
-            .maybeSingle();
-          if (Array.isArray(currentSiteState?.payload?.contactInquiries)) {
-            payload.contactInquiries = currentSiteState.payload.contactInquiries;
-          }
-          const { error } = await supabase
-            .from(SUPABASE_SITE_STATE_TABLE)
-            .upsert({
-              site_id: SUPABASE_SITE_STATE_ID,
-              payload,
-              updated_at: new Date().toISOString()
-            }, { onConflict: 'site_id' });
-
-          if (error) {
-            console.error('Failed to sync site state to Supabase:', error);
+          setStorageState((prev) => ({ ...prev, isSyncing: true, error: '', mode: 'api' }));
+          try {
+            const response = await fetch(SITE_STATE_ENDPOINT, {
+              method: 'PUT',
+              headers: { 'content-type': 'application/json', Accept: 'application/json' },
+              body: JSON.stringify({ payload })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || `HTTP ${response.status}`);
+            setStorageState((prev) => ({
+              ...prev,
+              isSyncing: false,
+              error: '',
+              lastSyncedAt: data.updated_at
+                ? new Date(data.updated_at).toLocaleString('zh-TW', { hour12: false })
+                : new Date().toLocaleString('zh-TW', { hour12: false })
+            }));
+          } catch (error) {
+            console.error('Failed to sync site state through API:', error);
             setStorageState((prev) => ({
               ...prev,
               isSyncing: false,
               error: error.message || '雲端同步失敗'
             }));
-            return;
           }
-
-          setStorageState((prev) => ({
-            ...prev,
-            isSyncing: false,
-            error: '',
-            lastSyncedAt: new Date().toLocaleString('zh-TW', { hour12: false })
-          }));
         }, 600);
 
         return () => {
@@ -7184,7 +7162,7 @@
             syncTimerRef.current = null;
           }
         };
-      }, [heroSlides, contentPages, homepageContent, brands, serviceRecords, teamAccess, storageState.mode]);
+      }, [heroSlides, contentPages, homepageContent, brands, serviceRecords, teamAccess, storageState.mode, currentRoute]);
       useEffect(() => {
         applyFaviconToDocument(homepageContent?.footer?.faviconUrl || defaultHomepageContent.footer.faviconUrl);
       }, [homepageContent?.footer?.faviconUrl]);

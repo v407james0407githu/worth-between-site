@@ -79,8 +79,8 @@ const formatInquiryEmail = (inquiry) => {
   return { text, html };
 };
 
-const getEmailConfig = (env, requestedRecipient) => {
-  const to = cleanText(env.CONTACT_INQUIRY_TO_EMAIL || requestedRecipient || '', 160);
+const getEmailConfig = (env) => {
+  const to = cleanText(env.CONTACT_INQUIRY_TO_EMAIL || '', 160);
   const fromAddress = cleanText(env.CONTACT_INQUIRY_FROM_EMAIL || 'no-reply@worthbetween.com', 160);
   const fromName = cleanText(env.CONTACT_INQUIRY_FROM_NAME || '沃蒔之間網站', 80);
   return { to, fromAddress, fromName };
@@ -96,13 +96,13 @@ const validateEmailConfig = ({ to, fromAddress }) => {
   return '';
 };
 
-const sendInquiryEmailWithResend = async (env, inquiry, requestedRecipient) => {
+const sendInquiryEmailWithResend = async (env, inquiry) => {
   const token = env.RESEND_API_KEY;
   if (!token) {
     return { sent: false, reason: '尚未設定 RESEND_API_KEY' };
   }
 
-  const emailConfig = getEmailConfig(env, requestedRecipient);
+  const emailConfig = getEmailConfig(env);
   const configError = validateEmailConfig(emailConfig);
   if (configError) {
     return { sent: false, reason: configError };
@@ -136,14 +136,14 @@ const sendInquiryEmailWithResend = async (env, inquiry, requestedRecipient) => {
   return { sent: true, provider: 'resend', id: result.id };
 };
 
-const sendInquiryEmailWithCloudflare = async (env, inquiry, requestedRecipient) => {
+const sendInquiryEmailWithCloudflare = async (env, inquiry) => {
   const token = env.CF_EMAIL_API_TOKEN || env.CF_API_TOKEN;
   const accountId = env.CF_ACCOUNT_ID;
   if (!accountId || !token) {
     return { sent: false, reason: '尚未設定 Cloudflare Email Sending 環境變數' };
   }
 
-  const emailConfig = getEmailConfig(env, requestedRecipient);
+  const emailConfig = getEmailConfig(env);
   const configError = validateEmailConfig(emailConfig);
   if (configError) {
     return { sent: false, reason: configError };
@@ -177,18 +177,18 @@ const sendInquiryEmailWithCloudflare = async (env, inquiry, requestedRecipient) 
   return { sent: true, provider: 'cloudflare' };
 };
 
-const sendInquiryEmail = async (env, inquiry, requestedRecipient) => {
+const sendInquiryEmail = async (env, inquiry) => {
   if (env.RESEND_API_KEY) {
-    const resendResult = await sendInquiryEmailWithResend(env, inquiry, requestedRecipient);
+    const resendResult = await sendInquiryEmailWithResend(env, inquiry);
     if (resendResult.sent || !env.CF_EMAIL_API_TOKEN) return resendResult;
-    const cloudflareResult = await sendInquiryEmailWithCloudflare(env, inquiry, requestedRecipient);
+    const cloudflareResult = await sendInquiryEmailWithCloudflare(env, inquiry);
     if (cloudflareResult.sent) return cloudflareResult;
     return {
       sent: false,
       reason: `Resend：${resendResult.reason}；Cloudflare：${cloudflareResult.reason}`
     };
   }
-  return sendInquiryEmailWithCloudflare(env, inquiry, requestedRecipient);
+  return sendInquiryEmailWithCloudflare(env, inquiry);
 };
 
 export async function onRequestPost({ request, env }) {
@@ -213,7 +213,6 @@ export async function onRequestPost({ request, env }) {
     source: 'homepage-contact',
     created_at: new Date().toISOString()
   };
-  const recipientEmail = cleanText(body.recipientEmail, 160);
 
   const missingFields = [];
   if (!inquiry.name) missingFields.push('姓名');
@@ -245,7 +244,7 @@ export async function onRequestPost({ request, env }) {
     }
   }
 
-  const emailResult = await sendInquiryEmail(env, inquiry, recipientEmail);
+  const emailResult = await sendInquiryEmail(env, inquiry);
   if (!emailResult.sent) {
     return jsonResponse({
       ok: true,

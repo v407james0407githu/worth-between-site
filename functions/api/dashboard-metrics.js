@@ -1,3 +1,5 @@
+import { requireAdminSession } from '../_lib/admin-auth.js';
+
 const jsonResponse = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
   headers: {
@@ -292,7 +294,12 @@ const fetchSupabaseMetrics = async (env) => {
   };
 };
 
-export async function onRequestGet({ env }) {
+export async function onRequestGet({ request, env }) {
+  const session = await requireAdminSession(request, env);
+  if (!session) {
+    return jsonResponse({ ok: false, message: '登入已失效，請重新登入' }, 401);
+  }
+
   const result = {
     generatedAt: new Date().toISOString(),
     traffic: {
