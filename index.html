@@ -1159,7 +1159,7 @@
       ...slide,
       tag: slide.tag || '',
       accent: slide.accent || colors.orange,
-      isActive: slide.isActive !== false,
+      isActive: true,
       sortOrder: index + 1
     }));
     const normalizeHomepageContent = (content) => {
@@ -4026,7 +4026,7 @@
       const [memberActionModal, setMemberActionModal] = useState({ open: false, member: null });
       const [activityFilterMember, setActivityFilterMember] = useState('全部');
 
-      const initialHeroForm = { tag: '', title: '', subtitle: '', bgImage: '', accent: colors.orange, isActive: true };
+      const initialHeroForm = { tag: '', title: '', subtitle: '', bgImage: '', accent: colors.orange };
       const [isHeroModalOpen, setIsHeroModalOpen] = useState(false);
       const [editingHeroId, setEditingHeroId] = useState(null);
       const [heroForm, setHeroForm] = useState(initialHeroForm);
@@ -4036,7 +4036,6 @@
       const [deleteHeroConfirmId, setDeleteHeroConfirmId] = useState(null);
       const [draggedHeroId, setDraggedHeroId] = useState(null);
       const sortedHeroSlides = sortSlides(heroSlides);
-      const activeHeroSlides = sortedHeroSlides.filter((slide) => slide.isActive !== false);
       const [activeContentSectionKey, setActiveContentSectionKey] = useState('about');
       const [activeHomepageSectionKey, setActiveHomepageSectionKey] = useState('about');
       const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
@@ -5053,7 +5052,7 @@
         setFlashMessage(`已更新首頁「${activeHomepageSectionMeta.label}」內容。`);
       };
 
-      const uploadImageToField = async ({ event, onSuccess, onError, setLoading }) => {
+      const uploadImageToField = async ({ event, onSuccess, onError, setLoading, uploadImmediately = false, uploadFilename = 'image.webp' }) => {
         const file = event.target.files?.[0];
         if (!file) return;
         if (!isSupportedImageFile(file)) {
@@ -5072,8 +5071,13 @@
         try {
           const compressed = await compressImageFileToWebP(file);
           const compressedKb = Math.round(compressed.sizeBytes / 1024);
-          onSuccess(compressed.dataUrl, { fileName: file.name, sizeBytes: compressed.sizeBytes });
-          setFlashMessage(`圖片已暫存為預覽，壓縮後約 ${compressedKb} KB；按下儲存時會上傳到 Supabase Storage。`);
+          const value = uploadImmediately
+            ? await uploadDataUrlToSupabase(compressed.dataUrl, uploadFilename)
+            : compressed.dataUrl;
+          onSuccess(value, { fileName: file.name, sizeBytes: compressed.sizeBytes });
+          setFlashMessage(uploadImmediately
+            ? `圖片已上傳到 Supabase Storage，壓縮後約 ${compressedKb} KB。`
+            : `圖片已暫存為預覽，壓縮後約 ${compressedKb} KB；按下儲存時會上傳到 Supabase Storage。`);
         } catch (error) {
           onError(error.message || '圖片壓縮失敗，請改用較小的圖片，或直接填入圖片網址。');
         } finally {
@@ -5438,8 +5442,7 @@
           title: slide.title,
           subtitle: slide.subtitle,
           bgImage: slide.bgImage,
-          accent: slide.accent || colors.orange,
-          isActive: slide.isActive !== false
+          accent: slide.accent || colors.orange
         });
         setHeroFormErrors({});
         setHeroImageUploadState({
@@ -5450,30 +5453,6 @@
         });
         setEditingHeroId(slide.id);
         setIsHeroModalOpen(true);
-      };
-
-      const uploadPendingHeroImage = async () => {
-        if (!isDataImageSource(heroForm.bgImage)) return heroForm.bgImage.trim();
-        setIsCompressingHeroImage(true);
-        setHeroImageUploadState((prev) => ({ ...prev, status: 'uploading', error: '' }));
-        try {
-          const uploadedUrl = await resolveImageSourceForSave(heroForm.bgImage, 'homepage-banner.webp');
-          setHeroForm((prev) => ({ ...prev, bgImage: uploadedUrl }));
-          setHeroImageUploadState((prev) => ({
-            ...prev,
-            status: 'uploaded',
-            publicUrl: uploadedUrl,
-            error: ''
-          }));
-          setFlashMessage('圖片已上傳到 Supabase Storage。');
-          return uploadedUrl;
-        } catch (error) {
-          const message = error.message || '圖片上傳到 Supabase 失敗，請稍後再試';
-          setHeroImageUploadState((prev) => ({ ...prev, status: 'error', error: message }));
-          throw new Error(message);
-        } finally {
-          setIsCompressingHeroImage(false);
-        }
       };
 
       const handleSaveHero = async (e) => {
@@ -5489,30 +5468,16 @@
           return;
         }
 
-        let uploadedBgImage = heroForm.bgImage.trim();
-        try {
-          uploadedBgImage = await uploadPendingHeroImage();
-        } catch (error) {
-          setHeroFormErrors({ bgImage: error.message || '圖片上傳到 Supabase 失敗，請稍後再試' });
-          return;
-        }
-
         const normalizedForm = {
           ...heroForm,
           tag: heroForm.tag.trim(),
           title: heroForm.title.trim(),
           subtitle: heroForm.subtitle.trim(),
-          bgImage: uploadedBgImage
+          bgImage: heroForm.bgImage.trim(),
+          isActive: true
         };
 
         if (editingHeroId) {
-          const targetSlide = heroSlides.find((slide) => slide.id === editingHeroId);
-          const isTurningOffLastActive = targetSlide?.isActive !== false && normalizedForm.isActive === false && activeHeroSlides.length <= 1;
-          if (isTurningOffLastActive) {
-            setHeroFormErrors({ isActive: '至少需保留一張啟用中的 Banner' });
-            return;
-          }
-
           setHeroSlides(heroSlides.map((slide) => (
             slide.id === editingHeroId
               ? { ...slide, ...normalizedForm, id: editingHeroId }
@@ -5534,7 +5499,6 @@
         const targetSlide = heroSlides.find((slide) => slide.id === deleteHeroConfirmId);
         if (!targetSlide) return;
         if (heroSlides.length <= 1) return;
-        if (targetSlide.isActive !== false && activeHeroSlides.length <= 1) return;
         const remainingSlides = sortSlides(heroSlides)
           .filter((slide) => slide.id !== deleteHeroConfirmId)
           .map((slide, index) => ({ ...slide, sortOrder: index + 1 }));
@@ -5553,26 +5517,18 @@
         setHeroSlides(reordered.map((slide, index) => ({ ...slide, sortOrder: index + 1 })));
       };
 
-      const toggleHeroActive = (slideId) => {
-        const targetSlide = heroSlides.find((slide) => slide.id === slideId);
-        if (!targetSlide) return;
-        if (targetSlide.isActive !== false && activeHeroSlides.length <= 1) return;
-
-        setHeroSlides(heroSlides.map((slide) => (
-          slide.id === slideId ? { ...slide, isActive: slide.isActive === false } : slide
-        )));
-      };
-
       const handleHeroImageUpload = async (event) => {
         await uploadImageToField({
           event,
           setLoading: setIsCompressingHeroImage,
+          uploadImmediately: true,
+          uploadFilename: 'homepage-banner.webp',
           onSuccess: (value, meta = {}) => {
             setHeroForm((prev) => ({ ...prev, bgImage: value }));
             setHeroImageUploadState({
               fileName: meta.fileName || '已選擇圖片',
-              status: 'selected',
-              publicUrl: '',
+              status: 'uploaded',
+              publicUrl: value,
               error: ''
             });
             setHeroFormErrors((prev) => {
@@ -5798,7 +5754,7 @@
                   <div className="flex justify-between items-center">
                     <div>
                       <h3 className="text-xl font-bold">Banner管理</h3>
-                      <p className="text-gray-500 text-sm mt-1">管理首頁最上方的動態輪播圖、排序、顯示狀態，以及首頁各主要段落的圖文內容。</p>
+                      <p className="text-gray-500 text-sm mt-1">管理首頁最上方的動態輪播圖、排序，以及首頁各主要段落的圖文內容。</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <button onClick={openAddHero} className="px-4 py-2 bg-[#4e7055] text-white rounded-lg flex items-center gap-2 text-sm font-bold hover:bg-[#3a5240] transition-colors">
@@ -5813,7 +5769,6 @@
                         <tr>
                           <th className="px-6 py-4 font-medium w-32">圖片預覽</th>
                           <th className="px-6 py-4 font-medium">標籤與標題</th>
-                          <th className="px-6 py-4 font-medium w-28">狀態</th>
                           <th className="px-6 py-4 font-medium w-24">排序</th>
                           <th className="px-6 py-4 font-medium w-24">主題色</th>
                           <th className="px-6 py-4 font-medium text-right w-40">操作</th>
@@ -5842,20 +5797,6 @@
                               <div className="text-xs text-gray-500 mt-2 line-clamp-2">{slide.subtitle}</div>
                             </td>
                             <td className="px-6 py-4">
-                              <button
-                                onClick={() => toggleHeroActive(slide.id)}
-                                disabled={slide.isActive !== false && activeHeroSlides.length <= 1}
-                                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                                  slide.isActive !== false
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-gray-100 text-gray-500'
-                                } ${slide.isActive !== false && activeHeroSlides.length <= 1 ? 'opacity-70 cursor-not-allowed' : 'hover:brightness-95'}`}
-                              >
-                                {slide.isActive !== false ? <Eye size={14} /> : <EyeOff size={14} />}
-                                {slide.isActive !== false ? '啟用中' : '已停用'}
-                              </button>
-                            </td>
-                            <td className="px-6 py-4">
                               <div className="text-xs font-bold text-gray-400 mb-2">#{slide.sortOrder ?? index + 1}</div>
                               <div className="text-[10px] text-gray-400 mb-2">可拖曳排序</div>
                               <div className="flex gap-1">
@@ -5882,8 +5823,8 @@
                               <button onClick={() => openEditHero(slide)} className="text-gray-400 hover:text-blue-600 mx-1 transition-colors"><Edit size={18} /></button>
                               <button 
                                 onClick={() => setDeleteHeroConfirmId(slide.id)} 
-                                disabled={heroSlides.length <= 1 || (slide.isActive !== false && activeHeroSlides.length <= 1)}
-                                className={`mx-1 transition-colors ${heroSlides.length <= 1 || (slide.isActive !== false && activeHeroSlides.length <= 1) ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-red-600'}`}
+                                disabled={heroSlides.length <= 1}
+                                className={`mx-1 transition-colors ${heroSlides.length <= 1 ? 'text-gray-200 cursor-not-allowed' : 'text-gray-400 hover:text-red-600'}`}
                               ><Trash2 size={18} /></button>
                             </td>
                           </tr>
@@ -6442,23 +6383,8 @@
                       </select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">顯示狀態</label>
-                      <select
-                        value={heroForm.isActive ? 'active' : 'inactive'}
-                        onChange={e => setHeroForm({...heroForm, isActive: e.target.value === 'active'})}
-                        className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]"
-                      >
-                        <option value="active">啟用並顯示在首頁</option>
-                        <option value="inactive">停用，暫不顯示</option>
-                      </select>
-                    </div>
-                    <div className="flex items-end">
-                      <div className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-xs text-gray-500">
-                        {editingHeroId ? '編輯後會立即同步前台首頁輪播。' : '新增後會自動排在目前輪播順序最後。'}
-                      </div>
-                    </div>
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-3 text-xs text-gray-500">
+                    {editingHeroId ? '編輯後會立即同步前台首頁輪播。' : '新增後會自動排在目前輪播順序最後。'}
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-gray-700 mb-1">主標題 (Title) * <span className="text-gray-400 font-normal">支援換行</span></label>
@@ -6496,22 +6422,12 @@
                         <div className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 break-all">
                           {heroImageUploadState.publicUrl || (isSupabasePublicImageSource(heroForm.bgImage) ? heroForm.bgImage : '') || heroImageUploadState.fileName || '未選擇任何檔案'}
                         </div>
-                        {isDataImageSource(heroForm.bgImage) && (
-                          <button
-                            type="button"
-                            onClick={() => uploadPendingHeroImage().catch(() => null)}
-                            disabled={isCompressingHeroImage || heroImageUploadState.status === 'uploading'}
-                            className="shrink-0 rounded-lg border border-[#4e7055] px-4 py-2 text-sm font-bold text-[#4e7055] hover:bg-[#eef5ef] disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {heroImageUploadState.status === 'uploading' ? '上傳中...' : '上傳圖片'}
-                          </button>
-                        )}
                       </div>
                       {heroImageUploadState.error && <p className="mt-2 text-xs text-red-600">{heroImageUploadState.error}</p>}
                       <p className="mt-2 text-xs text-gray-400">
                         {isCompressingHeroImage
-                          ? '圖片處理中；若正在儲存，會同步上傳到 Supabase Storage。'
-                          : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇後會先轉成 WebP 預覽；可按「上傳圖片」立即取得 Supabase public URL，或在儲存設定時自動上傳。`}
+                          ? '圖片處理並上傳到 Supabase Storage 中。'
+                          : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇檔案後會直接上傳到 Supabase Storage，不使用本地端圖片。`}
                       </p>
                     </div>
                     {heroForm.bgImage && (
