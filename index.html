@@ -7716,13 +7716,18 @@
             if (isCancelled) return;
 
             if (data?.payload) {
-              const remoteState = normalizeRemoteSiteState(data.payload);
-              setHeroSlides(remoteState.heroSlides);
-              setContentPages(remoteState.contentPages);
-              setHomepageContent(remoteState.homepageContent);
-              setBrands(remoteState.brands);
-              setServiceRecords(remoteState.serviceRecords);
-              setTeamAccess(remoteState.teamAccess);
+              const shouldMigrateAdminLocalState =
+                window.location.hash === '#/private-manager' &&
+                (!data.updated_at || data.storage === 'default');
+              const nextState = shouldMigrateAdminLocalState
+                ? readLocalSiteState()
+                : normalizeRemoteSiteState(data.payload);
+              setHeroSlides(nextState.heroSlides);
+              setContentPages(nextState.contentPages);
+              setHomepageContent(nextState.homepageContent);
+              setBrands(nextState.brands);
+              setServiceRecords(nextState.serviceRecords);
+              setTeamAccess(nextState.teamAccess);
             }
 
             hasCompletedBootstrapRef.current = true;
