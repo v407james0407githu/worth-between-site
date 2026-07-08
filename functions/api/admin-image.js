@@ -13,14 +13,45 @@ const sanitizeFilenamePart = (value) => String(value || 'image')
   .replace(/^-+|-+$/g, '')
   .slice(0, 48) || 'image';
 
+const readResponseText = async (response) => {
+  try {
+    return await response.text();
+  } catch {
+    return '';
+  }
+};
+
+const updateBucketPublic = async (config, bucket) => {
+  const response = await fetch(`${config.baseUrl}/storage/v1/bucket/${encodeURIComponent(bucket)}`, {
+    method: 'PUT',
+    headers: config.headers,
+    body: JSON.stringify({
+      public: true,
+      file_size_limit: MAX_STORED_IMAGE_BYTES,
+      allowed_mime_types: Array.from(ALLOWED_MIME_TYPES)
+    })
+  });
+  if (response.ok) return { ok: true };
+
+  const fallback = await fetch(`${config.baseUrl}/storage/v1/bucket/${encodeURIComponent(bucket)}`, {
+    method: 'PUT',
+    headers: config.headers,
+    body: JSON.stringify({ public: true })
+  });
+  if (fallback.ok) return { ok: true };
+  return { ok: false, detail: await readResponseText(fallback) || await readResponseText(response) };
+};
+
 const ensureBucket = async (config, bucket) => {
   const lookup = await fetch(`${config.baseUrl}/storage/v1/bucket/${encodeURIComponent(bucket)}`, {
     headers: config.headers
   });
   if (lookup.ok) {
     const data = await lookup.json().catch(() => null);
-    return data?.public !== false;
+    if (data?.public !== false) return { ok: true };
+    return updateBucketPublic(config, bucket);
   }
+  const lookupDetail = await readResponseText(lookup);
 
   const created = await fetch(`${config.baseUrl}/storage/v1/bucket`, {
     method: 'POST',
@@ -34,7 +65,18 @@ const ensureBucket = async (config, bucket) => {
     })
   });
 
-  if (created.ok || created.status === 409) return true;
+  if (created.ok) return { ok: true };
+  if (created.status === 409) {
+    const existing = await fetch(`${config.baseUrl}/storage/v1/bucket/${encodeURIComponent(bucket)}`, {
+      headers: config.headers
+    });
+    if (existing.ok) {
+      const data = await existing.json().catch(() => null);
+      if (data?.public !== false) return { ok: true };
+      return updateBucketPublic(config, bucket);
+    }
+  }
+  const createDetail = await readResponseText(created);
 
   const fallback = await fetch(`${config.baseUrl}/storage/v1/bucket`, {
     method: 'POST',
@@ -45,7 +87,13 @@ const ensureBucket = async (config, bucket) => {
       public: true
     })
   });
-  return fallback.ok || fallback.status === 409;
+  if (fallback.ok) return { ok: true };
+  if (fallback.status === 409) return updateBucketPublic(config, bucket);
+  const fallbackDetail = await readResponseText(fallback);
+  return {
+    ok: false,
+    detail: fallbackDetail || createDetail || lookupDetail || `Storage bucket API failed with HTTP ${fallback.status}`
+  };
 };
 
 export async function onRequestPost({ request, env }) {
@@ -75,7 +123,13 @@ export async function onRequestPost({ request, env }) {
 
   const bucket = env.SUPABASE_SITE_ASSETS_BUCKET || DEFAULT_BUCKET;
   const bucketReady = await ensureBucket(config, bucket);
-  if (!bucketReady) return jsonResponse({ ok: false, message: '無法建立或讀取 Supabase 圖片 bucket' }, 502);
+  if (!bucketReady.ok) {
+    console.error('Supabase image bucket setup failed:', bucketReady.detail || 'unknown');
+    return jsonResponse({
+      ok: false,
+      message: `無法建立或讀取 Supabase 圖片 bucket${bucketReady.detail ? `：${bucketReady.detail}` : ''}`
+    }, 502);
+  }
 
   const now = new Date();
   const folder = `${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
