@@ -35,7 +35,16 @@ export async function onRequestGet({ request, env }) {
     `${config.baseUrl}/rest/v1/site_state?site_id=eq.${SITE_ID}&select=payload,updated_at&limit=1`,
     { headers: config.headers }
   );
-  if (!response.ok) return jsonResponse({ ok: false, message: '無法讀取站台資料' }, 502);
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    console.error('Failed to read site_state:', detail || `HTTP ${response.status}`);
+    return jsonResponse({
+      ok: false,
+      message: `無法讀取站台資料${detail ? `：${detail}` : ''}`,
+      supabaseHost: config.host || null,
+      supabaseKeyProjectRef: config.keyProjectRef || null
+    }, 502);
+  }
 
   const rows = await response.json();
   const row = rows?.[0] || null;

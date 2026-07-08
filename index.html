@@ -7640,15 +7640,15 @@
     // ==========================================
     function App() {
       const [currentRoute, setCurrentRoute] = useState(window.location.hash);
-      const localSiteState = useRef(readLocalSiteState());
+      const defaultSiteState = useRef(buildDefaultSiteState());
       const syncTimerRef = useRef(null);
       const hasCompletedBootstrapRef = useRef(false);
-      const [heroSlides, setHeroSlides] = useState(localSiteState.current.heroSlides);
-      const [contentPages, setContentPages] = useState(localSiteState.current.contentPages);
-      const [homepageContent, setHomepageContent] = useState(localSiteState.current.homepageContent);
-      const [brands, setBrands] = useState(localSiteState.current.brands);
-      const [serviceRecords, setServiceRecords] = useState(localSiteState.current.serviceRecords);
-      const [teamAccess, setTeamAccess] = useState(localSiteState.current.teamAccess);
+      const [heroSlides, setHeroSlides] = useState(defaultSiteState.current.heroSlides);
+      const [contentPages, setContentPages] = useState(defaultSiteState.current.contentPages);
+      const [homepageContent, setHomepageContent] = useState(defaultSiteState.current.homepageContent);
+      const [brands, setBrands] = useState(defaultSiteState.current.brands);
+      const [serviceRecords, setServiceRecords] = useState(defaultSiteState.current.serviceRecords);
+      const [teamAccess, setTeamAccess] = useState(defaultSiteState.current.teamAccess);
       const [storageState, setStorageState] = useState({
         mode: 'api',
         isLoading: true,
@@ -7728,8 +7728,9 @@
       }, [currentRoute]);
 
       useEffect(() => {
+        if (currentRoute !== '#/private-manager') return;
         persistLocalSiteState({ heroSlides, contentPages, homepageContent, brands, serviceRecords, teamAccess });
-      }, [heroSlides, contentPages, homepageContent, brands, serviceRecords, teamAccess]);
+      }, [heroSlides, contentPages, homepageContent, brands, serviceRecords, teamAccess, currentRoute]);
       useEffect(() => {
         if (
           !hasCompletedBootstrapRef.current ||
