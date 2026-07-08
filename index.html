@@ -5637,9 +5637,9 @@
         { label: '總流量', value: formatBytes(trafficMetrics.bandwidthBytes), note: 'Cloudflare bandwidth' }
       ];
       const resourceSummaryCards = [
-        { label: '已使用儲存空間', value: formatBytes(resourceMetrics.supabaseStorageUsedBytes ?? estimatedSiteStateBytes), note: resourceMetrics.supabaseStorageUsedBytes ? 'Supabase Storage' : 'Supabase site_state 估算' },
-        { label: '剩餘儲存空間', value: formatBytes(resourceMetrics.supabaseStorageRemainingBytes), note: '依 Supabase quota 計算' },
-        { label: '站台資料大小', value: formatBytes(resourceMetrics.siteStateBytes ?? estimatedSiteStateBytes), note: 'Supabase site_state payload' },
+        { label: '已使用儲存空間', value: formatBytes(resourceMetrics.supabaseStorageUsedBytes ?? estimatedSiteStateBytes), note: resourceMetrics.supabaseStorageUsedBytes ? 'Cloudflare / API 估算' : '站台資料估算' },
+        { label: '剩餘儲存空間', value: formatBytes(resourceMetrics.supabaseStorageRemainingBytes), note: '依目前 API 回傳估算' },
+        { label: '站台資料大小', value: formatBytes(resourceMetrics.siteStateBytes ?? estimatedSiteStateBytes), note: 'Cloudflare site state payload' },
         { label: '公開文章數', value: formatNumber(publishedInsightCount), note: 'Supabase 內容資料' }
       ];
       const trafficSources = Array.isArray(trafficMetrics.sources) ? trafficMetrics.sources : [];
@@ -5668,7 +5668,7 @@
       ];
       const resourceCompositionRows = [
         { label: '站台資料', value: resourceMetrics.siteStateBytes ?? estimatedSiteStateBytes },
-        { label: 'Supabase 儲存', value: Math.max(0, (resourceMetrics.supabaseStorageUsedBytes ?? estimatedSiteStateBytes) - (resourceMetrics.siteStateBytes ?? estimatedSiteStateBytes)) }
+        { label: '圖片與其他儲存', value: Math.max(0, (resourceMetrics.supabaseStorageUsedBytes ?? estimatedSiteStateBytes) - (resourceMetrics.siteStateBytes ?? estimatedSiteStateBytes)) }
       ];
 
       if (isAuthenticated === null) {
