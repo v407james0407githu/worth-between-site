@@ -21,79 +21,23 @@ const readResponseText = async (response) => {
   }
 };
 
-const updateBucketPublic = async (config, bucket) => {
-  const response = await fetch(`${config.baseUrl}/storage/v1/bucket/${encodeURIComponent(bucket)}`, {
-    method: 'PUT',
-    headers: config.headers,
+const ensureBucket = async (config, bucket) => {
+  const response = await fetch(`${config.baseUrl}/rest/v1/storage.buckets?on_conflict=id`, {
+    method: 'POST',
+    headers: {
+      ...config.headers,
+      prefer: 'resolution=merge-duplicates,return=minimal'
+    },
     body: JSON.stringify({
+      id: bucket,
+      name: bucket,
       public: true,
       file_size_limit: MAX_STORED_IMAGE_BYTES,
       allowed_mime_types: Array.from(ALLOWED_MIME_TYPES)
     })
   });
   if (response.ok) return { ok: true };
-
-  const fallback = await fetch(`${config.baseUrl}/storage/v1/bucket/${encodeURIComponent(bucket)}`, {
-    method: 'PUT',
-    headers: config.headers,
-    body: JSON.stringify({ public: true })
-  });
-  if (fallback.ok) return { ok: true };
-  return { ok: false, detail: await readResponseText(fallback) || await readResponseText(response) };
-};
-
-const ensureBucket = async (config, bucket) => {
-  const lookup = await fetch(`${config.baseUrl}/storage/v1/bucket/${encodeURIComponent(bucket)}`, {
-    headers: config.headers
-  });
-  if (lookup.ok) {
-    const data = await lookup.json().catch(() => null);
-    if (data?.public !== false) return { ok: true };
-    return updateBucketPublic(config, bucket);
-  }
-  const lookupDetail = await readResponseText(lookup);
-
-  const created = await fetch(`${config.baseUrl}/storage/v1/bucket`, {
-    method: 'POST',
-    headers: config.headers,
-    body: JSON.stringify({
-      id: bucket,
-      name: bucket,
-      public: true,
-      file_size_limit: MAX_STORED_IMAGE_BYTES,
-      allowed_mime_types: Array.from(ALLOWED_MIME_TYPES)
-    })
-  });
-
-  if (created.ok) return { ok: true };
-  if (created.status === 409) {
-    const existing = await fetch(`${config.baseUrl}/storage/v1/bucket/${encodeURIComponent(bucket)}`, {
-      headers: config.headers
-    });
-    if (existing.ok) {
-      const data = await existing.json().catch(() => null);
-      if (data?.public !== false) return { ok: true };
-      return updateBucketPublic(config, bucket);
-    }
-  }
-  const createDetail = await readResponseText(created);
-
-  const fallback = await fetch(`${config.baseUrl}/storage/v1/bucket`, {
-    method: 'POST',
-    headers: config.headers,
-    body: JSON.stringify({
-      id: bucket,
-      name: bucket,
-      public: true
-    })
-  });
-  if (fallback.ok) return { ok: true };
-  if (fallback.status === 409) return updateBucketPublic(config, bucket);
-  const fallbackDetail = await readResponseText(fallback);
-  return {
-    ok: false,
-    detail: fallbackDetail || createDetail || lookupDetail || `Storage bucket API failed with HTTP ${fallback.status}`
-  };
+  return { ok: false, detail: await readResponseText(response) || `storage.buckets upsert failed with HTTP ${response.status}` };
 };
 
 export async function onRequestPost({ request, env }) {
@@ -152,7 +96,12 @@ export async function onRequestPost({ request, env }) {
   });
 
   if (!upload.ok) {
-    return jsonResponse({ ok: false, message: '圖片上傳到 Supabase 失敗' }, 502);
+    const detail = await readResponseText(upload);
+    console.error('Supabase image upload failed:', detail || `HTTP ${upload.status}`);
+    return jsonResponse({
+      ok: false,
+      message: `圖片上傳到 Supabase 失敗${detail ? `：${detail}` : ''}`
+    }, 502);
   }
 
   const publicUrl = `${config.baseUrl}/storage/v1/object/public/${encodeURIComponent(bucket)}/${objectPath}`;
