@@ -3,6 +3,7 @@ import { jsonResponse } from '../_lib/http.js';
 import { getSupabaseConfig } from '../_lib/supabase.js';
 
 const DEFAULT_BUCKET = 'site-assets';
+const KV_ASSET_PREFIX = 'assets';
 const MAX_STORED_IMAGE_BYTES = 512 * 1024;
 const ALLOWED_MIME_TYPES = new Set(['image/webp', 'image/jpeg', 'image/png', 'image/gif', 'image/svg+xml']);
 
@@ -44,9 +45,6 @@ export async function onRequestPost({ request, env }) {
   const session = await requireAdminSession(request, env);
   if (!session) return jsonResponse({ ok: false, message: '登入已失效，請重新登入' }, 401);
 
-  const config = getSupabaseConfig(env);
-  if (!config) return jsonResponse({ ok: false, message: '圖片儲存服務尚未設定' }, 503);
-
   let formData;
   try {
     formData = await request.formData();
@@ -65,6 +63,34 @@ export async function onRequestPost({ request, env }) {
     return jsonResponse({ ok: false, message: '圖片壓縮後仍超過 512 KB，請改用較小圖片' }, 413);
   }
 
+  const now = new Date();
+  const folder = `${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  const randomId = crypto.randomUUID();
+  const name = sanitizeFilenamePart(file.name);
+  const extension = file.type === 'image/webp' ? 'webp' : file.type.split('/')[1] || 'bin';
+  const objectPath = `${folder}/${randomId}-${name}.${extension}`;
+  const body = await file.arrayBuffer();
+
+  if (env.WORTH_BETWEEN_STORAGE) {
+    const key = `${KV_ASSET_PREFIX}/${objectPath}`;
+    await env.WORTH_BETWEEN_STORAGE.put(key, body, {
+      metadata: {
+        contentType: file.type,
+        cacheControl: 'public, max-age=31536000, immutable'
+      }
+    });
+    const origin = new URL(request.url).origin;
+    return jsonResponse({
+      ok: true,
+      url: `${origin}/api/site-assets/${objectPath}`,
+      path: objectPath,
+      bucket: 'cloudflare-kv',
+      size: file.size
+    });
+  }
+
+  const config = getSupabaseConfig(env);
+  if (!config) return jsonResponse({ ok: false, message: '圖片儲存服務尚未設定' }, 503);
   const bucket = env.SUPABASE_SITE_ASSETS_BUCKET || DEFAULT_BUCKET;
   const bucketReady = await ensureBucket(config, bucket);
   if (!bucketReady.ok) {
@@ -74,14 +100,6 @@ export async function onRequestPost({ request, env }) {
       message: `無法建立或讀取 Supabase 圖片 bucket${bucketReady.detail ? `：${bucketReady.detail}` : ''}`
     }, 502);
   }
-
-  const now = new Date();
-  const folder = `${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
-  const randomId = crypto.randomUUID();
-  const name = sanitizeFilenamePart(file.name);
-  const extension = file.type === 'image/webp' ? 'webp' : file.type.split('/')[1] || 'bin';
-  const objectPath = `${folder}/${randomId}-${name}.${extension}`;
-  const body = await file.arrayBuffer();
 
   const upload = await fetch(`${config.baseUrl}/storage/v1/object/${encodeURIComponent(bucket)}/${objectPath}`, {
     method: 'POST',

@@ -1624,6 +1624,7 @@
     };
     const isDataImageSource = (value) => typeof value === 'string' && value.trim().startsWith('data:image/');
     const isSupabasePublicImageSource = (value) => typeof value === 'string' && value.includes('/storage/v1/object/public/');
+    const isManagedImageSource = (value) => isSupabasePublicImageSource(value) || (typeof value === 'string' && value.includes('/api/site-assets/'));
     const isSupportedImageFile = (file) => {
       if (!file) return false;
       const mimeType = String(file.type || '').toLowerCase();
@@ -4032,7 +4033,7 @@
       const [heroForm, setHeroForm] = useState(initialHeroForm);
       const [heroFormErrors, setHeroFormErrors] = useState({});
       const [isCompressingHeroImage, setIsCompressingHeroImage] = useState(false);
-      const [heroImageUploadState, setHeroImageUploadState] = useState({ fileName: '', status: '', publicUrl: '', error: '' });
+      const [heroImageUploadState, setHeroImageUploadState] = useState({ fileName: '', status: '', publicUrl: '', error: '', pendingDataUrl: '' });
       const [deleteHeroConfirmId, setDeleteHeroConfirmId] = useState(null);
       const [draggedHeroId, setDraggedHeroId] = useState(null);
       const sortedHeroSlides = sortSlides(heroSlides);
@@ -5431,7 +5432,7 @@
       const openAddHero = () => {
         setHeroForm(initialHeroForm);
         setHeroFormErrors({});
-        setHeroImageUploadState({ fileName: '', status: '', publicUrl: '', error: '' });
+        setHeroImageUploadState({ fileName: '', status: '', publicUrl: '', error: '', pendingDataUrl: '' });
         setEditingHeroId(null);
         setIsHeroModalOpen(true);
       };
@@ -5447,12 +5448,38 @@
         setHeroFormErrors({});
         setHeroImageUploadState({
           fileName: '',
-          status: isSupabasePublicImageSource(slide.bgImage) ? 'uploaded' : '',
-          publicUrl: isSupabasePublicImageSource(slide.bgImage) ? slide.bgImage : '',
-          error: ''
+          status: isManagedImageSource(slide.bgImage) ? 'uploaded' : '',
+          publicUrl: isManagedImageSource(slide.bgImage) ? slide.bgImage : '',
+          error: '',
+          pendingDataUrl: ''
         });
         setEditingHeroId(slide.id);
         setIsHeroModalOpen(true);
+      };
+
+      const uploadPendingHeroImage = async () => {
+        if (!heroImageUploadState.pendingDataUrl) return heroForm.bgImage.trim();
+        setIsCompressingHeroImage(true);
+        setHeroImageUploadState((prev) => ({ ...prev, status: 'uploading', error: '' }));
+        try {
+          const uploadedUrl = await uploadDataUrlToSupabase(heroImageUploadState.pendingDataUrl, 'homepage-banner.webp');
+          setHeroForm((prev) => ({ ...prev, bgImage: uploadedUrl }));
+          setHeroImageUploadState((prev) => ({
+            ...prev,
+            status: 'uploaded',
+            publicUrl: uploadedUrl,
+            pendingDataUrl: '',
+            error: ''
+          }));
+          setFlashMessage('圖片已上傳到 Cloudflare 儲存空間。');
+          return uploadedUrl;
+        } catch (error) {
+          const message = error.message || '圖片上傳失敗，請稍後再試';
+          setHeroImageUploadState((prev) => ({ ...prev, status: 'error', error: message }));
+          throw new Error(message);
+        } finally {
+          setIsCompressingHeroImage(false);
+        }
       };
 
       const handleSaveHero = async (e) => {
@@ -5460,11 +5487,19 @@
         const nextErrors = {};
         if (!heroForm.title.trim()) nextErrors.title = '請輸入主標題';
         if (!heroForm.subtitle.trim()) nextErrors.subtitle = '請輸入副標題';
-        if (!heroForm.bgImage.trim()) nextErrors.bgImage = '請輸入圖片網址';
-        else if (!isValidUrl(heroForm.bgImage.trim())) nextErrors.bgImage = '請輸入有效的圖片網址，或直接上傳圖片';
+        if (!heroForm.bgImage.trim() && !heroImageUploadState.pendingDataUrl) nextErrors.bgImage = '請輸入圖片網址或上傳圖片';
+        else if (heroForm.bgImage.trim() && !isValidUrl(heroForm.bgImage.trim())) nextErrors.bgImage = '請輸入有效的圖片網址，或直接上傳圖片';
 
         if (Object.keys(nextErrors).length > 0) {
           setHeroFormErrors(nextErrors);
+          return;
+        }
+
+        let savedBgImage = heroForm.bgImage.trim();
+        try {
+          savedBgImage = await uploadPendingHeroImage();
+        } catch (error) {
+          setHeroFormErrors({ bgImage: error.message || '圖片上傳失敗，請稍後再試' });
           return;
         }
 
@@ -5473,7 +5508,7 @@
           tag: heroForm.tag.trim(),
           title: heroForm.title.trim(),
           subtitle: heroForm.subtitle.trim(),
-          bgImage: heroForm.bgImage.trim(),
+          bgImage: savedBgImage,
           isActive: true
         };
 
@@ -5521,15 +5556,13 @@
         await uploadImageToField({
           event,
           setLoading: setIsCompressingHeroImage,
-          uploadImmediately: true,
-          uploadFilename: 'homepage-banner.webp',
           onSuccess: (value, meta = {}) => {
-            setHeroForm((prev) => ({ ...prev, bgImage: value }));
             setHeroImageUploadState({
               fileName: meta.fileName || '已選擇圖片',
-              status: 'uploaded',
-              publicUrl: value,
-              error: ''
+              status: 'selected',
+              publicUrl: '',
+              error: '',
+              pendingDataUrl: value
             });
             setHeroFormErrors((prev) => {
               const next = { ...prev };
@@ -5538,7 +5571,7 @@
             });
           },
           onError: (message) => {
-            setHeroImageUploadState({ fileName: '', status: 'error', publicUrl: '', error: message });
+            setHeroImageUploadState({ fileName: '', status: 'error', publicUrl: '', error: message, pendingDataUrl: '' });
             setHeroFormErrors({ bgImage: message });
           }
         });
@@ -6398,10 +6431,10 @@
                     <label className="block text-xs font-bold text-gray-700 mb-1">背景圖片網址 (Image URL) <span className="text-gray-400 font-normal">僅限外部網路圖片</span></label>
                     <input
                       type="text"
-                      value={isDataImageSource(heroForm.bgImage) || isSupabasePublicImageSource(heroForm.bgImage) ? '' : heroForm.bgImage}
+                      value={isDataImageSource(heroForm.bgImage) || isManagedImageSource(heroForm.bgImage) ? '' : heroForm.bgImage}
                       onChange={e => {
                         setHeroForm({ ...heroForm, bgImage: e.target.value });
-                        setHeroImageUploadState({ fileName: '', status: '', publicUrl: '', error: '' });
+                        setHeroImageUploadState({ fileName: '', status: '', publicUrl: '', error: '', pendingDataUrl: '' });
                       }}
                       className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]"
                       placeholder="需要使用外部網路圖片時才貼上 https://..."
@@ -6420,14 +6453,22 @@
                           />
                         </label>
                         <div className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 break-all">
-                          {heroImageUploadState.publicUrl || (isSupabasePublicImageSource(heroForm.bgImage) ? heroForm.bgImage : '') || heroImageUploadState.fileName || '未選擇任何檔案'}
+                          {heroImageUploadState.publicUrl || (isManagedImageSource(heroForm.bgImage) ? heroForm.bgImage : '') || heroImageUploadState.fileName || '未選擇任何檔案'}
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => uploadPendingHeroImage().catch(() => null)}
+                          disabled={!heroImageUploadState.pendingDataUrl || isCompressingHeroImage || heroImageUploadState.status === 'uploading'}
+                          className="shrink-0 rounded-lg border border-[#4e7055] px-4 py-2 text-sm font-bold text-[#4e7055] hover:bg-[#eef5ef] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {heroImageUploadState.status === 'uploading' ? '上傳中...' : '上傳圖片'}
+                        </button>
                       </div>
                       {heroImageUploadState.error && <p className="mt-2 text-xs text-red-600">{heroImageUploadState.error}</p>}
                       <p className="mt-2 text-xs text-gray-400">
                         {isCompressingHeroImage
-                          ? '圖片處理並上傳到 Supabase Storage 中。'
-                          : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇檔案後會直接上傳到 Supabase Storage，不使用本地端圖片。`}
+                          ? '圖片處理中。'
+                          : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇檔案後請按「上傳圖片」取得正式網址；儲存設定時也會自動上傳待處理圖片。`}
                       </p>
                     </div>
                     {heroForm.bgImage && (
