@@ -4,6 +4,7 @@ export const getSupabaseConfig = (env) => {
   if (!baseUrl || !apiKey) return null;
   return {
     baseUrl,
+    apiKey,
     headers: {
       apikey: apiKey,
       authorization: `Bearer ${apiKey}`,

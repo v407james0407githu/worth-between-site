@@ -11,6 +11,7 @@
 - `ADMIN_SESSION_SECRET`：至少 32 bytes 的隨機值
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SITE_ASSETS_BUCKET`：選填，圖片上傳用 Storage bucket 名稱，未設定時使用 `site-assets`
 
 不要把這些值寫入 Git、HTML 或一般環境變數。
 
@@ -30,3 +31,5 @@
 - 啟用 RLS 並撤銷匿名與一般登入者直接存取
 
 網站資料與未來行銷診斷室資料只透過持有 Supabase service-role secret 的 Pages Functions 存取。
+
+後台選擇圖片後會先由瀏覽器壓縮成 WebP 作為預覽，按下儲存時再透過 `/api/admin-image` 上傳到 Supabase Storage。Function 會自動檢查並建立 public bucket，預設 bucket 為 `site-assets`；站台設定只保存 Storage 公開 URL，因此所有裝置都會讀到同一張更新後的圖片。

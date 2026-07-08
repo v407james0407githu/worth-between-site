@@ -14,6 +14,8 @@
     {
       "imports": {
         "react": "https://esm.sh/react@18.2.0",
+        "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+        "react/jsx-dev-runtime": "https://esm.sh/react@18.2.0/jsx-dev-runtime",
         "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
         "lucide-react": "https://esm.sh/lucide-react?external=react,react-dom"
       }
@@ -125,7 +127,8 @@
       LogOut, Plus, Edit, Trash2, ExternalLink, 
       TrendingUp, Globe, Briefcase, Target, Building2, Quote,
       ChevronLeft, ChevronUp, ChevronDown, GripVertical, Image as ImageIcon, ArrowUp, ArrowDown, Eye, EyeOff,
-      Download, Upload, Search, Bold, List, ListOrdered, Link as LinkIcon, Code2, Strikethrough, Underline
+      Download, Upload, Search, Bold, List, ListOrdered, Link as LinkIcon, Code2, Strikethrough, Underline,
+      MessageSquare, Send, Copy, RefreshCw
     } from 'lucide-react';
 
     // --- 企業色彩配置 ---
@@ -156,8 +159,15 @@
     const ADVISOR_TRANSITION_STORAGE_KEY = 'worth-between-advisor-transition';
     const ADMIN_SESSION_ENDPOINT = window.WORTH_BETWEEN_ADMIN_SESSION_ENDPOINT || '/api/admin-session';
     const SITE_STATE_ENDPOINT = window.WORTH_BETWEEN_SITE_STATE_ENDPOINT || '/api/site-state';
+    const ADMIN_IMAGE_ENDPOINT = window.WORTH_BETWEEN_ADMIN_IMAGE_ENDPOINT || '/api/admin-image';
     const DASHBOARD_METRICS_ENDPOINT = window.WORTH_BETWEEN_DASHBOARD_METRICS_ENDPOINT || '/api/dashboard-metrics';
     const CONTACT_INQUIRIES_ENDPOINT = window.WORTH_BETWEEN_CONTACT_INQUIRIES_ENDPOINT || '/api/contact-inquiries';
+    const MARKETING_CLINIC_SESSION_ENDPOINT = window.WORTH_BETWEEN_MARKETING_CLINIC_SESSION_ENDPOINT || '/api/marketing-clinic-session';
+    const MARKETING_CLINIC_CONFIG_ENDPOINT = window.WORTH_BETWEEN_MARKETING_CLINIC_CONFIG_ENDPOINT || '/api/marketing-clinic-config';
+    const MARKETING_CLINIC_CHAT_ENDPOINT = window.WORTH_BETWEEN_MARKETING_CLINIC_CHAT_ENDPOINT || '/api/marketing-clinic-chat';
+    const MARKETING_CLINIC_COMPLETE_ENDPOINT = window.WORTH_BETWEEN_MARKETING_CLINIC_COMPLETE_ENDPOINT || '/api/marketing-clinic-complete';
+    const ADMIN_MARKETING_CLINIC_ENDPOINT = window.WORTH_BETWEEN_ADMIN_MARKETING_CLINIC_ENDPOINT || '/api/admin-marketing-clinic';
+    const MARKETING_CLINIC_STORAGE_KEY = 'worth-between-marketing-clinic-session';
     const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
     const TARGET_UPLOAD_BYTES = 70 * 1024;
     const MAX_IMAGE_DIMENSION = 1600;
@@ -493,7 +503,10 @@
       },
       work: {
         sectionLabel: 'Case Studies',
-        title: '讓價值真正發生'
+        title: '讓價值真正發生',
+        solutionLabel: 'Our Solution 解決方案',
+        resultLabel: 'The Result 具體成果',
+        secondCtaLabel: '需要突破客群老化瓶頸？'
       },
       insights: {
         sectionLabel: 'Insights & Thinking',
@@ -1162,6 +1175,7 @@
         about: {
           ...defaultHomepageContent.about,
           ...sourceAbout,
+          isVisible: sourceAbout.isVisible !== false,
           paragraphs: hasOwn(sourceAbout, 'paragraphs') && Array.isArray(sourceAbout.paragraphs)
             ? [sourceAbout.paragraphs[0] ?? '', sourceAbout.paragraphs[1] ?? '']
             : [...defaultHomepageContent.about.paragraphs],
@@ -1186,6 +1200,7 @@
         services: {
           ...defaultHomepageContent.services,
           ...sourceServices,
+          isVisible: sourceServices.isVisible !== false,
           backgroundImage: sourceServices.backgroundImage ?? defaultHomepageContent.services.backgroundImage,
           overlayOpacity: typeof sourceServices.overlayOpacity === 'number'
             ? Math.min(0.95, Math.max(0, sourceServices.overlayOpacity))
@@ -1208,11 +1223,16 @@
         },
         work: {
           ...defaultHomepageContent.work,
-          ...sourceWork
+          ...sourceWork,
+          isVisible: sourceWork.isVisible !== false,
+          solutionLabel: sourceWork.solutionLabel ?? defaultHomepageContent.work.solutionLabel,
+          resultLabel: sourceWork.resultLabel ?? defaultHomepageContent.work.resultLabel,
+          secondCtaLabel: sourceWork.secondCtaLabel ?? defaultHomepageContent.work.secondCtaLabel
         },
         insights: {
           ...defaultHomepageContent.insights,
           ...sourceInsights,
+          isVisible: sourceInsights.isVisible !== false,
           featuredItemId: sourceInsights.featuredItemId ?? defaultHomepageContent.insights.featuredItemId,
           secondaryItemIds: hasOwn(sourceInsights, 'secondaryItemIds') && Array.isArray(sourceInsights.secondaryItemIds)
             ? sourceInsights.secondaryItemIds.filter((id) => id !== null && id !== undefined)
@@ -1221,6 +1241,7 @@
         contact: {
           ...defaultHomepageContent.contact,
           ...sourceContact,
+          isVisible: sourceContact.isVisible !== false,
           thankYouMessage: hasOwn(sourceContact, 'thankYouMessage')
             ? String(sourceContact.thankYouMessage ?? '').trim()
             : defaultHomepageContent.contact.thankYouMessage,
@@ -1231,6 +1252,7 @@
         footer: {
           ...defaultHomepageContent.footer,
           ...(source.footer || {}),
+          isVisible: source.footer?.isVisible !== false,
           faviconUrl: source.footer?.faviconUrl ?? defaultHomepageContent.footer.faviconUrl
         }
       };
@@ -1590,6 +1612,18 @@
       const padding = (base64.match(/=*$/)?.[0].length) || 0;
       return Math.floor((base64.length * 3) / 4) - padding;
     };
+    const dataUrlToBlob = (dataUrl) => {
+      const [metadata, base64 = ''] = dataUrl.split(',');
+      const mimeType = metadata.match(/^data:([^;]+);base64$/)?.[1] || 'application/octet-stream';
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      return new Blob([bytes], { type: mimeType });
+    };
+    const isDataImageSource = (value) => typeof value === 'string' && value.trim().startsWith('data:image/');
+    const isSupabasePublicImageSource = (value) => typeof value === 'string' && value.includes('/storage/v1/object/public/');
     const isSupportedImageFile = (file) => {
       if (!file) return false;
       const mimeType = String(file.type || '').toLowerCase();
@@ -1635,6 +1669,32 @@
 
       if (!best) throw new Error('compress-failed');
       return best;
+    };
+    const uploadDataUrlToSupabase = async (dataUrl, filename = 'image.webp') => {
+      const imageBlob = dataUrlToBlob(dataUrl);
+      const formData = new FormData();
+      formData.append('file', imageBlob, filename);
+      const response = await fetch(ADMIN_IMAGE_ENDPOINT, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.url) throw new Error(data?.message || `HTTP ${response.status}`);
+      return data.url;
+    };
+    const resolveImageSourceForSave = async (value, filename = 'image.webp') => {
+      const trimmed = String(value || '').trim();
+      if (!isDataImageSource(trimmed)) return trimmed;
+      return uploadDataUrlToSupabase(trimmed, filename);
+    };
+    const uploadDataImagesInHtml = async (html) => {
+      let nextHtml = String(html || '');
+      const dataSources = [...new Set([...nextHtml.matchAll(/src=(["'])(data:image\/[^"']+)\1/g)].map((match) => match[2]))];
+      for (const source of dataSources) {
+        const uploadedUrl = await uploadDataUrlToSupabase(source, 'insight-image.webp');
+        nextHtml = nextHtml.split(source).join(uploadedUrl);
+      }
+      return nextHtml;
     };
 
     // --- 共用小元件 ---
@@ -1866,6 +1926,9 @@
                   </button>
                 );
               })}
+              <button onClick={() => navigateToRouteTop('#/marketing-clinic')} className={`px-4 py-2.5 rounded-sm transition-all duration-300 ${isScrolled ? 'text-[#356569] hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}>
+                行銷診斷室
+              </button>
               <button onClick={onContact} style={{ backgroundColor: colors.orange }} className="text-white px-7 py-2.5 rounded-sm hover:bg-[#b06028] transition-colors ml-4 flex items-center gap-2 border border-transparent hover:border-white/20">
                 聯繫我們 <ArrowRight size={14} />
               </button>
@@ -1892,6 +1955,7 @@
                   {item.label}
                 </button>
               ))}
+              <button onClick={() => { setMobileMenuOpen(false); navigateToRouteTop('#/marketing-clinic'); }} className="text-left w-full py-4 px-3 font-bold border-b border-gray-50 rounded-sm text-[#356569]">行銷診斷室</button>
               <button onClick={onContact} style={{ color: colors.orange }} className="text-left w-full py-4 font-bold">聯繫我們</button>
             </div>
           )}
@@ -2470,6 +2534,293 @@
       );
     };
 
+    const MarketingClinicPage = ({ footerContent }) => {
+      const welcomeMessage = '歡迎來到沃蒔之間行銷診斷室。請簡單介紹你的品牌、目前遇到的行銷問題，以及希望改善的目標，我會陪你一起釐清問題。';
+      const [session, setSession] = useState(null);
+      const [messages, setMessages] = useState([{ id: 'welcome', role: 'assistant', content: welcomeMessage }]);
+      const [profile, setProfile] = useState({ name: '', email: '', phone: '', company: '', consent: false });
+      const [message, setMessage] = useState('');
+      const [status, setStatus] = useState({ sending: false, error: '' });
+      const [completion, setCompletion] = useState({ loading: false, error: '' });
+      const [turnstile, setTurnstile] = useState({ enabled: false, siteKey: '', token: '' });
+      const messagesEndRef = useRef(null);
+      const turnstileRef = useRef(null);
+
+      const formatAiError = (value) => {
+        const text = String(value || '').trim();
+        if (/insufficient_quota|exceeded your current quota|billing/i.test(text)) {
+          return '行銷診斷室目前服務忙碌，請稍後再試，或留下診斷內容等待顧問後續協助。';
+        }
+        return text || 'AI 回應失敗';
+      };
+
+      useEffect(() => {
+        const saved = JSON.parse(window.localStorage.getItem(MARKETING_CLINIC_STORAGE_KEY) || 'null');
+        if (!saved?.sessionId || !saved?.visitorId) return;
+        fetch(`${MARKETING_CLINIC_SESSION_ENDPOINT}?sessionId=${encodeURIComponent(saved.sessionId)}&visitorId=${encodeURIComponent(saved.visitorId)}`)
+          .then(async (response) => {
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message);
+            setSession(data.session);
+            setMessages([{ id: 'welcome', role: 'assistant', content: welcomeMessage }, ...(data.messages || [])]);
+          })
+          .catch(() => window.localStorage.removeItem(MARKETING_CLINIC_STORAGE_KEY));
+      }, []);
+      useEffect(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), [messages, status.sending]);
+      useEffect(() => {
+        if (session) return;
+        let cancelled = false;
+        fetch(MARKETING_CLINIC_CONFIG_ENDPOINT)
+          .then((response) => response.json())
+          .then((data) => {
+            if (!cancelled && data.turnstileEnabled) setTurnstile((current) => ({ ...current, enabled: true, siteKey: data.turnstileSiteKey }));
+          })
+          .catch(() => null);
+        return () => { cancelled = true; };
+      }, [session]);
+      useEffect(() => {
+        if (!turnstile.enabled || !turnstile.siteKey || !turnstileRef.current) return;
+        const renderWidget = () => {
+          if (!window.turnstile || !turnstileRef.current || turnstileRef.current.childElementCount) return;
+          window.turnstile.render(turnstileRef.current, {
+            sitekey: turnstile.siteKey,
+            callback: (token) => setTurnstile((current) => ({ ...current, token })),
+            'expired-callback': () => setTurnstile((current) => ({ ...current, token: '' }))
+          });
+        };
+        if (window.turnstile) {
+          renderWidget();
+          return;
+        }
+        let script = document.querySelector('script[data-worth-between-turnstile]');
+        if (!script) {
+          script = document.createElement('script');
+          script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+          script.async = true;
+          script.defer = true;
+          script.dataset.worthBetweenTurnstile = 'true';
+          document.head.appendChild(script);
+        }
+        script.addEventListener('load', renderWidget, { once: true });
+        return () => script?.removeEventListener('load', renderWidget);
+      }, [turnstile.enabled, turnstile.siteKey, session]);
+
+      const startSession = async () => {
+        if (turnstile.enabled && !turnstile.token) throw new Error('請先完成人機驗證');
+        if (!profile.name.trim() || !profile.email.trim() || !profile.phone.trim()) {
+          throw new Error('開始診斷前，請填寫姓名、Email 與電話');
+        }
+        const visitorId = crypto.randomUUID();
+        const response = await fetch(MARKETING_CLINIC_SESSION_ENDPOINT, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ ...profile, visitorId, turnstileToken: turnstile.token })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || '無法開始診斷');
+        setSession(data.session);
+        window.localStorage.setItem(MARKETING_CLINIC_STORAGE_KEY, JSON.stringify({
+          sessionId: data.session.id,
+          visitorId: data.session.visitor_id
+        }));
+        return data.session;
+      };
+
+      const sendMessage = async (event) => {
+        event?.preventDefault();
+        const content = message.trim();
+        if (!content || status.sending) return;
+        if (!session) {
+          if (!profile.name.trim() || !profile.email.trim() || !profile.phone.trim()) {
+            setStatus({ sending: false, error: '開始診斷前，請填寫姓名、Email 與電話' });
+            return;
+          }
+          if (!profile.consent) {
+            setStatus({ sending: false, error: '請先同意 AI 使用與資料保存告知' });
+            return;
+          }
+        }
+        setMessage('');
+        setStatus({ sending: true, error: '' });
+        const userMessage = { id: crypto.randomUUID(), role: 'user', content };
+        const assistantId = crypto.randomUUID();
+        setMessages((current) => [...current, userMessage, { id: assistantId, role: 'assistant', content: '' }]);
+        try {
+          const activeSession = session || await startSession();
+          const response = await fetch(MARKETING_CLINIC_CHAT_ENDPOINT, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ sessionId: activeSession.id, visitorId: activeSession.visitor_id, message: content })
+          });
+          if (!response.ok || !response.body) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.message || 'AI 回應失敗');
+          }
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          let streamError = '';
+          const handleStreamEvent = (eventBlock) => {
+            const dataLine = eventBlock.split('\n').find((line) => line.startsWith('data: '));
+            if (!dataLine) return;
+            try {
+              const data = JSON.parse(dataLine.slice(6));
+              if (data.type === 'response.output_text.delta') {
+                setMessages((current) => current.map((item) => item.id === assistantId
+                  ? { ...item, content: item.content + (data.delta || '') }
+                  : item));
+              }
+              if (data.type === 'error' || data.type === 'response.failed') {
+                streamError = formatAiError(data.error?.message || data.response?.error?.message || 'AI 回應失敗');
+              }
+            } catch {
+              streamError = streamError || 'AI 回應格式錯誤';
+            }
+          };
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const events = buffer.split('\n\n');
+            buffer = events.pop() || '';
+            events.forEach(handleStreamEvent);
+          }
+          if (buffer.trim()) handleStreamEvent(buffer);
+          if (streamError) throw new Error(streamError);
+          setSession((current) => ({ ...current, user_message_count: (Number(current?.user_message_count) || 0) + 1 }));
+          setStatus({ sending: false, error: '' });
+        } catch (error) {
+          setMessages((current) => current.filter((item) => item.id !== assistantId || item.content));
+          setStatus({ sending: false, error: error.message || '訊息送出失敗，請稍後再試' });
+        }
+      };
+
+      const resetSession = () => {
+        window.localStorage.removeItem(MARKETING_CLINIC_STORAGE_KEY);
+        setSession(null);
+        setMessages([{ id: 'welcome', role: 'assistant', content: welcomeMessage }]);
+        setStatus({ sending: false, error: '' });
+        setCompletion({ loading: false, error: '' });
+      };
+
+      const completeDiagnosis = async (requestConsultation = false) => {
+        if (!session || completion.loading) return;
+        if (requestConsultation && (!session.visitor_name || !session.visitor_email || !session.visitor_phone)) {
+          setCompletion({ loading: false, error: '送出諮詢需要完整的姓名、Email 與電話' });
+          return;
+        }
+        setCompletion({ loading: true, error: '' });
+        try {
+          const response = await fetch(MARKETING_CLINIC_COMPLETE_ENDPOINT, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ sessionId: session.id, visitorId: session.visitor_id, requestConsultation })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || '無法產生診斷摘要');
+          setSession((current) => ({ ...current, ...data.summary }));
+          setCompletion({ loading: false, error: '' });
+        } catch (error) {
+          setCompletion({ loading: false, error: error.message || '無法產生診斷摘要' });
+        }
+      };
+
+      return (
+        <div className="min-h-screen bg-[#eeeae3] text-[#292929]">
+          <header className="bg-[#292929] text-white">
+            <div className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between gap-4">
+              <button onClick={() => navigateToRouteTop('#/')} className="flex items-center gap-3 text-left"><CircleLogo /><span className="font-bold tracking-widest">沃蒔之間</span></button>
+              <button onClick={resetSession} className="flex items-center gap-2 border border-white/20 px-4 py-2 text-sm font-bold hover:bg-white/10"><RefreshCw size={15}/> 開始新診斷</button>
+            </div>
+          </header>
+          <main className="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12 grid lg:grid-cols-[300px_1fr] gap-6">
+            <aside className="bg-[#356569] text-white p-6 md:p-8 h-fit">
+              <div className="text-xs tracking-[0.22em] uppercase text-white/60">Marketing Clinic</div>
+              <h1 className="text-3xl font-black mt-3">行銷診斷室</h1>
+              <p className="text-sm text-white/75 leading-7 mt-4">透過 AI 顧問對話，逐步釐清品牌問題、目標與可執行的下一步。</p>
+              <div className="mt-6 space-y-4 border-y border-white/15 py-5 text-sm text-white/78">
+                <div>
+                  <div className="text-xs font-bold tracking-[0.18em] text-white/55">使用說明</div>
+                  <ol className="mt-3 list-decimal pl-5 space-y-2 leading-6">
+                    <li>填寫姓名、Email、電話並勾選同意保存對話。</li>
+                    <li>描述品牌現況、主要行銷問題或想達成的目標。</li>
+                    <li>依照 AI 顧問追問補充資訊，回答越具體，診斷越精準。</li>
+                    <li>對話足夠後，按「完成診斷並產生摘要」取得初步建議。</li>
+                  </ol>
+                </div>
+                <div className="rounded-sm border border-white/15 px-4 py-3 text-xs leading-5 text-white/72">
+                  <div className="font-bold text-white/85">提問限制</div>
+                  <p className="mt-1">本診斷室只處理品牌、行銷策略、客群、內容、媒體、廣告、公關與 ESG 溝通相關問題。請勿詢問與行銷診斷無關的主題，系統會自動攔截不相關或試圖繞過規則的訊息。</p>
+                </div>
+                <div className="rounded-sm bg-white/10 px-4 py-3 text-xs leading-5 text-white/70">
+                  <div className="font-bold text-white/85">目前狀態</div>
+                  <p className="mt-1">診斷內容會保存於沃蒔之間後台，方便顧問後續判讀。若系統暫時忙碌，請保留診斷內容或稍後再試。</p>
+                </div>
+              </div>
+              {!session && (
+                <div className="mt-8 space-y-4">
+                  <p className="text-xs text-white/70 leading-5">開始使用前請填寫聯絡資料。姓名、Email 與電話皆為必填，同一電話每日最多使用兩次。</p>
+                  <input required value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} className="w-full bg-white/10 border border-white/20 px-3 py-3 text-sm placeholder:text-white/40" placeholder="姓名（必填）" />
+                  <input required type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} className="w-full bg-white/10 border border-white/20 px-3 py-3 text-sm placeholder:text-white/40" placeholder="Email（必填）" />
+                  <input required type="tel" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} className="w-full bg-white/10 border border-white/20 px-3 py-3 text-sm placeholder:text-white/40" placeholder="電話（必填）" />
+                  <input value={profile.company} onChange={(e) => setProfile({ ...profile, company: e.target.value })} className="w-full bg-white/10 border border-white/20 px-3 py-3 text-sm placeholder:text-white/40" placeholder="公司／品牌（選填）" />
+                  <label className="flex gap-3 text-xs leading-5 text-white/75">
+                    <input type="checkbox" checked={profile.consent} onChange={(e) => setProfile({ ...profile, consent: e.target.checked })} className="mt-1" />
+                    <span>我了解此服務由 AI 協助回應，並同意對話內容保存於沃蒔之間後台，用於診斷與服務改善。</span>
+                  </label>
+                  {turnstile.enabled && <div ref={turnstileRef} className="min-h-[65px]"></div>}
+                </div>
+              )}
+              {session && <div className="mt-8 border-t border-white/20 pt-5 text-xs text-white/60">診斷編號<br/><span className="font-mono text-white/80">{session.id}</span></div>}
+              {session && session.status !== 'completed' && (
+                <button onClick={() => completeDiagnosis(false)} disabled={completion.loading || messages.filter((item) => item.role === 'user').length === 0} className="mt-6 w-full border border-white/30 px-4 py-3 text-sm font-bold hover:bg-white/10 disabled:opacity-40">
+                  {completion.loading ? '整理診斷中…' : '完成診斷並產生摘要'}
+                </button>
+              )}
+            </aside>
+            <section className="bg-white shadow-sm min-h-[70vh] flex flex-col">
+              {session?.summary && (
+                <div className="m-5 md:m-8 mb-0 border border-[#356569]/20 bg-[#f0f5f3] p-5">
+                  <div className="text-xs font-bold tracking-widest text-[#356569]">診斷摘要</div>
+                  <h2 className="font-bold text-xl mt-2">{session.topic || '行銷診斷結果'}</h2>
+                  <p className="whitespace-pre-wrap text-sm leading-7 mt-3">{session.summary}</p>
+                  {session.recommended_service && <p className="text-sm mt-3"><strong>建議下一步：</strong>{session.recommended_service}</p>}
+                  <button onClick={() => completeDiagnosis(true)} disabled={completion.loading || session.consultation_requested_at} className="mt-4 px-5 py-3 bg-[#cc7333] text-white text-sm font-bold disabled:opacity-50">
+                    {session.consultation_requested_at ? '已送出諮詢需求' : '將診斷結果送給顧問並預約諮詢'}
+                  </button>
+                </div>
+              )}
+              <div className="flex-1 p-5 md:p-8 space-y-6 overflow-auto max-h-[68vh]">
+                {messages.map((item) => (
+                  <div key={item.id} className={`flex ${item.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[88%] md:max-w-[78%] px-5 py-4 ${item.role === 'user' ? 'bg-[#cc7333] text-white' : 'bg-[#f3f1ed] text-[#333]'}`}>
+                      <div className="whitespace-pre-wrap leading-7 text-sm md:text-base">{item.content || (status.sending ? '思考中…' : '')}</div>
+                      {item.role === 'assistant' && item.content && item.id !== 'welcome' && (
+                        <button onClick={() => navigator.clipboard.writeText(item.content)} className="mt-3 text-xs text-gray-400 hover:text-[#cc7333] flex items-center gap-1"><Copy size={12}/> 複製回答</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEndRef}></div>
+              </div>
+              <form onSubmit={sendMessage} className="border-t border-gray-200 p-4 md:p-6">
+                {status.error && <div className="mb-3 text-sm text-red-600">{status.error}</div>}
+                {completion.error && <div className="mb-3 text-sm text-red-600">{completion.error}</div>}
+                <div className="flex gap-3">
+                  <textarea value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) sendMessage(e);
+                  }} rows="3" maxLength="1500" className="flex-1 resize-none border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#356569]" placeholder="描述你的品牌現況或行銷問題…"></textarea>
+                  <button type="submit" disabled={status.sending || !message.trim() || (!session && (!profile.name.trim() || !profile.email.trim() || !profile.phone.trim() || !profile.consent))} className="self-stretch px-5 bg-[#292929] text-white hover:bg-[#cc7333] disabled:opacity-40"><Send size={20}/></button>
+                </div>
+                <p className="mt-3 text-xs text-gray-400">AI 回應可能不完全正確，重要決策請由專業顧問確認。Enter 送出，Shift + Enter 換行。</p>
+              </form>
+            </section>
+          </main>
+          <SiteFooter footerContent={footerContent} />
+        </div>
+      );
+    };
+
     const ContentItemDetailPage = ({ page, item, heroSlides, footerContent }) => {
       const [isScrolled, setIsScrolled] = useState(false);
       const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -2920,6 +3271,7 @@
       const workContent = homepageContent.work;
       const insightsContent = homepageContent.insights;
       const contactContent = homepageContent.contact;
+      const footerContent = homepageContent.footer;
       const [contactForm, setContactForm] = useState({
         name: '',
         company: '',
@@ -3160,6 +3512,7 @@
           </section>
 
           {/* 關於我們 About WB */}
+          {aboutContent.isVisible !== false && (
           <section id="about" className="relative -mt-1 md:-mt-2 pt-14 md:pt-18 pb-24 md:pb-32 px-6 bg-white z-10">
             <div className="max-w-7xl mx-auto">
               <MotionOnScroll variant="fade-up">
@@ -3216,8 +3569,10 @@
               </div>
             </div>
           </section>
+          )}
 
           {/* 專業服務 Services */}
+          {servicesContent.isVisible !== false && (
           <section id="services" className="py-24 md:py-32 px-6 bg-white border-t border-gray-200">
             <div className="max-w-7xl mx-auto">
               <MotionOnScroll variant="drift-up-left">
@@ -3291,8 +3646,10 @@
               </div>
             </div>
           </section>
+          )}
 
           {/* 案例實績 Work */}
+          {workContent.isVisible !== false && (
           <section id="work" className="py-24 md:py-32 px-6 bg-white">
             <div className="max-w-7xl mx-auto">
               <MotionOnScroll variant="slide-right">
@@ -3327,14 +3684,14 @@
                     
                     <div className="lg:col-span-7 bg-[#F9FAFB] p-8 md:p-12 rounded-sm border border-gray-100">
                       <div className="mb-12">
-                        <h4 className="text-xs font-bold text-[#3a3a3a] mb-4 uppercase tracking-widest border-b border-gray-200 pb-2">Our Solution 解決方案</h4>
+                        <h4 className="text-xs font-bold text-[#3a3a3a] mb-4 uppercase tracking-widest border-b border-gray-200 pb-2">{workContent.solutionLabel}</h4>
                         <ul className="text-[15px] text-gray-700 space-y-4 list-none">
                           <li className="flex gap-3"><CheckCircle2 size={20} className="text-[#4e7055] shrink-0 mt-0.5"/><span className="whitespace-pre-line">{homepageWorkItems[0].body}</span></li>
                         </ul>
                       </div>
                       {homepageWorkItems[0].result && (
                         <div className="bg-white p-8 border border-gray-200 border-l-4 border-l-[#cc7333] shadow-sm">
-                          <h4 className="text-xs font-bold text-[#cc7333] mb-3 uppercase tracking-widest">The Result 具體成果</h4>
+                          <h4 className="text-xs font-bold text-[#cc7333] mb-3 uppercase tracking-widest">{workContent.resultLabel}</h4>
                           <p className="text-xl font-bold text-[#3a3a3a] leading-relaxed">
                             <span className="whitespace-pre-line">{homepageWorkItems[0].result}</span>
                           </p>
@@ -3362,21 +3719,21 @@
                       </MotionOnScroll>
                       <MotionOnScroll variant="slide-right" delay={260}>
                         <button onClick={() => scrollTo('contact')} className="text-sm font-bold flex items-center gap-2 hover:text-[#356569] transition-colors group">
-                          需要突破客群老化瓶頸？ <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
+                          {workContent.secondCtaLabel} <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
                         </button>
                       </MotionOnScroll>
                     </div>
                     
                     <div className="lg:col-span-7 bg-[#F9FAFB] p-8 md:p-12 rounded-sm border border-gray-100">
                       <div className="mb-12">
-                        <h4 className="text-xs font-bold text-[#3a3a3a] mb-4 uppercase tracking-widest border-b border-gray-200 pb-2">Our Solution 解決方案</h4>
+                        <h4 className="text-xs font-bold text-[#3a3a3a] mb-4 uppercase tracking-widest border-b border-gray-200 pb-2">{workContent.solutionLabel}</h4>
                         <ul className="text-[15px] text-gray-700 space-y-4 list-none">
                           <li className="flex gap-3"><CheckCircle2 size={20} className="text-[#356569] shrink-0 mt-0.5"/><span className="whitespace-pre-line">{homepageWorkItems[1].body}</span></li>
                         </ul>
                       </div>
                       {homepageWorkItems[1].result && (
                         <div className="bg-white p-8 border border-gray-200 border-l-4 border-l-[#356569] shadow-sm">
-                          <h4 className="text-xs font-bold text-[#356569] mb-3 uppercase tracking-widest">The Result 具體成果</h4>
+                          <h4 className="text-xs font-bold text-[#356569] mb-3 uppercase tracking-widest">{workContent.resultLabel}</h4>
                           <p className="text-xl font-bold text-[#3a3a3a] leading-relaxed">
                             <span className="whitespace-pre-line">{homepageWorkItems[1].result}</span>
                           </p>
@@ -3388,8 +3745,10 @@
               </div>
             </div>
           </section>
+          )}
 
           {/* 觀點文章 Insights */}
+          {insightsContent.isVisible !== false && (
           <section id="insights" className="py-24 md:py-32 px-6 bg-[#F9FAFB] border-t border-gray-200">
             <div className="max-w-7xl mx-auto">
               <MotionOnScroll variant="drift-up-right">
@@ -3453,8 +3812,10 @@
               </div>
             </div>
           </section>
+          )}
 
           {/* 聯繫我們 Contact */}
+          {contactContent.isVisible !== false && (
           <section id="contact" className="py-24 md:py-32 bg-[#2a2a2a] text-white">
             <div className="max-w-7xl mx-auto px-6">
               <div className="grid lg:grid-cols-12 gap-16 lg:gap-24">
@@ -3553,8 +3914,9 @@
               </div>
             </div>
           </section>
+          )}
 
-          <SiteFooter footerContent={homepageContent.footer} />
+          {footerContent.isVisible !== false && <SiteFooter footerContent={footerContent} />}
         </div>
       );
     };
@@ -3604,6 +3966,7 @@
       const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
       const [dashboardMetrics, setDashboardMetrics] = useState({ isLoading: false, error: '', data: null });
       const [dashboardView, setDashboardView] = useState('traffic');
+      const [clinicState, setClinicState] = useState({ loading: false, error: '', sessions: [], metrics: null, selected: null, messages: [] });
       useEffect(() => {
         let isCancelled = false;
         const verifySession = async () => {
@@ -3621,10 +3984,42 @@
         };
       }, []);
       useEffect(() => {
-        if (!['dashboard', 'hero-slider', 'content', 'team'].includes(activeTab)) {
+        if (!['dashboard', 'hero-slider', 'content', 'team', 'marketing-clinic'].includes(activeTab)) {
           setActiveTab('hero-slider');
         }
       }, [activeTab]);
+      useEffect(() => {
+        if (activeTab !== 'marketing-clinic' || clinicState.loading || clinicState.sessions.length) return;
+        setClinicState((current) => ({ ...current, loading: true, error: '' }));
+        fetch(ADMIN_MARKETING_CLINIC_ENDPOINT)
+          .then(async (response) => {
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message);
+            setClinicState((current) => ({ ...current, loading: false, sessions: data.sessions || [], metrics: data.metrics || null }));
+          })
+          .catch((error) => setClinicState((current) => ({ ...current, loading: false, error: error.message || '讀取失敗' })));
+      }, [activeTab]);
+      const openClinicSession = async (sessionId) => {
+        setClinicState((current) => ({ ...current, loading: true, error: '' }));
+        try {
+          const response = await fetch(`${ADMIN_MARKETING_CLINIC_ENDPOINT}?sessionId=${encodeURIComponent(sessionId)}`);
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message);
+          setClinicState((current) => ({ ...current, loading: false, selected: data.session, messages: data.messages || [] }));
+        } catch (error) {
+          setClinicState((current) => ({ ...current, loading: false, error: error.message || '讀取失敗' }));
+        }
+      };
+      const exportClinicCsv = async () => {
+        const response = await fetch(ADMIN_MARKETING_CLINIC_ENDPOINT, { method: 'POST' });
+        if (!response.ok) return;
+        const blob = await response.blob();
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `marketing-clinic-${new Date().toISOString().slice(0, 10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      };
       const [editingMemberId, setEditingMemberId] = useState(null);
       const [memberForm, setMemberForm] = useState({ name: '', email: '', lastLogin: '尚未登入' });
       const [memberFormError, setMemberFormError] = useState('');
@@ -3637,6 +4032,7 @@
       const [heroForm, setHeroForm] = useState(initialHeroForm);
       const [heroFormErrors, setHeroFormErrors] = useState({});
       const [isCompressingHeroImage, setIsCompressingHeroImage] = useState(false);
+      const [heroImageUploadState, setHeroImageUploadState] = useState({ fileName: '', status: '', publicUrl: '', error: '' });
       const [deleteHeroConfirmId, setDeleteHeroConfirmId] = useState(null);
       const [draggedHeroId, setDraggedHeroId] = useState(null);
       const sortedHeroSlides = sortSlides(heroSlides);
@@ -3845,6 +4241,17 @@
       const closeHomepageSectionModal = () => {
         setIsHomepageSectionModalOpen(false);
         setHomepageSectionErrors({});
+      };
+      const toggleHomepageSectionVisibility = (sectionKey) => {
+        const section = homepageSectionOptions.find((item) => item.key === sectionKey);
+        setHomepageContent((prev) => normalizeHomepageContent({
+          ...prev,
+          [sectionKey]: {
+            ...prev[sectionKey],
+            isVisible: prev[sectionKey]?.isVisible === false
+          }
+        }));
+        setFlashMessage(`已${homepageContent[sectionKey]?.isVisible === false ? '顯示' : '隱藏'}首頁「${section?.label || '內容區塊'}」。`);
       };
       const closeCategoryModal = () => {
         setIsCategoryModalOpen(false);
@@ -4313,7 +4720,7 @@
         setIsSectionModalOpen(true);
       };
 
-      const saveSectionForm = (e) => {
+      const saveSectionForm = async (e) => {
         e.preventDefault();
         const nextErrors = {};
         if (!sectionForm.heroTitle.trim()) nextErrors.heroTitle = '請輸入頁面主標題';
@@ -4327,6 +4734,17 @@
           return;
         }
 
+        let uploadedHeroImage = sectionForm.heroImage.trim();
+        setIsCompressingSectionImage(true);
+        try {
+          uploadedHeroImage = await resolveImageSourceForSave(uploadedHeroImage, `${activeContentSectionKey || 'section'}-banner.webp`);
+        } catch (error) {
+          setSectionFormErrors({ heroImage: error.message || '圖片上傳到 Supabase 失敗，請稍後再試' });
+          return;
+        } finally {
+          setIsCompressingSectionImage(false);
+        }
+
         updateContentSection(activeContentSectionKey, (page) => ({
           ...page,
           heroTag: sectionForm.heroTag.trim(),
@@ -4335,7 +4753,7 @@
           intro: sectionForm.intro.trim(),
           seoTitle: sectionForm.seoTitle.trim(),
           seoDescription: sectionForm.seoDescription.trim(),
-          heroImage: sectionForm.heroImage.trim(),
+          heroImage: uploadedHeroImage,
           heroImagePositionX: clampPercent(sectionForm.heroImagePositionX, page.heroImagePositionX ?? 50),
           heroImagePositionY: clampPercent(sectionForm.heroImagePositionY, page.heroImagePositionY ?? 32),
           overlayOpacity: Math.min(0.95, Math.max(0, Number(sectionForm.overlayOpacity)))
@@ -4350,6 +4768,7 @@
         setActiveHomepageSectionKey(sectionKey);
         if (sectionKey === 'about') {
           setHomepageSectionForm({
+            isVisible: target.isVisible !== false,
             sectionLabel: target.sectionLabel ?? '',
             title: target.title ?? '',
             paragraph1: target.paragraphs?.[0] ?? '',
@@ -4364,6 +4783,7 @@
           });
         } else if (sectionKey === 'services') {
           setHomepageSectionForm({
+            isVisible: target.isVisible !== false,
             sectionLabel: target.sectionLabel ?? '',
             title: target.title ?? '',
             intro: target.intro ?? '',
@@ -4390,11 +4810,16 @@
           });
         } else if (sectionKey === 'work') {
           setHomepageSectionForm({
+            isVisible: target.isVisible !== false,
             sectionLabel: target.sectionLabel ?? '',
-            title: target.title ?? ''
+            title: target.title ?? '',
+            solutionLabel: target.solutionLabel ?? defaultHomepageContent.work.solutionLabel,
+            resultLabel: target.resultLabel ?? defaultHomepageContent.work.resultLabel,
+            secondCtaLabel: target.secondCtaLabel ?? defaultHomepageContent.work.secondCtaLabel
           });
         } else if (sectionKey === 'insights') {
           setHomepageSectionForm({
+            isVisible: target.isVisible !== false,
             sectionLabel: target.sectionLabel ?? '',
             title: target.title ?? '',
             featuredItemId: target.featuredItemId ? String(target.featuredItemId) : '',
@@ -4403,6 +4828,7 @@
           });
         } else if (sectionKey === 'contact') {
           setHomepageSectionForm({
+            isVisible: target.isVisible !== false,
             sectionLabel: target.sectionLabel ?? '',
             titlePrefix: target.titlePrefix ?? '',
             titleHighlight: target.titleHighlight ?? '',
@@ -4418,6 +4844,7 @@
           });
         } else if (sectionKey === 'footer') {
           setHomepageSectionForm({
+            isVisible: target.isVisible !== false,
             copyrightText: target.copyrightText ?? '',
             faviconUrl: target.faviconUrl ?? defaultHomepageContent.footer.faviconUrl,
             facebookUrl: target.facebookUrl ?? '',
@@ -4430,7 +4857,7 @@
         setIsHomepageSectionModalOpen(true);
       };
 
-      const saveHomepageSectionForm = (e) => {
+      const saveHomepageSectionForm = async (e) => {
         e.preventDefault();
         const nextErrors = {};
         if (activeHomepageSectionKey === 'about') {
@@ -4454,6 +4881,9 @@
         } else if (activeHomepageSectionKey === 'work') {
           if (!homepageSectionForm.sectionLabel?.trim()) nextErrors.sectionLabel = '請輸入段落標籤';
           if (!homepageSectionForm.title?.trim()) nextErrors.title = '請輸入段落標題';
+          if (!homepageSectionForm.solutionLabel?.trim()) nextErrors.solutionLabel = '請輸入解決方案標籤';
+          if (!homepageSectionForm.resultLabel?.trim()) nextErrors.resultLabel = '請輸入成果標籤';
+          if (!homepageSectionForm.secondCtaLabel?.trim()) nextErrors.secondCtaLabel = '請輸入 CTA 文字';
         } else if (activeHomepageSectionKey === 'insights') {
           if (!homepageSectionForm.sectionLabel?.trim()) nextErrors.sectionLabel = '請輸入段落標籤';
           if (!homepageSectionForm.title?.trim()) nextErrors.title = '請輸入段落標題';
@@ -4483,12 +4913,34 @@
           return;
         }
 
+        let uploadedBackgroundImage = homepageSectionForm.backgroundImage?.trim() || '';
+        let uploadedFaviconUrl = homepageSectionForm.faviconUrl?.trim() || '';
+        if (activeHomepageSectionKey === 'services' || activeHomepageSectionKey === 'footer') {
+          setIsCompressingHomepageImage(true);
+          try {
+            if (activeHomepageSectionKey === 'services') {
+              uploadedBackgroundImage = await resolveImageSourceForSave(uploadedBackgroundImage, 'homepage-services-background.webp');
+            }
+            if (activeHomepageSectionKey === 'footer') {
+              uploadedFaviconUrl = await resolveImageSourceForSave(uploadedFaviconUrl, 'site-favicon.webp');
+            }
+          } catch (error) {
+            setHomepageSectionErrors({
+              [activeHomepageSectionKey === 'footer' ? 'faviconUrl' : 'backgroundImage']: error.message || '圖片上傳到 Supabase 失敗，請稍後再試'
+            });
+            return;
+          } finally {
+            setIsCompressingHomepageImage(false);
+          }
+        }
+
         setHomepageContent((prev) => {
           if (activeHomepageSectionKey === 'about') {
             return normalizeHomepageContent({
               ...prev,
               about: {
                 ...prev.about,
+                isVisible: homepageSectionForm.isVisible !== false,
                 sectionLabel: homepageSectionForm.sectionLabel.trim(),
                 title: homepageSectionForm.title.trim(),
                 paragraphs: [homepageSectionForm.paragraph1.trim(), homepageSectionForm.paragraph2.trim()],
@@ -4515,11 +4967,12 @@
               ...prev,
               services: {
                 ...prev.services,
+                isVisible: homepageSectionForm.isVisible !== false,
                 sectionLabel: homepageSectionForm.sectionLabel.trim(),
                 title: homepageSectionForm.title.trim(),
                 intro: homepageSectionForm.intro.trim(),
                 badgeLabel: homepageSectionForm.badgeLabel.trim(),
-                backgroundImage: homepageSectionForm.backgroundImage.trim(),
+                backgroundImage: uploadedBackgroundImage,
                 overlayOpacity: Math.min(0.95, Math.max(0, Number(homepageSectionForm.overlayOpacity))),
                 cardOverlayOpacity: Math.min(1.9, Math.max(0, Number(homepageSectionForm.cardOverlayOpacity))),
                 cards: prev.services.cards.map((card, index) => ({
@@ -4537,8 +4990,12 @@
               ...prev,
               work: {
                 ...prev.work,
+                isVisible: homepageSectionForm.isVisible !== false,
                 sectionLabel: homepageSectionForm.sectionLabel.trim(),
-                title: homepageSectionForm.title.trim()
+                title: homepageSectionForm.title.trim(),
+                solutionLabel: homepageSectionForm.solutionLabel.trim(),
+                resultLabel: homepageSectionForm.resultLabel.trim(),
+                secondCtaLabel: homepageSectionForm.secondCtaLabel.trim()
               }
             });
           }
@@ -4551,6 +5008,7 @@
               ...prev,
               insights: {
                 ...prev.insights,
+                isVisible: homepageSectionForm.isVisible !== false,
                 sectionLabel: homepageSectionForm.sectionLabel.trim(),
                 title: homepageSectionForm.title.trim(),
                 featuredItemId: Number.isFinite(featuredItemId) ? featuredItemId : null,
@@ -4563,6 +5021,7 @@
               ...prev,
               contact: {
                 ...prev.contact,
+                isVisible: homepageSectionForm.isVisible !== false,
                 sectionLabel: homepageSectionForm.sectionLabel.trim(),
                 titlePrefix: homepageSectionForm.titlePrefix.trim(),
                 titleHighlight: homepageSectionForm.titleHighlight.trim(),
@@ -4580,8 +5039,9 @@
             ...prev,
             footer: {
               ...prev.footer,
+              isVisible: homepageSectionForm.isVisible !== false,
               copyrightText: homepageSectionForm.copyrightText.trim(),
-              faviconUrl: homepageSectionForm.faviconUrl.trim(),
+              faviconUrl: uploadedFaviconUrl,
               facebookUrl: homepageSectionForm.facebookUrl.trim(),
               instagramUrl: homepageSectionForm.instagramUrl.trim(),
               threadsUrl: homepageSectionForm.threadsUrl.trim(),
@@ -4612,10 +5072,10 @@
         try {
           const compressed = await compressImageFileToWebP(file);
           const compressedKb = Math.round(compressed.sizeBytes / 1024);
-          onSuccess(compressed.dataUrl);
-          setFlashMessage(`圖片已轉成 WebP，壓縮後約 ${compressedKb} KB。`);
-        } catch {
-          onError('圖片壓縮失敗，請改用較小的圖片，或直接填入圖片網址。');
+          onSuccess(compressed.dataUrl, { fileName: file.name, sizeBytes: compressed.sizeBytes });
+          setFlashMessage(`圖片已暫存為預覽，壓縮後約 ${compressedKb} KB；按下儲存時會上傳到 Supabase Storage。`);
+        } catch (error) {
+          onError(error.message || '圖片壓縮失敗，請改用較小的圖片，或直接填入圖片網址。');
         } finally {
           setLoading(false);
           event.target.value = '';
@@ -4783,7 +5243,7 @@
         setIsContentItemModalOpen(true);
       };
 
-      const saveContentItemForm = (e, forcedStatus = null) => {
+      const saveContentItemForm = async (e, forcedStatus = null) => {
         if (e?.preventDefault) e.preventDefault();
         const nextEditorStatus = forcedStatus || contentItemForm.editorStatus || 'published';
         const nextErrors = {};
@@ -4804,14 +5264,31 @@
           return;
         }
 
+        let uploadedImage = contentItemForm.image.trim();
+        let uploadedBodyHtml = isInsightContentSection
+          ? (contentItemForm.bodyHtml || plainTextToRichHtml(contentItemForm.body)).trim()
+          : undefined;
+        setIsCompressingContentImage(true);
+        try {
+          if (uploadedImage) {
+            uploadedImage = await resolveImageSourceForSave(uploadedImage, `${activeContentSectionKey || 'content'}-image.webp`);
+          }
+          if (isInsightContentSection && uploadedBodyHtml) {
+            uploadedBodyHtml = await uploadDataImagesInHtml(uploadedBodyHtml);
+          }
+        } catch (error) {
+          setContentItemErrors((prev) => ({ ...prev, image: error.message || '圖片上傳到 Supabase 失敗，請稍後再試' }));
+          return;
+        } finally {
+          setIsCompressingContentImage(false);
+        }
+
         const normalizedItem = {
           category: contentItemForm.category.trim(),
           title: contentItemForm.title.trim(),
           subtitle: contentItemForm.subtitle.trim(),
           body: contentItemForm.body.trim(),
-          bodyHtml: isInsightContentSection
-            ? (contentItemForm.bodyHtml || plainTextToRichHtml(contentItemForm.body)).trim()
-            : undefined,
+          bodyHtml: uploadedBodyHtml,
           result: contentItemForm.result.trim(),
           tags: activeContentSectionKey === 'services'
             ? contentItemForm.tagsText.split('\n').map((item) => item.trim()).filter(Boolean)
@@ -4819,7 +5296,7 @@
           collaborationModes: activeContentSectionKey === 'services'
             ? contentItemForm.collaborationModesText.split('\n').map((item) => item.trim()).filter(Boolean)
             : undefined,
-          image: contentItemForm.image.trim(),
+          image: uploadedImage,
           publishedAt: contentItemForm.publishedAt.trim() || new Date().toISOString().split('T')[0],
           isPopular: contentItemForm.isPopular === true,
           editorStatus: nextEditorStatus
@@ -4950,6 +5427,7 @@
       const openAddHero = () => {
         setHeroForm(initialHeroForm);
         setHeroFormErrors({});
+        setHeroImageUploadState({ fileName: '', status: '', publicUrl: '', error: '' });
         setEditingHeroId(null);
         setIsHeroModalOpen(true);
       };
@@ -4964,11 +5442,41 @@
           isActive: slide.isActive !== false
         });
         setHeroFormErrors({});
+        setHeroImageUploadState({
+          fileName: '',
+          status: isSupabasePublicImageSource(slide.bgImage) ? 'uploaded' : '',
+          publicUrl: isSupabasePublicImageSource(slide.bgImage) ? slide.bgImage : '',
+          error: ''
+        });
         setEditingHeroId(slide.id);
         setIsHeroModalOpen(true);
       };
 
-      const handleSaveHero = (e) => {
+      const uploadPendingHeroImage = async () => {
+        if (!isDataImageSource(heroForm.bgImage)) return heroForm.bgImage.trim();
+        setIsCompressingHeroImage(true);
+        setHeroImageUploadState((prev) => ({ ...prev, status: 'uploading', error: '' }));
+        try {
+          const uploadedUrl = await resolveImageSourceForSave(heroForm.bgImage, 'homepage-banner.webp');
+          setHeroForm((prev) => ({ ...prev, bgImage: uploadedUrl }));
+          setHeroImageUploadState((prev) => ({
+            ...prev,
+            status: 'uploaded',
+            publicUrl: uploadedUrl,
+            error: ''
+          }));
+          setFlashMessage('圖片已上傳到 Supabase Storage。');
+          return uploadedUrl;
+        } catch (error) {
+          const message = error.message || '圖片上傳到 Supabase 失敗，請稍後再試';
+          setHeroImageUploadState((prev) => ({ ...prev, status: 'error', error: message }));
+          throw new Error(message);
+        } finally {
+          setIsCompressingHeroImage(false);
+        }
+      };
+
+      const handleSaveHero = async (e) => {
         e.preventDefault();
         const nextErrors = {};
         if (!heroForm.title.trim()) nextErrors.title = '請輸入主標題';
@@ -4981,12 +5489,20 @@
           return;
         }
 
+        let uploadedBgImage = heroForm.bgImage.trim();
+        try {
+          uploadedBgImage = await uploadPendingHeroImage();
+        } catch (error) {
+          setHeroFormErrors({ bgImage: error.message || '圖片上傳到 Supabase 失敗，請稍後再試' });
+          return;
+        }
+
         const normalizedForm = {
           ...heroForm,
           tag: heroForm.tag.trim(),
           title: heroForm.title.trim(),
           subtitle: heroForm.subtitle.trim(),
-          bgImage: heroForm.bgImage.trim()
+          bgImage: uploadedBgImage
         };
 
         if (editingHeroId) {
@@ -5051,15 +5567,24 @@
         await uploadImageToField({
           event,
           setLoading: setIsCompressingHeroImage,
-          onSuccess: (value) => {
+          onSuccess: (value, meta = {}) => {
             setHeroForm((prev) => ({ ...prev, bgImage: value }));
+            setHeroImageUploadState({
+              fileName: meta.fileName || '已選擇圖片',
+              status: 'selected',
+              publicUrl: '',
+              error: ''
+            });
             setHeroFormErrors((prev) => {
               const next = { ...prev };
               delete next.bgImage;
               return next;
             });
           },
-          onError: (message) => setHeroFormErrors({ bgImage: message })
+          onError: (message) => {
+            setHeroImageUploadState({ fileName: '', status: 'error', publicUrl: '', error: message });
+            setHeroFormErrors({ bgImage: message });
+          }
         });
       };
 
@@ -5240,6 +5765,9 @@
               <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'dashboard' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
                 <BarChart3 size={18} /> 數據分析儀表板
               </button>
+              <button onClick={() => setActiveTab('marketing-clinic')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeTab === 'marketing-clinic' ? 'bg-[#4e7055]' : 'hover:bg-gray-700'}`}>
+                <MessageSquare size={18} /> 行銷診斷室
+              </button>
             </nav>
             <div className="p-4 border-t border-gray-700">
               <button onClick={async () => {
@@ -5376,26 +5904,53 @@
                         const data = homepageContent[section.key];
                         const previewImage = section.key === 'services' ? data.backgroundImage : '';
                         const previewTitle = data.title || data.formTitle || data.copyrightText || section.label;
+                        const isSectionVisible = data?.isVisible !== false;
                         return (
-                          <button
-                            type="button"
+                          <div
                             key={section.key}
-                            onClick={() => openHomepageSectionModal(section.key)}
-                            className="rounded-xl border border-gray-200 overflow-hidden bg-gray-50/50 text-left transition-all hover:bg-white hover:border-gray-300 hover:shadow-sm"
+                            className={`rounded-xl border overflow-hidden text-left transition-all hover:bg-white hover:border-gray-300 hover:shadow-sm ${isSectionVisible ? 'border-gray-200 bg-gray-50/50' : 'border-gray-200 bg-gray-100 opacity-75'}`}
                           >
-                            {previewImage ? (
-                              <div className="h-28 bg-cover bg-center" style={{ backgroundImage: `url(${previewImage})` }}></div>
-                            ) : (
-                              <div className="h-28 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-gray-300 text-xs font-bold uppercase tracking-widest">
-                                {section.label}
+                            <button
+                              type="button"
+                              onClick={() => openHomepageSectionModal(section.key)}
+                              className="block w-full text-left"
+                            >
+                              {previewImage ? (
+                                <div className="h-28 bg-cover bg-center" style={{ backgroundImage: `url(${previewImage})` }}></div>
+                              ) : (
+                                <div className="h-28 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-gray-300 text-xs font-bold uppercase tracking-widest">
+                                  {section.label}
+                                </div>
+                              )}
+                              <div className="p-4 pb-3">
+                                <div className="flex items-center justify-between gap-2 mb-2">
+                                  <div className="text-[10px] uppercase tracking-widest font-bold text-gray-400">{section.label}</div>
+                                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${isSectionVisible ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
+                                    {isSectionVisible ? <Eye size={12} /> : <EyeOff size={12} />}
+                                    {isSectionVisible ? '顯示' : '隱藏'}
+                                  </span>
+                                </div>
+                                <div className="text-sm font-bold text-[#3a3a3a] line-clamp-2 min-h-[2.6rem]">{previewTitle}</div>
+                                <p className="text-xs text-gray-500 mt-2 line-clamp-3">{section.description}</p>
                               </div>
-                            )}
-                            <div className="p-4">
-                              <div className="text-[10px] uppercase tracking-widest font-bold text-gray-400 mb-2">{section.label}</div>
-                              <div className="text-sm font-bold text-[#3a3a3a] line-clamp-2 min-h-[2.6rem]">{previewTitle}</div>
-                              <p className="text-xs text-gray-500 mt-2 line-clamp-3">{section.description}</p>
+                            </button>
+                            <div className="px-4 pb-4 flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openHomepageSectionModal(section.key)}
+                                className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-600 hover:border-[#4e7055] hover:text-[#4e7055] transition-colors"
+                              >
+                                編輯
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => toggleHomepageSectionVisibility(section.key)}
+                                className={`flex-1 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${isSectionVisible ? 'bg-gray-200 text-gray-600 hover:bg-gray-300' : 'bg-[#4e7055] text-white hover:bg-[#3a5240]'}`}
+                              >
+                                {isSectionVisible ? '隱藏' : '顯示'}
+                              </button>
                             </div>
-                          </button>
+                          </div>
                         );
                       })}
                     </div>
@@ -5764,6 +6319,98 @@
                   )}
                 </div>
               )}
+              {activeTab === 'marketing-clinic' && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <div><h3 className="text-2xl font-bold">行銷診斷室對話</h3><p className="text-gray-500 text-sm mt-2">瀏覽訪客與 AI 的完整診斷紀錄。</p></div>
+                    <button onClick={exportClinicCsv} className="px-4 py-2 bg-[#3a3a3a] text-white rounded-lg flex items-center gap-2 text-sm font-bold"><Download size={16}/> 匯出 CSV</button>
+                  </div>
+                  {clinicState.error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{clinicState.error}</div>}
+                  {clinicState.metrics && (
+                    <div className="grid grid-cols-2 xl:grid-cols-6 gap-4">
+                      {[
+                        ['總診斷數', clinicState.metrics.total],
+                        ['完成率', `${clinicState.metrics.completionRate}%`],
+                        ['諮詢轉換率', `${clinicState.metrics.consultationRate}%`],
+                        ['熱門商機', clinicState.metrics.hotLeads],
+                        ['攔截訊息', clinicState.metrics.blockedMessages],
+                        ['預估 API 成本', `US$${Number(clinicState.metrics.estimatedCostUsd || 0).toFixed(3)}`]
+                      ].map(([label, value]) => (
+                        <div key={label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                          <div className="text-xs font-bold text-gray-400">{label}</div>
+                          <div className="text-2xl font-black text-[#356569] mt-2">{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="grid xl:grid-cols-[420px_1fr] gap-6">
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                      <div className="px-5 py-4 border-b font-bold">工作階段（{clinicState.sessions.length}）</div>
+                      <div className="divide-y max-h-[68vh] overflow-auto">
+                        {clinicState.sessions.map((item) => (
+                          <button key={item.id} onClick={() => openClinicSession(item.id)} className={`w-full text-left px-5 py-4 hover:bg-gray-50 ${clinicState.selected?.id === item.id ? 'bg-orange-50' : ''}`}>
+                            <div className="font-bold text-gray-900">{item.visitor_name || '未填姓名'}{item.company_name ? `｜${item.company_name}` : ''}</div>
+                            <div className="text-xs text-gray-500 mt-1">{item.visitor_email}</div>
+                            <div className="text-xs text-gray-500 mt-1">{item.visitor_phone}</div>
+                            <div className="flex gap-2 mt-2">
+                              {item.lead_category && <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${item.lead_category === 'hot' ? 'bg-red-100 text-red-700' : item.lead_category === 'warm' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>{item.lead_category.toUpperCase()} · {item.lead_score || 0}</span>}
+                              {item.consultation_requested_at && <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">已預約諮詢</span>}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-2">{new Date(item.last_active_at).toLocaleString('zh-TW', { hour12: false })} · {item.user_message_count || 0} 則提問</div>
+                            <div className="text-xs text-gray-400 mt-1">{Number(item.input_tokens || 0).toLocaleString()} 輸入 Token · {Number(item.output_tokens || 0).toLocaleString()} 輸出 Token · US${Number(item.estimated_cost_usd || 0).toFixed(4)}</div>
+                          </button>
+                        ))}
+                        {!clinicState.loading && !clinicState.sessions.length && <div className="p-8 text-center text-gray-400">尚無診斷紀錄</div>}
+                      </div>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 max-h-[74vh] overflow-auto">
+                      {!clinicState.selected ? <div className="text-center text-gray-400 py-20">請選擇左側工作階段</div> : (
+                        <div className="space-y-5">
+                          <div className="border-b pb-5">
+                            <h4 className="font-bold text-lg">{clinicState.selected.visitor_name || '未填姓名'}{clinicState.selected.company_name ? `｜${clinicState.selected.company_name}` : ''}</h4>
+                            <p className="text-sm text-gray-500 mt-1">Email：{clinicState.selected.visitor_email || '未提供'}</p>
+                            <p className="text-sm text-gray-500 mt-1">電話：{clinicState.selected.visitor_phone || '未提供'}</p>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {[
+                              ['輸入 Token', Number(clinicState.selected.input_tokens || 0).toLocaleString()],
+                              ['輸出 Token', Number(clinicState.selected.output_tokens || 0).toLocaleString()],
+                              ['總 Token', (Number(clinicState.selected.input_tokens || 0) + Number(clinicState.selected.output_tokens || 0)).toLocaleString()],
+                              ['預估金額', `US$${Number(clinicState.selected.estimated_cost_usd || 0).toFixed(6)}`]
+                            ].map(([label, value]) => (
+                              <div key={label} className="rounded-lg bg-gray-50 p-3">
+                                <div className="text-[11px] font-bold text-gray-400">{label}</div>
+                                <div className="mt-1 text-sm font-black text-[#356569]">{value}</div>
+                              </div>
+                            ))}
+                          </div>
+                          {clinicState.selected.summary && (
+                            <div className="rounded-xl border border-[#356569]/20 bg-[#f0f5f3] p-5">
+                              <div className="flex items-center justify-between gap-3"><h5 className="font-bold">{clinicState.selected.topic || '診斷摘要'}</h5><span className="text-xs font-bold text-[#356569]">{clinicState.selected.lead_category?.toUpperCase()} · {clinicState.selected.lead_score || 0}</span></div>
+                              <p className="text-sm leading-7 whitespace-pre-wrap mt-3">{clinicState.selected.summary}</p>
+                              {clinicState.selected.recommended_service && <p className="text-sm mt-3"><strong>建議服務：</strong>{clinicState.selected.recommended_service}</p>}
+                              <p className="text-xs text-gray-400 mt-3">預估 API 成本 US${Number(clinicState.selected.estimated_cost_usd || 0).toFixed(4)}</p>
+                            </div>
+                          )}
+                          {clinicState.messages.map((item) => (
+                            <div key={item.id} className={`p-4 rounded-xl ${item.role === 'user' ? 'bg-orange-50 ml-10' : item.role === 'system' ? 'bg-emerald-50' : 'bg-gray-50 mr-10'}`}>
+                              <div className="text-xs font-bold text-gray-400 mb-2">{item.role === 'user' ? '訪客／主題分類' : item.role === 'system' ? '系統／診斷摘要' : 'AI 顧問'} · {new Date(item.created_at).toLocaleString('zh-TW', { hour12: false })}{item.moderation_status !== 'allowed' ? ` · ${item.moderation_status === 'blocked' ? '已攔截' : '待檢查'}：${item.moderation_reason || '未提供原因'}` : ''}</div>
+                              <div className="whitespace-pre-wrap text-sm leading-7">{item.content}</div>
+                              <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-gray-500">
+                                <span className="rounded-full bg-white px-2 py-1">模型：{item.model_name || '未呼叫模型'}</span>
+                                <span className="rounded-full bg-white px-2 py-1">輸入：{Number(item.input_tokens || 0).toLocaleString()} Token</span>
+                                <span className="rounded-full bg-white px-2 py-1">輸出：{Number(item.output_tokens || 0).toLocaleString()} Token</span>
+                                <span className="rounded-full bg-white px-2 py-1">總計：{(Number(item.input_tokens || 0) + Number(item.output_tokens || 0)).toLocaleString()} Token</span>
+                                <span className="rounded-full bg-white px-2 py-1">預估：US${Number(item.estimated_cost_usd || 0).toFixed(6)}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </main>
 
@@ -5822,21 +6469,49 @@
                     <textarea required rows="3" value={heroForm.subtitle} onChange={e => setHeroForm({...heroForm, subtitle: e.target.value})} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none" placeholder="輸入描述文字..." />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">背景圖片網址 (Image URL) *</label>
-                    <input required type="text" value={heroForm.bgImage} onChange={e => setHeroForm({...heroForm, bgImage: e.target.value})} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" placeholder="https://... 或上傳圖片後自動填入" />
+                    <label className="block text-xs font-bold text-gray-700 mb-1">背景圖片網址 (Image URL) <span className="text-gray-400 font-normal">僅限外部網路圖片</span></label>
+                    <input
+                      type="text"
+                      value={isDataImageSource(heroForm.bgImage) || isSupabasePublicImageSource(heroForm.bgImage) ? '' : heroForm.bgImage}
+                      onChange={e => {
+                        setHeroForm({ ...heroForm, bgImage: e.target.value });
+                        setHeroImageUploadState({ fileName: '', status: '', publicUrl: '', error: '' });
+                      }}
+                      className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]"
+                      placeholder="需要使用外部網路圖片時才貼上 https://..."
+                    />
                     <div className="mt-3">
                       <label className="block text-xs font-bold text-gray-700 mb-2">或直接上傳圖片</label>
-                      <input
-                        type="file"
-                        accept={SUPPORTED_IMAGE_ACCEPT}
-                        onChange={handleHeroImageUpload}
-                        disabled={isCompressingHeroImage}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-[#4e7055] file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-[#3a5240] disabled:cursor-not-allowed disabled:opacity-60"
-                      />
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <label className={`shrink-0 rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors ${isCompressingHeroImage ? 'cursor-not-allowed bg-gray-400' : 'cursor-pointer bg-[#4e7055] hover:bg-[#3a5240]'}`}>
+                          選擇檔案
+                          <input
+                            type="file"
+                            accept={SUPPORTED_IMAGE_ACCEPT}
+                            onChange={handleHeroImageUpload}
+                            disabled={isCompressingHeroImage}
+                            className="hidden"
+                          />
+                        </label>
+                        <div className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 break-all">
+                          {heroImageUploadState.publicUrl || (isSupabasePublicImageSource(heroForm.bgImage) ? heroForm.bgImage : '') || heroImageUploadState.fileName || '未選擇任何檔案'}
+                        </div>
+                        {isDataImageSource(heroForm.bgImage) && (
+                          <button
+                            type="button"
+                            onClick={() => uploadPendingHeroImage().catch(() => null)}
+                            disabled={isCompressingHeroImage || heroImageUploadState.status === 'uploading'}
+                            className="shrink-0 rounded-lg border border-[#4e7055] px-4 py-2 text-sm font-bold text-[#4e7055] hover:bg-[#eef5ef] disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {heroImageUploadState.status === 'uploading' ? '上傳中...' : '上傳圖片'}
+                          </button>
+                        )}
+                      </div>
+                      {heroImageUploadState.error && <p className="mt-2 text-xs text-red-600">{heroImageUploadState.error}</p>}
                       <p className="mt-2 text-xs text-gray-400">
                         {isCompressingHeroImage
-                          ? '圖片壓縮中，正在轉換為 WebP 並盡量縮到約 70 KB。'
-                          : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，上傳後會自動轉成 WebP 並壓縮到約 70 KB，再保存到瀏覽器，重新整理後仍會保留。`}
+                          ? '圖片處理中；若正在儲存，會同步上傳到 Supabase Storage。'
+                          : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇後會先轉成 WebP 預覽；可按「上傳圖片」立即取得 Supabase public URL，或在儲存設定時自動上傳。`}
                       </p>
                     </div>
                     {heroForm.bgImage && (
@@ -5986,7 +6661,7 @@
                           disabled={isCompressingSectionImage}
                           className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-[#4e7055] file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-[#3a5240] disabled:cursor-not-allowed disabled:opacity-60"
                         />
-                        <p className="mt-2 text-xs text-gray-400">{isCompressingSectionImage ? '頁首圖片壓縮中...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，上傳後會自動轉 WebP 並壓到約 70 KB。`}</p>
+                        <p className="mt-2 text-xs text-gray-400">{isCompressingSectionImage ? '頁首圖片處理中，儲存時會同步上傳...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇後會先轉 WebP 預覽；按下儲存時上傳到 Supabase Storage。`}</p>
                       </div>
                       <div className="space-y-4">
                         <div>
@@ -6077,6 +6752,20 @@
                       {Object.values(homepageSectionErrors)[0]}
                     </div>
                   )}
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-bold text-gray-800">區塊顯示狀態</div>
+                      <p className="text-xs text-gray-500 mt-1">關閉後，前台首頁不會顯示這個內容區塊。</p>
+                    </div>
+                    <select
+                      value={homepageSectionForm.isVisible === false ? 'hidden' : 'visible'}
+                      onChange={e => setHomepageSectionForm({ ...homepageSectionForm, isVisible: e.target.value === 'visible' })}
+                      className="w-full sm:w-52 border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] bg-white"
+                    >
+                      <option value="visible">顯示在首頁</option>
+                      <option value="hidden">隱藏此區塊</option>
+                    </select>
+                  </div>
 
                   {activeHomepageSectionKey === 'about' && (
                     <div className="space-y-4">
@@ -6192,7 +6881,7 @@
                           disabled={isCompressingHomepageImage}
                           className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-[#4e7055] file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-[#3a5240] disabled:cursor-not-allowed disabled:opacity-60"
                         />
-                        <p className="mt-2 text-xs text-gray-400">{isCompressingHomepageImage ? '首頁背景圖壓縮中...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，上傳後會自動轉 WebP 並壓到約 70 KB。`}</p>
+                        <p className="mt-2 text-xs text-gray-400">{isCompressingHomepageImage ? '首頁背景圖處理中，儲存時會同步上傳...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇後會先轉 WebP 預覽；按下儲存時上傳到 Supabase Storage。`}</p>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-700 mb-2">背景圖預覽</label>
@@ -6251,7 +6940,21 @@
                         <label className="block text-xs font-bold text-gray-700 mb-1">主標題</label>
                         <textarea rows="2" value={homepageSectionForm.title || ''} onChange={e => setHomepageSectionForm({ ...homepageSectionForm, title: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055] resize-none" />
                       </div>
-                      <p className="text-sm text-gray-500">這個區塊的文章與案例卡片內容，會直接使用下方各子頁內容列表裡的資料與圖片。</p>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1">解決方案標籤</label>
+                          <input value={homepageSectionForm.solutionLabel || ''} onChange={e => setHomepageSectionForm({ ...homepageSectionForm, solutionLabel: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-700 mb-1">成果標籤</label>
+                          <input value={homepageSectionForm.resultLabel || ''} onChange={e => setHomepageSectionForm({ ...homepageSectionForm, resultLabel: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 mb-1">第二張案例 CTA 文字</label>
+                        <input value={homepageSectionForm.secondCtaLabel || ''} onChange={e => setHomepageSectionForm({ ...homepageSectionForm, secondCtaLabel: e.target.value })} className="w-full border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#4e7055]" />
+                      </div>
+                      <p className="text-sm text-gray-500">案例卡片的分類、標題、副標題、內容與成效，會使用「分頁管理 &gt; 案例實績」內容列表中的前兩筆資料。</p>
                     </div>
                   )}
 
@@ -6396,7 +7099,7 @@
                                   disabled={isCompressingHomepageImage}
                                 />
                               </label>
-                              <span className="text-sm text-gray-500">{isCompressingHomepageImage ? '圖示壓縮中...' : '支援主流圖片格式，建議使用方形圖示。'}</span>
+                              <span className="text-sm text-gray-500">{isCompressingHomepageImage ? '圖示處理中，儲存時會同步上傳...' : '支援主流圖片格式，選擇後先預覽；按下儲存時上傳到 Supabase Storage。'}</span>
                             </div>
                           </div>
                         </div>
@@ -6773,7 +7476,7 @@
                               <label className="px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50">
                                 <div>
                                   <div className="font-bold text-[#3a3a3a]">選擇一張與文章內容相符的圖片。</div>
-                                  <div className="text-xs text-gray-400 mt-1">支援 {SUPPORTED_IMAGE_LABEL}，自動轉 WebP</div>
+                                  <div className="text-xs text-gray-400 mt-1">支援 {SUPPORTED_IMAGE_LABEL}，先轉 WebP 預覽，儲存時上傳</div>
                                 </div>
                                 <input
                                   type="file"
@@ -6971,7 +7674,7 @@
                       disabled={isCompressingContentImage}
                       className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-[#4e7055] file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-[#3a5240] disabled:cursor-not-allowed disabled:opacity-60"
                     />
-                    <p className="mt-2 text-xs text-gray-400">{isCompressingContentImage ? '內容圖片壓縮中...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，上傳後會自動轉 WebP 並壓到約 70 KB。`}</p>
+                    <p className="mt-2 text-xs text-gray-400">{isCompressingContentImage ? '內容圖片處理中，儲存時會同步上傳...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇後會先轉 WebP 預覽；按下儲存時上傳到 Supabase Storage。`}</p>
                   </div>
                   <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] min-h-[180px]">
                     <img src={contentItemForm.image || activeContentSection?.heroImage} alt="Content preview" className="w-full h-full object-cover" />
@@ -7185,6 +7888,9 @@
             storageState={storageState}
           />
         );
+      }
+      if (currentRoute === '#/marketing-clinic') {
+        return <MarketingClinicPage footerContent={homepageContent.footer} />;
       }
       const contentItemEntry = getContentItemByRoute(contentPages, currentRoute);
       if (contentItemEntry) {

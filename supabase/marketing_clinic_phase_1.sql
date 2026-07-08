@@ -19,13 +19,21 @@ create table if not exists public.contact_inquiries (
 create table if not exists public.chat_sessions (
   id uuid primary key default gen_random_uuid(),
   visitor_id uuid not null default gen_random_uuid(),
+  source_hash text,
   visitor_name text,
   visitor_email text,
+  visitor_phone text,
+  phone_hash text,
   company_name text,
   status text not null default 'active'
     check (status in ('active', 'completed', 'abandoned', 'blocked')),
   topic text,
   summary text,
+  lead_category text,
+  lead_score integer check (lead_score between 0 and 100),
+  recommended_service text,
+  consultation_requested_at timestamptz,
+  blocked_message_count integer not null default 0 check (blocked_message_count >= 0),
   openai_conversation_id text,
   user_message_count integer not null default 0 check (user_message_count >= 0),
   input_tokens bigint not null default 0 check (input_tokens >= 0),
@@ -46,8 +54,12 @@ create table if not exists public.chat_messages (
     check (moderation_status in ('allowed', 'blocked', 'review')),
   moderation_reason text,
   openai_response_id text,
+  usage_type text not null default 'message'
+    check (usage_type in ('message', 'classifier', 'assistant_response', 'summary')),
+  model_name text,
   input_tokens integer not null default 0 check (input_tokens >= 0),
   output_tokens integer not null default 0 check (output_tokens >= 0),
+  estimated_cost_usd numeric(12, 6) not null default 0 check (estimated_cost_usd >= 0),
   created_at timestamptz not null default timezone('utc', now())
 );
 
@@ -72,9 +84,33 @@ create table if not exists public.admin_audit_logs (
   created_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.chat_rate_limits (
+  key text primary key,
+  request_count integer not null default 0 check (request_count >= 0),
+  expires_at timestamptz not null,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
+alter table public.chat_sessions add column if not exists lead_category text;
+alter table public.chat_sessions add column if not exists lead_score integer check (lead_score between 0 and 100);
+alter table public.chat_sessions add column if not exists recommended_service text;
+alter table public.chat_sessions add column if not exists consultation_requested_at timestamptz;
+alter table public.chat_sessions add column if not exists source_hash text;
+alter table public.chat_sessions add column if not exists blocked_message_count integer not null default 0 check (blocked_message_count >= 0);
+alter table public.chat_sessions add column if not exists visitor_phone text;
+alter table public.chat_sessions add column if not exists phone_hash text;
+alter table public.chat_messages add column if not exists usage_type text not null default 'message'
+  check (usage_type in ('message', 'classifier', 'assistant_response', 'summary'));
+alter table public.chat_messages add column if not exists model_name text;
+alter table public.chat_messages add column if not exists estimated_cost_usd numeric(12, 6) not null default 0 check (estimated_cost_usd >= 0);
+
 create index if not exists chat_sessions_created_at_idx on public.chat_sessions (created_at desc);
 create index if not exists chat_sessions_status_idx on public.chat_sessions (status, last_active_at desc);
+create index if not exists chat_sessions_lead_idx on public.chat_sessions (lead_category, lead_score desc);
+create index if not exists chat_sessions_source_created_idx on public.chat_sessions (source_hash, created_at desc);
+create index if not exists chat_sessions_phone_created_idx on public.chat_sessions (phone_hash, created_at desc);
 create index if not exists chat_messages_session_created_idx on public.chat_messages (session_id, created_at);
+create index if not exists chat_messages_moderation_idx on public.chat_messages (moderation_status, created_at desc);
 create index if not exists chat_files_session_idx on public.chat_files (session_id);
 create index if not exists admin_audit_logs_created_at_idx on public.admin_audit_logs (created_at desc);
 
@@ -83,11 +119,13 @@ alter table public.chat_sessions enable row level security;
 alter table public.chat_messages enable row level security;
 alter table public.chat_files enable row level security;
 alter table public.admin_audit_logs enable row level security;
+alter table public.chat_rate_limits enable row level security;
 
 revoke all on public.contact_inquiries from anon, authenticated;
 revoke all on public.chat_sessions from anon, authenticated;
 revoke all on public.chat_messages from anon, authenticated;
 revoke all on public.chat_files from anon, authenticated;
 revoke all on public.admin_audit_logs from anon, authenticated;
+revoke all on public.chat_rate_limits from anon, authenticated;
 
 commit;
