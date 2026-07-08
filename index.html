@@ -1671,7 +1671,7 @@
       if (!best) throw new Error('compress-failed');
       return best;
     };
-    const uploadDataUrlToSupabase = async (dataUrl, filename = 'image.webp') => {
+    const uploadDataUrlToCloudStorage = async (dataUrl, filename = 'image.webp') => {
       const imageBlob = dataUrlToBlob(dataUrl);
       const formData = new FormData();
       formData.append('file', imageBlob, filename);
@@ -1686,13 +1686,13 @@
     const resolveImageSourceForSave = async (value, filename = 'image.webp') => {
       const trimmed = String(value || '').trim();
       if (!isDataImageSource(trimmed)) return trimmed;
-      return uploadDataUrlToSupabase(trimmed, filename);
+      return uploadDataUrlToCloudStorage(trimmed, filename);
     };
     const uploadDataImagesInHtml = async (html) => {
       let nextHtml = String(html || '');
       const dataSources = [...new Set([...nextHtml.matchAll(/src=(["'])(data:image\/[^"']+)\1/g)].map((match) => match[2]))];
       for (const source of dataSources) {
-        const uploadedUrl = await uploadDataUrlToSupabase(source, 'insight-image.webp');
+        const uploadedUrl = await uploadDataUrlToCloudStorage(source, 'insight-image.webp');
         nextHtml = nextHtml.split(source).join(uploadedUrl);
       }
       return nextHtml;
@@ -4426,7 +4426,7 @@
             if (!isCancelled) {
               setDashboardMetrics({
                 isLoading: false,
-                error: '尚未連上 Cloudflare / Supabase 數據 API',
+                error: '尚未連上 Cloudflare 數據 API',
                 data: null
               });
             }
@@ -4739,7 +4739,7 @@
         try {
           uploadedHeroImage = await resolveImageSourceForSave(uploadedHeroImage, `${activeContentSectionKey || 'section'}-banner.webp`);
         } catch (error) {
-          setSectionFormErrors({ heroImage: error.message || '圖片上傳到 Supabase 失敗，請稍後再試' });
+          setSectionFormErrors({ heroImage: error.message || '圖片上傳到 Cloudflare 失敗，請稍後再試' });
           return;
         } finally {
           setIsCompressingSectionImage(false);
@@ -4926,7 +4926,7 @@
             }
           } catch (error) {
             setHomepageSectionErrors({
-              [activeHomepageSectionKey === 'footer' ? 'faviconUrl' : 'backgroundImage']: error.message || '圖片上傳到 Supabase 失敗，請稍後再試'
+              [activeHomepageSectionKey === 'footer' ? 'faviconUrl' : 'backgroundImage']: error.message || '圖片上傳到 Cloudflare 失敗，請稍後再試'
             });
             return;
           } finally {
@@ -5053,7 +5053,7 @@
         setFlashMessage(`已更新首頁「${activeHomepageSectionMeta.label}」內容。`);
       };
 
-      const uploadImageToField = async ({ event, onSuccess, onError, setLoading, uploadImmediately = false, uploadFilename = 'image.webp' }) => {
+      const uploadImageToField = async ({ event, onSuccess, onError, setLoading, uploadImmediately = true, uploadFilename = 'image.webp' }) => {
         const file = event.target.files?.[0];
         if (!file) return;
         if (!isSupportedImageFile(file)) {
@@ -5073,12 +5073,12 @@
           const compressed = await compressImageFileToWebP(file);
           const compressedKb = Math.round(compressed.sizeBytes / 1024);
           const value = uploadImmediately
-            ? await uploadDataUrlToSupabase(compressed.dataUrl, uploadFilename)
+            ? await uploadDataUrlToCloudStorage(compressed.dataUrl, uploadFilename)
             : compressed.dataUrl;
           onSuccess(value, { fileName: file.name, sizeBytes: compressed.sizeBytes });
           setFlashMessage(uploadImmediately
-            ? `圖片已上傳到 Supabase Storage，壓縮後約 ${compressedKb} KB。`
-            : `圖片已暫存為預覽，壓縮後約 ${compressedKb} KB；按下儲存時會上傳到 Supabase Storage。`);
+            ? `圖片已上傳到 Cloudflare 儲存空間，壓縮後約 ${compressedKb} KB。`
+            : `圖片已暫存為預覽，壓縮後約 ${compressedKb} KB；按下上傳圖片或儲存設定時會上傳到 Cloudflare 儲存空間。`);
         } catch (error) {
           onError(error.message || '圖片壓縮失敗，請改用較小的圖片，或直接填入圖片網址。');
         } finally {
@@ -5282,7 +5282,7 @@
             uploadedBodyHtml = await uploadDataImagesInHtml(uploadedBodyHtml);
           }
         } catch (error) {
-          setContentItemErrors((prev) => ({ ...prev, image: error.message || '圖片上傳到 Supabase 失敗，請稍後再試' }));
+          setContentItemErrors((prev) => ({ ...prev, image: error.message || '圖片上傳到 Cloudflare 失敗，請稍後再試' }));
           return;
         } finally {
           setIsCompressingContentImage(false);
@@ -5462,7 +5462,7 @@
         setIsCompressingHeroImage(true);
         setHeroImageUploadState((prev) => ({ ...prev, status: 'uploading', error: '' }));
         try {
-          const uploadedUrl = await uploadDataUrlToSupabase(heroImageUploadState.pendingDataUrl, 'homepage-banner.webp');
+          const uploadedUrl = await uploadDataUrlToCloudStorage(heroImageUploadState.pendingDataUrl, 'homepage-banner.webp');
           setHeroForm((prev) => ({ ...prev, bgImage: uploadedUrl }));
           setHeroImageUploadState((prev) => ({
             ...prev,
@@ -5556,6 +5556,7 @@
         await uploadImageToField({
           event,
           setLoading: setIsCompressingHeroImage,
+          uploadImmediately: false,
           onSuccess: (value, meta = {}) => {
             setHeroImageUploadState({
               fileName: meta.fileName || '已選擇圖片',
@@ -6618,7 +6619,7 @@
                           disabled={isCompressingSectionImage}
                           className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-[#4e7055] file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-[#3a5240] disabled:cursor-not-allowed disabled:opacity-60"
                         />
-                        <p className="mt-2 text-xs text-gray-400">{isCompressingSectionImage ? '頁首圖片處理中，儲存時會同步上傳...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇後會先轉 WebP 預覽；按下儲存時上傳到 Supabase Storage。`}</p>
+                        <p className="mt-2 text-xs text-gray-400">{isCompressingSectionImage ? '頁首圖片處理並上傳中...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇後會轉 WebP 並立即上傳到 Cloudflare 儲存空間。`}</p>
                       </div>
                       <div className="space-y-4">
                         <div>
@@ -6838,7 +6839,7 @@
                           disabled={isCompressingHomepageImage}
                           className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-[#4e7055] file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-[#3a5240] disabled:cursor-not-allowed disabled:opacity-60"
                         />
-                        <p className="mt-2 text-xs text-gray-400">{isCompressingHomepageImage ? '首頁背景圖處理中，儲存時會同步上傳...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇後會先轉 WebP 預覽；按下儲存時上傳到 Supabase Storage。`}</p>
+                        <p className="mt-2 text-xs text-gray-400">{isCompressingHomepageImage ? '首頁背景圖處理並上傳中...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇後會轉 WebP 並立即上傳到 Cloudflare 儲存空間。`}</p>
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-gray-700 mb-2">背景圖預覽</label>
@@ -7056,7 +7057,7 @@
                                   disabled={isCompressingHomepageImage}
                                 />
                               </label>
-                              <span className="text-sm text-gray-500">{isCompressingHomepageImage ? '圖示處理中，儲存時會同步上傳...' : '支援主流圖片格式，選擇後先預覽；按下儲存時上傳到 Supabase Storage。'}</span>
+                              <span className="text-sm text-gray-500">{isCompressingHomepageImage ? '圖示處理並上傳中...' : '支援主流圖片格式，選擇後會立即上傳到 Cloudflare 儲存空間。'}</span>
                             </div>
                           </div>
                         </div>
@@ -7433,7 +7434,7 @@
                               <label className="px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50">
                                 <div>
                                   <div className="font-bold text-[#3a3a3a]">選擇一張與文章內容相符的圖片。</div>
-                                  <div className="text-xs text-gray-400 mt-1">支援 {SUPPORTED_IMAGE_LABEL}，先轉 WebP 預覽，儲存時上傳</div>
+                                  <div className="text-xs text-gray-400 mt-1">支援 {SUPPORTED_IMAGE_LABEL}，選擇後立即上傳到 Cloudflare</div>
                                 </div>
                                 <input
                                   type="file"
@@ -7631,7 +7632,7 @@
                       disabled={isCompressingContentImage}
                       className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-[#4e7055] file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-[#3a5240] disabled:cursor-not-allowed disabled:opacity-60"
                     />
-                    <p className="mt-2 text-xs text-gray-400">{isCompressingContentImage ? '內容圖片處理中，儲存時會同步上傳...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇後會先轉 WebP 預覽；按下儲存時上傳到 Supabase Storage。`}</p>
+                    <p className="mt-2 text-xs text-gray-400">{isCompressingContentImage ? '內容圖片處理並上傳中...' : `支援 ${SUPPORTED_IMAGE_LABEL} 格式，選擇後會轉 WebP 並立即上傳到 Cloudflare 儲存空間。`}</p>
                   </div>
                   <div className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-[16/9] min-h-[180px]">
                     <img src={contentItemForm.image || activeContentSection?.heroImage} alt="Content preview" className="w-full h-full object-cover" />

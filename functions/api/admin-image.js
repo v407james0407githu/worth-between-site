@@ -1,8 +1,6 @@
 import { requireAdminSession } from '../_lib/admin-auth.js';
 import { jsonResponse } from '../_lib/http.js';
-import { getSupabaseConfig } from '../_lib/supabase.js';
 
-const DEFAULT_BUCKET = 'site-assets';
 const KV_ASSET_PREFIX = 'assets';
 const MAX_STORED_IMAGE_BYTES = 512 * 1024;
 const ALLOWED_MIME_TYPES = new Set(['image/webp', 'image/jpeg', 'image/png', 'image/gif', 'image/svg+xml']);
@@ -14,36 +12,13 @@ const sanitizeFilenamePart = (value) => String(value || 'image')
   .replace(/^-+|-+$/g, '')
   .slice(0, 48) || 'image';
 
-const readResponseText = async (response) => {
-  try {
-    return await response.text();
-  } catch {
-    return '';
-  }
-};
-
-const ensureBucket = async (config, bucket) => {
-  const response = await fetch(`${config.baseUrl}/rest/v1/storage.buckets?on_conflict=id`, {
-    method: 'POST',
-    headers: {
-      ...config.headers,
-      prefer: 'resolution=merge-duplicates,return=minimal'
-    },
-    body: JSON.stringify({
-      id: bucket,
-      name: bucket,
-      public: true,
-      file_size_limit: MAX_STORED_IMAGE_BYTES,
-      allowed_mime_types: Array.from(ALLOWED_MIME_TYPES)
-    })
-  });
-  if (response.ok) return { ok: true };
-  return { ok: false, detail: await readResponseText(response) || `storage.buckets upsert failed with HTTP ${response.status}` };
-};
-
 export async function onRequestPost({ request, env }) {
   const session = await requireAdminSession(request, env);
   if (!session) return jsonResponse({ ok: false, message: '登入已失效，請重新登入' }, 401);
+
+  if (!env.WORTH_BETWEEN_STORAGE) {
+    return jsonResponse({ ok: false, message: 'Cloudflare 圖片儲存空間尚未設定' }, 503);
+  }
 
   let formData;
   try {
@@ -71,63 +46,19 @@ export async function onRequestPost({ request, env }) {
   const objectPath = `${folder}/${randomId}-${name}.${extension}`;
   const body = await file.arrayBuffer();
 
-  if (env.WORTH_BETWEEN_STORAGE) {
-    const key = `${KV_ASSET_PREFIX}/${objectPath}`;
-    await env.WORTH_BETWEEN_STORAGE.put(key, body, {
-      metadata: {
-        contentType: file.type,
-        cacheControl: 'public, max-age=31536000, immutable'
-      }
-    });
-    const origin = new URL(request.url).origin;
-    return jsonResponse({
-      ok: true,
-      url: `${origin}/api/site-assets/${objectPath}`,
-      path: objectPath,
-      bucket: 'cloudflare-kv',
-      size: file.size
-    });
-  }
-
-  const config = getSupabaseConfig(env);
-  if (!config) return jsonResponse({ ok: false, message: '圖片儲存服務尚未設定' }, 503);
-  const bucket = env.SUPABASE_SITE_ASSETS_BUCKET || DEFAULT_BUCKET;
-  const bucketReady = await ensureBucket(config, bucket);
-  if (!bucketReady.ok) {
-    console.error('Supabase image bucket setup failed:', bucketReady.detail || 'unknown');
-    return jsonResponse({
-      ok: false,
-      message: `無法建立或讀取 Supabase 圖片 bucket${bucketReady.detail ? `：${bucketReady.detail}` : ''}`
-    }, 502);
-  }
-
-  const upload = await fetch(`${config.baseUrl}/storage/v1/object/${encodeURIComponent(bucket)}/${objectPath}`, {
-    method: 'POST',
-    headers: {
-      apikey: config.apiKey,
-      authorization: `Bearer ${config.apiKey}`,
-      'content-type': file.type,
-      'cache-control': '31536000, immutable',
-      'x-upsert': 'false'
+  const key = `${KV_ASSET_PREFIX}/${objectPath}`;
+  await env.WORTH_BETWEEN_STORAGE.put(key, body, {
+    metadata: {
+      contentType: file.type,
+      cacheControl: 'public, max-age=31536000, immutable'
     },
-    body
   });
-
-  if (!upload.ok) {
-    const detail = await readResponseText(upload);
-    console.error('Supabase image upload failed:', detail || `HTTP ${upload.status}`);
-    return jsonResponse({
-      ok: false,
-      message: `圖片上傳到 Supabase 失敗${detail ? `：${detail}` : ''}`
-    }, 502);
-  }
-
-  const publicUrl = `${config.baseUrl}/storage/v1/object/public/${encodeURIComponent(bucket)}/${objectPath}`;
+  const origin = new URL(request.url).origin;
   return jsonResponse({
     ok: true,
-    url: publicUrl,
+    url: `${origin}/api/site-assets/${objectPath}`,
     path: objectPath,
-    bucket,
+    bucket: 'cloudflare-kv',
     size: file.size
   });
 }
