@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "worth-between-site",
+  "pages_build_output_dir": ".",
+  "compatibility_date": "2026-06-14",
+  "kv_namespaces": [
+    {
+      "binding": "WORTH_BETWEEN_STORAGE",
+      "id": "37682072081543008a0f3f816c97f81b"
+    }
+  ]
+}
