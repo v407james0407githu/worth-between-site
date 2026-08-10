@@ -1,4 +1,4 @@
-import { classifyMarketingMessage, cleanText, enforceRateLimit, estimateOpenAiCost, getDailyBudgetUsage, supabaseRequest } from '../_lib/chat.js';
+import { classifyMarketingMessage, cleanText, enforceRateLimit, estimateOpenAiCost, getDailyBudgetUsage, getDailyQuestionCreditKey, getTaipeiDayRange, supabaseRequest } from '../_lib/chat.js';
 import { jsonResponse } from '../_lib/http.js';
 
 const DEFAULT_INSTRUCTIONS = `你是「沃蒔之間行銷診斷室」的資深行銷策略顧問，只處理品牌、行銷、內容、媒體、客群與 ESG 溝通問題。使用繁體中文。
@@ -40,6 +40,23 @@ const buildFallbackDiagnosisResponse = () => (
   '有了這些資訊後，我會再幫你判斷優先要處理品牌定位、內容訊息、通路觸及或轉換設計。'
 );
 
+const getDailyPhoneQuestionCount = async (env, phoneHash) => {
+  if (!phoneHash) return 0;
+  const { start, end } = getTaipeiDayRange();
+  const response = await supabaseRequest(
+    env,
+    `chat_sessions?phone_hash=eq.${encodeURIComponent(phoneHash)}&created_at=gte.${encodeURIComponent(start)}&created_at=lte.${encodeURIComponent(end)}&select=user_message_count`
+  );
+  if (!response.ok) throw new Error('無法確認今日提問額度');
+  const sessions = await response.json();
+  const creditKey = await getDailyQuestionCreditKey(phoneHash, env);
+  const creditResponse = await supabaseRequest(env, `chat_rate_limits?key=eq.${creditKey}&select=request_count&limit=1`);
+  if (!creditResponse.ok) throw new Error('無法確認今日提問額度');
+  const credits = Number((await creditResponse.json())?.[0]?.request_count) || 0;
+  const questionCount = (sessions || []).reduce((total, item) => total + (Number(item.user_message_count) || 0), 0);
+  return Math.max(0, questionCount - credits);
+};
+
 export async function onRequestPost({ request, env, waitUntil }) {
   if (!env.OPENAI_API_KEY) return jsonResponse({ ok: false, message: '行銷診斷室 AI 尚未完成設定' }, 503);
   if (!(await enforceRateLimit(request, env))) {
@@ -67,11 +84,20 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
   const sessionResponse = await supabaseRequest(
     env,
-    `chat_sessions?id=eq.${encodeURIComponent(sessionId)}&visitor_id=eq.${encodeURIComponent(visitorId)}&select=id,status,openai_conversation_id,user_message_count,blocked_message_count,input_tokens,output_tokens,estimated_cost_usd&limit=1`
+    `chat_sessions?id=eq.${encodeURIComponent(sessionId)}&visitor_id=eq.${encodeURIComponent(visitorId)}&select=*&limit=1`
   );
   const session = (sessionResponse.ok ? await sessionResponse.json() : [])?.[0];
   if (!session) return jsonResponse({ ok: false, message: '診斷工作階段已失效，請重新開始' }, 404);
   if (session.status !== 'active') return jsonResponse({ ok: false, message: '此診斷已結束，請開始新的診斷' }, 409);
+  const dailyQuestionLimit = Math.max(1, Number(env.MARKETING_CLINIC_DAILY_QUESTION_LIMIT) || 6);
+  try {
+    const dailyQuestionCount = await getDailyPhoneQuestionCount(env, session.phone_hash);
+    if (dailyQuestionCount >= dailyQuestionLimit) {
+      return jsonResponse({ ok: false, message: `此電話今日已累計 ${dailyQuestionLimit} 個提問，請明天再試` }, 429);
+    }
+  } catch (error) {
+    return jsonResponse({ ok: false, message: error.message || '無法確認今日提問額度' }, 502);
+  }
   const maxSessionMessages = Math.max(1, Number(env.MARKETING_CLINIC_MAX_SESSION_MESSAGES) || 15);
   if (Number(session.user_message_count) >= maxSessionMessages) {
     return jsonResponse({ ok: false, message: `每次診斷最多可提問 ${maxSessionMessages} 次，請完成診斷並查看摘要` }, 429);

@@ -6,6 +6,7 @@ create table if not exists public.site_state (
 
 alter table public.site_state enable row level security;
 
+drop policy if exists "Allow public read site_state" on public.site_state;
 create policy "Allow public read site_state"
 on public.site_state
 for select

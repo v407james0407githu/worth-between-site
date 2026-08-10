@@ -4,7 +4,7 @@
 
 ## Cloudflare Pages Secrets
 
-正式部署前，在 `worth-between-site` Pages 專案設定以下加密 Secrets：
+正式部署前，在 `worth-between-site` Pages 專案設定以下加密 Secrets，並在 **Custom domains** 綁定正式網址 `worthbetween.com`：
 
 - `ADMIN_EMAIL`：管理者登入 Email
 - `ADMIN_PASSWORD`：管理者登入密碼，請使用新的強密碼

@@ -38,7 +38,11 @@ assert.match(chatEndpoint, /buildFallbackDiagnosisResponse/);
 assert.match(chatEndpoint, /insufficient_quota/);
 
 const indexHtml = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-assert.doesNotMatch(indexHtml, /AI 額度已用完/);
-assert.match(indexHtml, /服務忙碌/);
+const appSource = fs.readFileSync(new URL('../app.jsx', import.meta.url), 'utf8');
+assert.match(indexHtml, /<script type="module" src="\/app\.js"><\/script>/);
+assert.doesNotMatch(indexHtml, /babel\.min\.js/);
+assert.doesNotMatch(appSource, /AI 額度已用完/);
+assert.match(appSource, /服務忙碌/);
+assert.match(appSource, /const resetSession = \(\) => \{\s*window\.localStorage\.removeItem\(MARKETING_CLINIC_STORAGE_KEY\);\s*window\.location\.reload\(\);\s*\}/);
 
 console.log('marketing clinic quality checks passed');

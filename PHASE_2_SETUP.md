@@ -18,8 +18,8 @@
 
 ## 功能網址
 
-- 前台：`https://worth-between-site.pages.dev/#/marketing-clinic`
-- 後台：`https://worth-between-site.pages.dev/#/private-manager`，登入後選擇「行銷診斷室」
+- 前台：`https://worthbetween.com/#/marketing-clinic`
+- 後台：`https://worthbetween.com/#/private-manager`，登入後選擇「行銷診斷室」
 
 ## 尚未包含
 

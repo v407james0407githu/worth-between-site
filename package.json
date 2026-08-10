@@ -1,0 +1,13 @@
+{
+  "type": "module",
+  "scripts": {
+    "build": "npm run build:css && npm run build:js",
+    "build:css": "tailwindcss -i tailwind.css -o site.css --content app.jsx --minify",
+    "build:js": "esbuild app.jsx --loader:.jsx=jsx --format=esm --target=es2020 --minify --legal-comments=none --outfile=app.js",
+    "test": "node tests/marketing-clinic-quality.mjs"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17",
+    "wrangler": "^4.110.0"
+  }
+}

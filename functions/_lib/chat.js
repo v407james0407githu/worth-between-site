@@ -113,6 +113,21 @@ export const enforceIdentifierRateLimit = async (identifier, env, options = {}) 
   return response.ok;
 };
 
+export const getTaipeiDayRange = () => {
+  const localNow = new Date(Date.now() + 8 * 60 * 60 * 1000);
+  const day = localNow.toISOString().slice(0, 10);
+  return {
+    day,
+    start: new Date(`${day}T00:00:00+08:00`).toISOString(),
+    end: new Date(`${day}T23:59:59.999+08:00`).toISOString()
+  };
+};
+
+export const getDailyQuestionCreditKey = async (phoneHash, env) => {
+  const { day } = getTaipeiDayRange();
+  return digest(`phone-question-credit-day:${phoneHash}:${day}:${env.ADMIN_SESSION_SECRET || 'worth-between'}`);
+};
+
 const INJECTION_PATTERNS = [
   /ignore\s+(all\s+)?(previous|prior|above)\s+instructions?/i,
   /reveal|show|print|repeat|expose/i,

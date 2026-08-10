@@ -24,6 +24,7 @@ const publicPayload = (payload) => {
     heroSlides: source.heroSlides,
     contentPages: source.contentPages,
     homepageContent: source.homepageContent,
+    marketingClinicContent: source.marketingClinicContent,
     brands: source.brands
   };
 };

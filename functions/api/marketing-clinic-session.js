@@ -1,4 +1,4 @@
-import { cleanText, digest, enforceIdentifierRateLimit, getSourceHash, isValidEmail, isValidPhone, normalizePhone, supabaseRequest, verifyTurnstile } from '../_lib/chat.js';
+import { cleanText, digest, getSourceHash, isValidEmail, isValidPhone, normalizePhone, supabaseRequest, verifyTurnstile } from '../_lib/chat.js';
 import { jsonResponse } from '../_lib/http.js';
 
 export async function onRequestGet({ request, env }) {
@@ -9,7 +9,7 @@ export async function onRequestGet({ request, env }) {
 
   const sessionResponse = await supabaseRequest(
     env,
-    `chat_sessions?id=eq.${encodeURIComponent(sessionId)}&visitor_id=eq.${encodeURIComponent(visitorId)}&select=id,visitor_id,visitor_name,visitor_email,visitor_phone,company_name,status,topic,summary,lead_category,lead_score,recommended_service,consultation_requested_at,user_message_count,blocked_message_count,last_active_at,created_at&limit=1`
+    `chat_sessions?id=eq.${encodeURIComponent(sessionId)}&visitor_id=eq.${encodeURIComponent(visitorId)}&select=*&limit=1`
   );
   const sessions = sessionResponse.ok ? await sessionResponse.json() : [];
   if (!sessions?.[0]) return jsonResponse({ ok: false, message: '找不到診斷紀錄' }, 404);
@@ -45,11 +45,6 @@ export async function onRequestPost({ request, env }) {
   if (!isValidPhone(phone)) return jsonResponse({ ok: false, message: '請填寫有效的電話號碼' }, 400);
 
   const phoneHash = await digest(`phone:${phone}:${env.ADMIN_SESSION_SECRET || 'worth-between'}`);
-  const allowed = await enforceIdentifierRateLimit(phoneHash, env, {
-    namespace: 'phone-session-day',
-    limit: Number(env.MARKETING_CLINIC_DAILY_SESSION_LIMIT) || 2
-  });
-  if (!allowed) return jsonResponse({ ok: false, message: '此電話今日已使用兩次診斷，請明天再試' }, 429);
 
   const session = {
     id: crypto.randomUUID(),
