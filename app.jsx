@@ -3434,14 +3434,14 @@
                       <button
                         onClick={() => previousItem && (window.location.hash = buildContentItemRoute(page.key, previousItem.id))}
                         disabled={!previousItem}
-                        className={`group overflow-hidden text-left rounded-sm border transition-colors ${previousItem ? 'border-gray-200 hover:border-gray-400 bg-white' : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'}`}
+                        className={`group flex h-full flex-col overflow-hidden rounded-sm border p-0 text-left transition-colors ${previousItem ? 'border-gray-200 hover:border-gray-400 bg-white' : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'}`}
                       >
                         {previousItem && (
-                          <div className="aspect-[16/8] overflow-hidden bg-gray-100">
-                            <img src={previousItem.image || page.heroImage} alt="" className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" />
+                          <div className="h-64 w-full shrink-0 overflow-hidden bg-gray-100">
+                            <img src={previousItem.image || page.heroImage} alt="" className="block h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" />
                           </div>
                         )}
-                        <div className="px-6 py-5">
+                        <div className="flex-1 px-6 py-5">
                           <div className="text-[10px] uppercase tracking-widest font-bold mb-2">上一則</div>
                           <div className="font-bold">{previousItem ? previousItem.title : '已經是第一則內容'}</div>
                         </div>
@@ -3449,14 +3449,14 @@
                       <button
                         onClick={() => nextItem && (window.location.hash = buildContentItemRoute(page.key, nextItem.id))}
                         disabled={!nextItem}
-                        className={`group overflow-hidden text-left rounded-sm border transition-colors ${nextItem ? 'border-gray-200 hover:border-gray-400 bg-white' : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'}`}
+                        className={`group flex h-full flex-col overflow-hidden rounded-sm border p-0 text-left transition-colors ${nextItem ? 'border-gray-200 hover:border-gray-400 bg-white' : 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'}`}
                       >
                         {nextItem && (
-                          <div className="aspect-[16/8] overflow-hidden bg-gray-100">
-                            <img src={nextItem.image || page.heroImage} alt="" className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" />
+                          <div className="h-64 w-full shrink-0 overflow-hidden bg-gray-100">
+                            <img src={nextItem.image || page.heroImage} alt="" className="block h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" />
                           </div>
                         )}
-                        <div className="px-6 py-5">
+                        <div className="flex-1 px-6 py-5">
                           <div className="text-[10px] uppercase tracking-widest font-bold mb-2">下一則</div>
                           <div className="font-bold">{nextItem ? nextItem.title : '已經是最後一則內容'}</div>
                         </div>
