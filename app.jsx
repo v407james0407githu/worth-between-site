@@ -3048,8 +3048,11 @@
       const previousItem = currentIndex > 0 ? sortedItems[currentIndex - 1] : null;
       const nextItem = currentIndex >= 0 && currentIndex < sortedItems.length - 1 ? sortedItems[currentIndex + 1] : null;
 
-      useEffect(() => {
+      useLayoutEffect(() => {
         window.scrollTo(0, 0);
+      }, [item.id]);
+
+      useEffect(() => {
         let ticking = false;
         const updateScrollState = () => {
           const scrollY = window.scrollY;
