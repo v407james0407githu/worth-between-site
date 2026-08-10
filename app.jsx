@@ -1754,23 +1754,19 @@
       const hasTriggeredRef = useRef(false);
 
       useEffect(() => {
-        const reveal = (wait = 0) => {
+        const reveal = () => {
           if (hasTriggeredRef.current) return;
           hasTriggeredRef.current = true;
-          window.setTimeout(() => {
-            window.requestAnimationFrame(() => {
-              setIsVisible(true);
-            });
-          }, wait);
+          window.requestAnimationFrame(() => setIsVisible(true));
         };
         if (!('IntersectionObserver' in window)) {
-          reveal(delay);
+          reveal();
           return undefined;
         }
         const observer = new IntersectionObserver(entries => {
           entries.forEach(entry => {
             if (entry.isIntersecting) {
-              reveal(24);
+              reveal();
               observer.unobserve(entry.target);
             }
           });
@@ -1785,7 +1781,7 @@
       return (
         <div
           ref={domRef}
-          className={`transition-all duration-[1000ms] ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'} ${className}`}
+          className={`transition-[opacity,transform] duration-[900ms] [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-7'} ${className}`}
           style={{ transitionDelay: `${delay}ms` }}
         >
           {children}
@@ -1799,23 +1795,19 @@
       const hasTriggeredRef = useRef(false);
 
       useEffect(() => {
-        const reveal = (wait = 0) => {
+        const reveal = () => {
           if (hasTriggeredRef.current) return;
           hasTriggeredRef.current = true;
-          window.setTimeout(() => {
-            window.requestAnimationFrame(() => {
-              setIsVisible(true);
-            });
-          }, wait);
+          window.requestAnimationFrame(() => setIsVisible(true));
         };
         if (!('IntersectionObserver' in window)) {
-          reveal(delay);
+          reveal();
           return undefined;
         }
         const observer = new IntersectionObserver(entries => {
           entries.forEach(entry => {
             if (entry.isIntersecting) {
-              reveal(24);
+              reveal();
               observer.unobserve(entry.target);
             }
           });
@@ -1829,47 +1821,47 @@
 
       const variantStyles = {
         'fade-up': {
-          hidden: { opacity: 0, transform: 'translate3d(0, 72px, 0) scale(0.965)' },
+          hidden: { opacity: 0, transform: 'translate3d(0, 36px, 0) scale(0.985)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         },
         'soft-scale': {
-          hidden: { opacity: 0, transform: 'translate3d(0, 58px, 0) scale(0.93)' },
+          hidden: { opacity: 0, transform: 'translate3d(0, 28px, 0) scale(0.985)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         },
         'blur-up': {
-          hidden: { opacity: 0, transform: 'translate3d(0, 84px, 0) scale(0.94)' },
+          hidden: { opacity: 0, transform: 'translate3d(0, 38px, 0) scale(0.98)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         },
         'slide-left': {
-          hidden: { opacity: 0, transform: 'translate3d(-88px, 26px, 0)' },
+          hidden: { opacity: 0, transform: 'translate3d(-40px, 12px, 0)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0)' }
         },
         'slide-right': {
-          hidden: { opacity: 0, transform: 'translate3d(88px, 26px, 0)' },
+          hidden: { opacity: 0, transform: 'translate3d(40px, 12px, 0)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0)' }
         },
         'drift-up-left': {
-          hidden: { opacity: 0, transform: 'translate3d(-68px, 72px, 0) scale(0.96)' },
+          hidden: { opacity: 0, transform: 'translate3d(-32px, 36px, 0) scale(0.985)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         },
         'drift-up-right': {
-          hidden: { opacity: 0, transform: 'translate3d(68px, 72px, 0) scale(0.96)' },
+          hidden: { opacity: 0, transform: 'translate3d(32px, 36px, 0) scale(0.985)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         },
         'flip-right': {
-          hidden: { opacity: 0, transform: 'perspective(1200px) rotateY(-8deg) translate3d(60px, 22px, 0) scale(0.97)' },
+          hidden: { opacity: 0, transform: 'perspective(1200px) rotateY(-3deg) translate3d(28px, 12px, 0) scale(0.99)' },
           visible: { opacity: 1, transform: 'perspective(1400px) rotateY(0deg) translate3d(0, 0, 0) scale(1)' }
         },
         'flip-left': {
-          hidden: { opacity: 0, transform: 'perspective(1200px) rotateY(8deg) translate3d(-60px, 22px, 0) scale(0.97)' },
+          hidden: { opacity: 0, transform: 'perspective(1200px) rotateY(3deg) translate3d(-28px, 12px, 0) scale(0.99)' },
           visible: { opacity: 1, transform: 'perspective(1400px) rotateY(0deg) translate3d(0, 0, 0) scale(1)' }
         },
         'tilt-rise': {
-          hidden: { opacity: 0, transform: 'perspective(1200px) rotateX(7deg) translate3d(0, 72px, 0) scale(0.965)' },
+          hidden: { opacity: 0, transform: 'perspective(1200px) rotateX(3deg) translate3d(0, 34px, 0) scale(0.985)' },
           visible: { opacity: 1, transform: 'perspective(1400px) rotateX(0deg) translate3d(0, 0, 0) scale(1)' }
         },
         'reveal-up': {
-          hidden: { opacity: 0, transform: 'translate3d(0, 78px, 0) scale(0.975)' },
+          hidden: { opacity: 0, transform: 'translate3d(0, 38px, 0) scale(0.99)' },
           visible: { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1)' }
         }
       };
@@ -1882,8 +1874,9 @@
           className={className}
           style={{
             transformStyle: variant.startsWith('flip') || variant === 'tilt-rise' ? 'preserve-3d' : 'flat',
+            backfaceVisibility: 'hidden',
             willChange: isVisible ? 'auto' : 'opacity, transform',
-            transition: 'opacity 820ms cubic-bezier(0.22, 1, 0.36, 1), transform 820ms cubic-bezier(0.22, 1, 0.36, 1)',
+            transition: 'opacity 900ms cubic-bezier(0.16, 1, 0.3, 1), transform 900ms cubic-bezier(0.16, 1, 0.3, 1)',
             transitionDelay: `${delay}ms`,
             ...(isVisible ? selected.visible : selected.hidden)
           }}
