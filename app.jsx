@@ -1774,7 +1774,7 @@
               observer.unobserve(entry.target);
             }
           });
-        }, { threshold: 0.01, rootMargin: "0px 0px 60% 0px" });
+        }, { threshold: 0.08, rootMargin: "0px 0px 35% 0px" });
 
         if (domRef.current) observer.observe(domRef.current);
         return () => {
@@ -1819,7 +1819,7 @@
               observer.unobserve(entry.target);
             }
           });
-        }, { threshold: 0.01, rootMargin: "0px 0px 60% 0px" });
+        }, { threshold: 0.08, rootMargin: "0px 0px 35% 0px" });
 
         if (domRef.current) observer.observe(domRef.current);
         return () => {
@@ -1883,7 +1883,7 @@
           style={{
             transformStyle: variant.startsWith('flip') || variant === 'tilt-rise' ? 'preserve-3d' : 'flat',
             willChange: isVisible ? 'auto' : 'opacity, transform',
-            transition: 'opacity 520ms cubic-bezier(0.22, 1, 0.36, 1), transform 520ms cubic-bezier(0.22, 1, 0.36, 1)',
+            transition: 'opacity 820ms cubic-bezier(0.22, 1, 0.36, 1), transform 820ms cubic-bezier(0.22, 1, 0.36, 1)',
             transitionDelay: `${delay}ms`,
             ...(isVisible ? selected.visible : selected.hidden)
           }}
